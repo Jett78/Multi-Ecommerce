@@ -399,3 +399,16 @@ export const navigationItems = pgTable('navigation_items', {
   keyIdx: index('navigation_items_key_idx').on(table.key),
   sortOrderIdx: index('navigation_items_sort_order_idx').on(table.sortOrder),
 }));
+
+export const brands = pgTable('brands', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  imageKey: varchar('image_key', { length: 500 }),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  sortOrderIdx: index('brands_sort_order_idx').on(table.sortOrder),
+  isActiveIdx: index('brands_is_active_idx').on(table.isActive),
+}));

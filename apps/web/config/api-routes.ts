@@ -21,4 +21,5 @@ export const API_ROUTES = {
   REDIRECT: `${API_BASE_URL}/redirects`,
   PERMISSION: `${API_BASE_URL}/permissions`,
   NAVIGATION: `${API_BASE_URL}/navigation`,
+  BRAND: `${API_BASE_URL}/brands`,
 } as const;

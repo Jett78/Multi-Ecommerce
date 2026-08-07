@@ -64,13 +64,14 @@ const navigation: NavItem[] = [
   {
     name: "Content",
     icon: FileText,
-    permissions: ["blog.read", "testimonial.read", "team.read", "service.read", "faq.read"],
+    permissions: ["blog.read", "testimonial.read", "team.read", "service.read", "faq.read", "brand.read"],
     children: [
       { name: "Blogs", href: "/dashboard/blogs", icon: FileText, permission: "blog.read" },
       { name: "Testimonials", href: "/dashboard/testimonials", icon: Star, permission: "testimonial.read" },
       { name: "Team", href: "/dashboard/team", icon: UsersRound, permission: "team.read" },
       { name: "Services", href: "/dashboard/services", icon: Briefcase, permission: "service.read" },
       { name: "FAQs", href: "/dashboard/faqs", icon: HelpCircle, permission: "faq.read" },
+      { name: "Brands", href: "/dashboard/brands", icon: Star, permission: "brand.read" },
     ],
   },
   { name: "Inquiries", href: "/dashboard/inquiries", icon: MessageSquare, permission: "inquiry.read" },

@@ -23,6 +23,7 @@ import { ServiceModule } from './modules/service/service.module';
 import { RedirectModule } from './modules/redirect/redirect.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { NavigationModule } from './modules/navigation/navigation.module';
+import { BrandModule } from './modules/brand/brand.module';
 import { PermissionGuard } from './guards/permission.guard';
 
 @Module({
@@ -47,6 +48,7 @@ import { PermissionGuard } from './guards/permission.guard';
     RedirectModule,
     PermissionModule,
     NavigationModule,
+    BrandModule,
   ],
   controllers: [AppController],
   providers: [

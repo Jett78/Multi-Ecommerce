@@ -9,6 +9,10 @@ export interface BlogFormProps {
   blog?: import("./blog").Blog;
 }
 
+export interface BrandFormProps {
+  brand?: import("./brand").Brand;
+}
+
 export interface BlogCardProps {
   blog: import("./blog").Blog;
   variant?: "default" | "featured";
