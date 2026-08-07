@@ -46,7 +46,9 @@ export class UploadService {
 
     await this.s3Client.send(command);
 
-    const url = `https://${this.cloudfrontUrl}/${key}`;
+    const url = this.cloudfrontUrl
+      ? `https://${this.cloudfrontUrl}/${key}`
+      : `https://${this.bucketName}.s3.${this.configService.get<string>('AWS_REGION', 'ap-south-1')}.amazonaws.com/${key}`;
 
     this.logger.log(`File uploaded: ${key}`);
     return { key, url, bucket: this.bucketName };
