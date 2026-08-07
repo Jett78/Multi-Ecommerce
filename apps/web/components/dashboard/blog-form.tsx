@@ -144,7 +144,7 @@ export function BlogForm({ blog }: BlogFormProps) {
             name="seoMeta.metaTitle"
             value={values.seoMeta.metaTitle}
             onChange={handleChange}
-            placeholder={values.title || "SEO title"}
+            placeholder={ "SEO title"}
           />
         </div>
 
@@ -152,10 +152,10 @@ export function BlogForm({ blog }: BlogFormProps) {
           label="Meta Description"
           name="seoMeta.metaDescription"
           textarea
-          rows={2}
+          rows={6}
           value={values.seoMeta.metaDescription}
           onChange={handleChange}
-          placeholder={values.description || "SEO description"}
+          placeholder={ "SEO description"}
         />
       </div>
 

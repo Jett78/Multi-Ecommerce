@@ -62,7 +62,7 @@ export async function getBlogById(id: string): Promise<Blog | null> {
 export async function getAllBlogSlugs(): Promise<string[]> {
   try {
     const response = await apiClient<BlogListResponse>(
-      `${API_ROUTES.BLOG}?take=1000&isActive=true`,
+      `${API_ROUTES.BLOG}?take=10&isActive=true`,
       { next: { tags: ["blogs"] } }
     );
 
