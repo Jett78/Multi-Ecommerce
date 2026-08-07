@@ -29,7 +29,7 @@ export default function FaqsPage() {
   const { data, isLoading, isError, error } = getAllPaginated({
     take: PAGE_SIZE,
     skip: (page - 1) * PAGE_SIZE,
-    search: debouncedSearch || undefined,
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
   });
 
   const faqs = data?.items || [];

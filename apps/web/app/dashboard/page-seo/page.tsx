@@ -27,7 +27,7 @@ export default function PageSeoPage() {
   const { data, isLoading, isError, error } = getAllPaginated({
     take: PAGE_SIZE,
     skip: (page - 1) * PAGE_SIZE,
-    search: debouncedSearch || undefined,
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
   });
 
   const pages = data?.items || [];

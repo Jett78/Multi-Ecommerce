@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 import DataTable, { Column } from "@/components/dashboard/data-table";
+import DashboardPagination from "@/components/dashboard/dashboard-pagination";
 import { Search, UserCheck, UserX, Calendar, Users, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
 import { DeleteButton } from "@/components/dashboard/delete-button";
+import { useDebounce } from "@/hooks/useDebounce";
 import UserModal from "./user-modal";
 import type { User } from "@/types/user";
 import Image from "next/image";
+
+const PAGE_SIZE = 10;
 
 const getRoleBadge = (role: string) => {
   const roleStyles: Record<string, string> = {
@@ -25,16 +29,10 @@ const getRoleBadge = (role: string) => {
 
 export default function UsersPage() {
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [roleFilter, setRoleFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+  const debouncedSearch = useDebounce(search);
 
   // Fetch current user to prevent self-deletion
   const { getAll: getCurrentUser } = useCrud<User>({
@@ -46,23 +44,36 @@ export default function UsersPage() {
   const { data: currentUserData } = getCurrentUser();
   const currentUser = currentUserData as User | undefined;
 
-  const { getAll } = useCrud<User>({
+  const { getAllPaginated } = useCrud<User>({
     endpoint: API_ROUTES.USER,
     queryKey: "users",
     isAuthenticated: true,
   });
 
-  const { data, isLoading, isError, error } = getAll({ limit: 100 });
+  const { data, isLoading, isError, error } = getAllPaginated({
+    take: PAGE_SIZE,
+    skip: (page - 1) * PAGE_SIZE,
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
+  });
 
-  const users = (data as User[]) || [];
+  const users = data?.items || [];
+  const total = data?.total || 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      user.email?.toLowerCase().includes(debouncedSearch.toLowerCase());
     const matchesRole = roleFilter === "all" || user.role === roleFilter;
-    return matchesSearch && matchesRole;
+    return matchesRole;
   });
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleRoleChange = (role: string) => {
+    setRoleFilter(role);
+    setPage(1);
+  };
 
   const columns: Column<User>[] = [
     {
@@ -189,7 +200,7 @@ export default function UsersPage() {
             placeholder="Search by name or email..."
             className="pl-10 h-11 bg-white border-slate-200 rounded-md focus:ring-primary/20 focus:border-primary transition-all font-medium"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
         <div className="flex gap-2">
@@ -197,7 +208,7 @@ export default function UsersPage() {
             (role) => (
               <button
                 key={role}
-                onClick={() => setRoleFilter(role)}
+                onClick={() => handleRoleChange(role)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-full capitalize transition-colors ${
                   roleFilter === role
                     ? "bg-primary text-white"
@@ -217,6 +228,14 @@ export default function UsersPage() {
         isLoading={isLoading}
         className="shadow-2xl shadow-slate-200/40"
       />
+
+      {totalPages > 1 && (
+        <DashboardPagination
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+        />
+      )}
 
       <UserModal
         user={selectedUser}
