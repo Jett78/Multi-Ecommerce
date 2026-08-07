@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  turbopack: {
+    root: 'C:\\Users\\admin\\trustable',
+  },
   async rewrites() {
     return [
       {
