@@ -53,8 +53,11 @@ export class TeamService {
   async findAll(params?: { skip?: number; take?: number; search?: string }) {
     try {
       const { skip = 0, take = 10, search } = params || {};
-      const teamMembers = await this.repository.findAll({ skip, take, search });
-      return { data: teamMembers };
+      const [teamMembers, total] = await Promise.all([
+        this.repository.findAll({ skip, take, search }),
+        this.repository.count({ search }),
+      ]);
+      return { data: teamMembers, total };
     } catch (error) {
       this.logger.error(`Failed to fetch team members: ${error.message}`, error.stack);
       throw error;

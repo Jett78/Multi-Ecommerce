@@ -57,9 +57,11 @@ export class FaqController {
     @Query('search') search?: string,
     @Query('isActive') isActive?: string,
   ) {
+    const skipNum = skip ? parseInt(skip, 10) : 0;
+    const takeNum = take ? parseInt(take, 10) : 100;
     const result = await this.faqService.findAll({
-      skip: skip ? parseInt(skip, 10) : 0,
-      take: take ? parseInt(take, 10) : 100,
+      skip: skipNum,
+      take: takeNum,
       search,
       isActive: isActive !== undefined ? isActive === 'true' : undefined,
     });
@@ -68,6 +70,10 @@ export class FaqController {
       statusCode: 200,
       message: 'FAQs fetched successfully',
       data: result.data.map((f) => new FaqEntity(f)),
+      total: result.total,
+      skip: skipNum,
+      take: takeNum,
+      hasMore: skipNum + takeNum < result.total,
     };
   }
 

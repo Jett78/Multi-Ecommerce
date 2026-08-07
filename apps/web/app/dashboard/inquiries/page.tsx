@@ -1,45 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 import DataTable, { Column } from "@/components/dashboard/data-table";
+import DashboardPagination from "@/components/dashboard/dashboard-pagination";
 import { Search, Mail, Phone, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
 import { DeleteButton } from "@/components/dashboard/delete-button";
+import { useDebounce } from "@/hooks/useDebounce";
 import InquiryModal from "./inquiry-modal";
 import type { Inquiry } from "@/types/inquiry";
 
+const PAGE_SIZE = 10;
+
 export default function InquiriesPage() {
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
+  const debouncedSearch = useDebounce(search);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  const { getAll } = useCrud<Inquiry>({
+  const { getAllPaginated } = useCrud<Inquiry>({
     endpoint: API_ROUTES.INQUIRY,
     queryKey: "inquiries",
     isAuthenticated: true,
   });
 
-  const { data, isLoading, isError, error } = getAll({ take: 50 });
+  const { data, isLoading, isError, error } = getAllPaginated({
+    take: PAGE_SIZE,
+    skip: (page - 1) * PAGE_SIZE,
+    search: debouncedSearch || undefined,
+  });
 
-  const inquiries = (data as Inquiry[]) || [];
+  const inquiries = data?.items || [];
+  const total = data?.total || 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  const filteredInquiries = inquiries.filter(
-    (i) =>
-      i.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      i.email.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      i.message.toLowerCase().includes(debouncedSearch.toLowerCase())
-  );
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
 
   const columns: Column<Inquiry>[] = [
     {
@@ -137,17 +139,25 @@ export default function InquiriesPage() {
             placeholder="Search by name, email or message..."
             className="pl-10 h-11 bg-white border-slate-200 rounded-md focus:ring-primary/20 focus:border-primary transition-all font-medium"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
       </div>
 
       <DataTable
         columns={columns}
-        data={filteredInquiries}
+        data={inquiries}
         isLoading={isLoading}
         className="shadow-2xl shadow-slate-200/40"
       />
+
+      {totalPages > 1 && (
+        <DashboardPagination
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+        />
+      )}
 
       <InquiryModal
         inquiry={selectedInquiry}

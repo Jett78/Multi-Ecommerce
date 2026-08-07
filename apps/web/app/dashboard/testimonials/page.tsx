@@ -3,6 +3,7 @@
 import { useState } from "react";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 import DataTable, { Column } from "@/components/dashboard/data-table";
+import DashboardPagination from "@/components/dashboard/dashboard-pagination";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
@@ -13,24 +14,32 @@ import { revalidateTestimonials } from "@/actions/revalidate-action";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { Testimonial } from "@/types/testimonial";
 
+const PAGE_SIZE = 10;
+
 export default function TestimonialsPage() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search);
 
-  const { getAll } = useCrud<Testimonial>({
+  const { getAllPaginated } = useCrud<Testimonial>({
     endpoint: API_ROUTES.TESTIMONIAL,
     queryKey: "testimonials",
   });
 
-  const { data, isLoading, isError, error } = getAll({ take: 50 });
+  const { data, isLoading, isError, error } = getAllPaginated({
+    take: PAGE_SIZE,
+    skip: (page - 1) * PAGE_SIZE,
+    search: debouncedSearch || undefined,
+  });
 
-  const testimonials = (data as Testimonial[]) || [];
+  const testimonials = data?.items || [];
+  const total = data?.total || 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  const filteredTestimonials = testimonials.filter(
-    (t) =>
-      t.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      t.message.toLowerCase().includes(debouncedSearch.toLowerCase())
-  );
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
 
   const columns: Column<Testimonial>[] = [
     {
@@ -110,16 +119,24 @@ export default function TestimonialsPage() {
             placeholder="Search by name or message..."
             className="pl-10 h-11 bg-white border-slate-200 rounded-md focus:ring-primary/20 focus:border-primary transition-all font-medium"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
 
       <DataTable
         columns={columns}
-        data={filteredTestimonials}
+        data={testimonials}
         isLoading={isLoading}
         className="shadow-2xl shadow-slate-200/40"
       />
+
+      {totalPages > 1 && (
+        <DashboardPagination
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+        />
+      )}
     </div>
   );
 }

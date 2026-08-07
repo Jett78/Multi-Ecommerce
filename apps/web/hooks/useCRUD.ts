@@ -24,7 +24,32 @@ export function useCrud<T>({
       queryKey: [queryKey, params],
       queryFn: async () => {
         const response = await apiClient<any>(`${endpoint}${queryString}`, { isAuthenticated });
-        return response?.data?.data || response?.data || [];
+        return response?.data || [];
+      },
+    });
+  };
+
+  const getAllPaginated = (params?: Record<string, string | number | boolean>) => {
+    const queryString = params
+      ? "?" +
+        Object.entries(params)
+          .filter(([_, value]) => value !== undefined && value !== "")
+          .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+          .join("&")
+      : "";
+
+    return useQuery({
+      queryKey: [queryKey, "paginated", params],
+      queryFn: async () => {
+        const response = await apiClient<any>(`${endpoint}${queryString}`, { isAuthenticated });
+        const items = response?.data || [];
+        return {
+          items: Array.isArray(items) ? items : [],
+          total: response?.total ?? 0,
+          skip: response?.skip ?? 0,
+          take: response?.take ?? 10,
+          hasMore: response?.hasMore ?? false,
+        };
       },
     });
   };
@@ -88,6 +113,7 @@ export function useCrud<T>({
 
   return {
     getAll,
+    getAllPaginated,
     getOne,
     create,
     update,

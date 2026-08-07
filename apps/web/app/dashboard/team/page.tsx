@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 import DataTable, { Column } from "@/components/dashboard/data-table";
+import DashboardPagination from "@/components/dashboard/dashboard-pagination";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
@@ -11,33 +12,35 @@ import Image from "next/image";
 import { DeleteButton } from "@/components/dashboard/delete-button";
 import { EditButton } from "@/components/dashboard/edit-button";
 import { revalidateTeamMembers } from "@/actions/revalidate-action";
+import { useDebounce } from "@/hooks/useDebounce";
 import type { TeamMember } from "@/types/team";
+
+const PAGE_SIZE = 10;
 
 export default function TeamPage() {
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebounce(search);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  const { getAll } = useCrud<TeamMember>({
+  const { getAllPaginated } = useCrud<TeamMember>({
     endpoint: API_ROUTES.TEAM,
     queryKey: "team-members",
   });
 
-  const { data, isLoading, isError, error } = getAll({ take: 50 });
+  const { data, isLoading, isError, error } = getAllPaginated({
+    take: PAGE_SIZE,
+    skip: (page - 1) * PAGE_SIZE,
+    search: debouncedSearch || undefined,
+  });
 
-  const teamMembers = (data as TeamMember[]) || [];
+  const teamMembers = data?.items || [];
+  const total = data?.total || 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  const filteredTeamMembers = teamMembers.filter(
-    (t) =>
-      t.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      (t.designation && t.designation.toLowerCase().includes(debouncedSearch.toLowerCase()))
-  );
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
 
   const columns: Column<TeamMember>[] = [
     {
@@ -141,16 +144,24 @@ export default function TeamPage() {
           placeholder="Search by name or designation..."
           className="pl-10 h-11 bg-white border-slate-200 rounded-md focus:ring-primary/20 focus:border-primary transition-all font-medium"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
         />
       </div>
 
       <DataTable
         columns={columns}
-        data={filteredTeamMembers}
+        data={teamMembers}
         isLoading={isLoading}
         className="shadow-2xl shadow-slate-200/40"
       />
+
+      {totalPages > 1 && (
+        <DashboardPagination
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+        />
+      )}
     </div>
   );
 }

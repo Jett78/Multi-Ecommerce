@@ -31,8 +31,11 @@ export class TestimonialService {
   async findAll(params?: { skip?: number; take?: number; search?: string }) {
     try {
       const { skip = 0, take = 10, search } = params || {};
-      const testimonials = await this.repository.findAll({ skip, take, search });
-      return { data: testimonials };
+      const [testimonials, total] = await Promise.all([
+        this.repository.findAll({ skip, take, search }),
+        this.repository.count({ search }),
+      ]);
+      return { data: testimonials, total };
     } catch (error) {
       this.logger.error(`Failed to fetch testimonials: ${error.message}`, error.stack);
       throw error;

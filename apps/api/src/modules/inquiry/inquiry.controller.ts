@@ -55,22 +55,18 @@ export class InquiryController {
     @Query('take') take?: string,
     @Query('search') search?: string,
   ) {
-    const result = await this.inquiryService.findAll({
-      skip: skip ? parseInt(skip, 10) : 0,
-      take: take ? parseInt(take, 10) : 10,
-      search,
-    });
+    const skipNum = skip ? parseInt(skip, 10) : 0;
+    const takeNum = take ? parseInt(take, 10) : 10;
+    const result = await this.inquiryService.findAll({ skip: skipNum, take: takeNum, search });
     return {
       success: true,
       statusCode: 200,
       message: 'Inquiries fetched successfully',
-      data: {
-        data: result.data.map((i) => new InquiryEntity(i)),
-        total: result.total,
-        skip: result.skip,
-        take: result.take,
-        hasMore: result.hasMore,
-      },
+      data: result.data.map((i) => new InquiryEntity(i)),
+      total: result.total,
+      skip: skipNum,
+      take: takeNum,
+      hasMore: skipNum + takeNum < result.total,
     };
   }
 

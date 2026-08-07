@@ -56,8 +56,11 @@ export class ServiceService {
   async findAll(params?: { skip?: number; take?: number; search?: string }) {
     try {
       const { skip = 0, take = 10, search } = params || {};
-      const services = await this.repository.findAll({ skip, take, search });
-      return { data: services };
+      const [services, total] = await Promise.all([
+        this.repository.findAll({ skip, take, search }),
+        this.repository.count({ search }),
+      ]);
+      return { data: services, total };
     } catch (error) {
       this.logger.error(`Failed to fetch services: ${error.message}`, error.stack);
       throw error;

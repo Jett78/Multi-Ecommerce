@@ -2,36 +2,43 @@
 
 import { useState } from "react";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
-import { Search, Plus, Calendar, FileText } from "lucide-react";
-import NoData from "@/components/no-data";
+import DashboardPagination from "@/components/dashboard/dashboard-pagination";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { DeleteButton } from "@/components/dashboard/delete-button";
-import { EditButton } from "@/components/dashboard/edit-button";
-import { revalidateBlogs } from "@/actions/revalidate-action";
+import NoData from "@/components/no-data";
 import { useDebounce } from "@/hooks/useDebounce";
+import BlogCard from "@/components/dashboard/blog-card";
 import type { Blog } from "@/types/blog";
-import Link from "next/link";
-import Image from "next/image";
+
+const PAGE_SIZE = 9;
 
 export default function BlogsPage() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search);
 
-  const { getAll } = useCrud<Blog>({
+  const { getAllPaginated } = useCrud<Blog>({
     endpoint: API_ROUTES.BLOG,
     queryKey: "blogs",
   });
 
-  const { data, isLoading, isError, error } = getAll({ take: 50, isActive: true });
+  const { data, isLoading, isError, error } = getAllPaginated({
+    take: PAGE_SIZE,
+    skip: (page - 1) * PAGE_SIZE,
+    search: debouncedSearch || undefined,
+    isActive: true,
+  });
 
-  const blogs = (data as Blog[]) || [];
+  const blogs = data?.items || [];
+  const total = data?.total || 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  const filteredBlogs = blogs.filter((blog) =>
-    blog.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-    blog.slug.toLowerCase().includes(debouncedSearch.toLowerCase())
-  );
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
 
   if (isError) {
     return (
@@ -49,16 +56,15 @@ export default function BlogsPage() {
         path="blogs"
       />
 
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-          <Input
-            placeholder="Search by title or slug..."
-            className="pl-10 h-11 bg-white border-slate-200 rounded-md focus:ring-primary/20 focus:border-primary transition-all font-medium"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-      
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+        <Input
+          placeholder="Search by title or slug..."
+          className="pl-10 h-11 bg-white border-slate-200 rounded-md focus:ring-primary/20 focus:border-primary transition-all font-medium"
+          value={search}
+          onChange={(e) => handleSearchChange(e.target.value)}
+        />
+      </div>
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -73,69 +79,22 @@ export default function BlogsPage() {
             </div>
           ))}
         </div>
-      ) : filteredBlogs.length === 0 ? (
+      ) : blogs.length === 0 ? (
         <NoData title="blog posts" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBlogs.map((blog) => (
-            <div
-              key={blog.id}
-              className="group bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg hover:shadow-slate-200/50 transition-all duration-300"
-            >
-              <div className="aspect-video relative bg-slate-100 overflow-hidden">
-                {blog.imageKey ? (
-                  <Image
-                    src={blog.imageKey}
-                    alt={blog.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <FileText className="size-12 text-foreground" />
-                  </div>
-                )}
-              </div>
-
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <h3 className="font-bold text-slate-900 line-clamp-2 leading-tight">
-                    {blog.title}
-                  </h3>
-                  <span
-                    className={`shrink-0 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                      blog.isActive
-                        ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                        : "bg-slate-50 text-slate-600 border-slate-100"
-                    }`}
-                  >
-                    {blog.isActive ? "Active" : "Inactive"}
-                  </span>
-                </div>
-
-                <p className="text-xs text-slate-400 font-medium mb-4 flex items-center gap-1">
-                  /{blog.slug}
-                </p>
-
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-4">
-                  <Calendar className="size-3.5" />
-                  {new Date(blog.createdAt).toLocaleDateString()}
-                </div>
-
-                <div className="flex items-center gap-2 pt-4 border-t border-slate-100">
-                  <EditButton href={`/dashboard/blogs/${blog.id}/edit`} />
-                  <DeleteButton
-                    id={blog.id}
-                    endpoint={API_ROUTES.BLOG}
-                    queryKey="blogs"
-                    entityName="blog"
-                    onSuccess={revalidateBlogs}
-                  />
-                </div>
-              </div>
-            </div>
+          {blogs.map((blog) => (
+            <BlogCard key={blog.id} blog={blog} />
           ))}
         </div>
+      )}
+
+      {totalPages > 1 && (
+        <DashboardPagination
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+        />
       )}
     </div>
   );

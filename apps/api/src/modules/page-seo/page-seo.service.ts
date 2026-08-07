@@ -3,7 +3,7 @@ import { Inject } from '@nestjs/common';
 import { DB_CONNECTION } from '../../db/db.module';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { CreatePageSeoDto, UpdatePageSeoDto } from './dto/page-seo.dto';
 
 @Injectable()
@@ -15,8 +15,13 @@ export class PageSeoService {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
-  async findAll() {
-    return this.db.select().from(schema.pageSeo);
+  async findAll(params?: { skip?: number; take?: number }) {
+    const { skip = 0, take = 100 } = params || {};
+    const [pages, countResult] = await Promise.all([
+      this.db.select().from(schema.pageSeo).limit(take).offset(skip),
+      this.db.select({ count: sql<number>`count(*)` }).from(schema.pageSeo),
+    ]);
+    return { data: pages, total: Number(countResult[0]?.count || 0) };
   }
 
   async findByPath(pagePath: string) {

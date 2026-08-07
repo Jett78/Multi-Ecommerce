@@ -53,16 +53,18 @@ export class TestimonialController {
     @Query('take') take?: string,
     @Query('search') search?: string,
   ) {
-    const result = await this.testimonialService.findAll({
-      skip: skip ? parseInt(skip, 10) : 0,
-      take: take ? parseInt(take, 10) : 10,
-      search,
-    });
+    const skipNum = skip ? parseInt(skip, 10) : 0;
+    const takeNum = take ? parseInt(take, 10) : 10;
+    const result = await this.testimonialService.findAll({ skip: skipNum, take: takeNum, search });
     return {
       success: true,
       statusCode: 200,
       message: 'Testimonials fetched successfully',
       data: result.data.map((t) => new TestimonialEntity(t)),
+      total: result.total,
+      skip: skipNum,
+      take: takeNum,
+      hasMore: skipNum + takeNum < result.total,
     };
   }
 

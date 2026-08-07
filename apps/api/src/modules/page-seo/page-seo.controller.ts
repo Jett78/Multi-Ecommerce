@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import {
   ApiResponse,
   ApiUnauthorizedResponse,
   ApiParam,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { AllowAnonymous, Roles } from '@thallesp/nestjs-better-auth';
 import { PageSeoService } from './page-seo.service';
@@ -44,15 +46,26 @@ export class PageSeoController {
   @Get()
   @Roles(['super_admin'])
   @ApiOperation({ summary: 'Get all page SEO entries' })
+  @ApiQuery({ name: 'skip', required: false, type: Number })
+  @ApiQuery({ name: 'take', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'All page SEO entries', type: [PageSeoEntity] })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
-  async findAll() {
-    const pages = await this.pageSeoService.findAll();
+  async findAll(
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+  ) {
+    const skipNum = skip ? parseInt(skip, 10) : 0;
+    const takeNum = take ? parseInt(take, 10) : 100;
+    const result = await this.pageSeoService.findAll({ skip: skipNum, take: takeNum });
     return {
       success: true,
       statusCode: 200,
       message: 'Page SEO entries fetched successfully',
-      data: pages,
+      data: result.data,
+      total: result.total,
+      skip: skipNum,
+      take: takeNum,
+      hasMore: skipNum + takeNum < result.total,
     };
   }
 

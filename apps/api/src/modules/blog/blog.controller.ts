@@ -57,13 +57,11 @@ export class BlogController {
       success: true,
       statusCode: 200,
       message: 'Blogs fetched successfully',
-      data: {
-        data: result.data.map((blog) => new BlogEntity(blog)),
-        total: result.total,
-        skip: result.skip,
-        take: result.take,
-        hasMore: result.hasMore,
-      },
+      data: result.data.map((blog) => new BlogEntity(blog)),
+      total: result.total,
+      skip: result.skip,
+      take: result.take,
+      hasMore: result.hasMore,
     };
   }
 
