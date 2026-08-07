@@ -240,6 +240,7 @@ export function ServiceForm({ service }: ServiceFormProps) {
           <FileUpload
             defaultImage={imageKey}
             onSuccess={(url) => setImageKey(url)}
+            folder="services"
           />
         </div>
 

@@ -20,6 +20,7 @@ export interface FileUploadProps {
   className?: string;
   returnType?: "url" | "key";
   accept?: string;
+  folder?: string;
 }
 
 export interface BlogPostPageProps {

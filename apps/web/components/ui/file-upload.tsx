@@ -5,14 +5,13 @@ import { Input } from "@/components/ui/input";
 import { uploadSingleImage } from "@/actions/upload-action";
 import type { FileUploadProps } from "@/types/components";
 
-const FIXED_FOLDER = "blogs";
-
 export default function FileUpload({
   onSuccess,
   defaultImage,
   className,
   returnType = "url",
   accept = "image/*",
+  folder = "uploads",
 }: FileUploadProps) {
   const [isUploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -37,7 +36,7 @@ export default function FileUpload({
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("folder", FIXED_FOLDER);
+    formData.append("folder", folder);
 
     setUploading(true);
 

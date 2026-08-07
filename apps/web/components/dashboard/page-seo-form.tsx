@@ -173,6 +173,7 @@ export function PageSeoForm({ pageSeo }: PageSeoFormProps) {
                   returnType="url"
                   defaultImage={values.ogImageKey}
                   onSuccess={(url) => setField("ogImageKey", url)}
+                  folder="page-seo"
                 />
               </div>
             </div>

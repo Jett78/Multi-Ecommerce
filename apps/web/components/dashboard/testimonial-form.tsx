@@ -108,6 +108,7 @@ export function TestimonialForm({ testimonial }: TestimonialFormProps) {
           defaultImage={values.avatar}
           onSuccess={(url) => setField("avatar", url)}
           returnType="url"
+          folder="testimonials"
         />
       </div>
 

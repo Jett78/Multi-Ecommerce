@@ -127,6 +127,7 @@ export function BlogForm({ blog }: BlogFormProps) {
           defaultImage={values.imageKey}
           onSuccess={(url) => setField("imageKey", url)}
           returnType="url"
+          folder="blogs"
         />
       </div>
 

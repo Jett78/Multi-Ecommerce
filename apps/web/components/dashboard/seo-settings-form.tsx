@@ -114,6 +114,7 @@ export function SeoSettingsForm({ seo }: SeoSettingsFormProps) {
                 defaultImage={values.ogImageKey}
                 onSuccess={(url) => setField("ogImageKey", url)}
                 returnType="url"
+                folder="seo"
               />
             </div>
           </div>

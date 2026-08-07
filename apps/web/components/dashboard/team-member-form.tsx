@@ -131,6 +131,7 @@ export function TeamMemberForm({ teamMember }: TeamMemberFormProps) {
           defaultImage={values.avatar}
           onSuccess={(url) => setField("avatar", url)}
           returnType="url"
+          folder="team"
         />
       </div>
 

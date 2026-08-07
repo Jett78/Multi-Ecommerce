@@ -315,6 +315,7 @@ export function CompanyProfileForm({ profile }: CompanyProfileFormProps) {
                   defaultImage={values.logoKey}
                   onSuccess={(url) => setField("logoKey", url)}
                   returnType="url"
+                  folder="company-profile"
                 />
               </div>
               <div className="space-y-3">
@@ -323,6 +324,7 @@ export function CompanyProfileForm({ profile }: CompanyProfileFormProps) {
                   defaultImage={values.footerLogoKey}
                   onSuccess={(url) => setField("footerLogoKey", url)}
                   returnType="url"
+                  folder="company-profile"
                 />
               </div>
               <div className="space-y-3">
@@ -331,6 +333,7 @@ export function CompanyProfileForm({ profile }: CompanyProfileFormProps) {
                   defaultImage={values.faviconKey}
                   onSuccess={(url) => setField("faviconKey", url)}
                   returnType="url"
+                  folder="company-profile"
                 />
               </div>
             </div>
