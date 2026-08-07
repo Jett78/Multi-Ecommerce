@@ -2,6 +2,7 @@
 
 import { FileText } from "lucide-react";
 import type { PageSeo } from "@/types/page-seo";
+import NoData from "@/components/no-data";
 import Link from "next/link";
 import { EditButton } from "@/components/dashboard/edit-button";
 import { DeleteButton } from "@/components/dashboard/delete-button";
@@ -17,11 +18,7 @@ export function PageSeoManager({ pages }: PageSeoManagerProps) {
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-6">
           {pages.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="h-12 w-12 text-foreground mx-auto mb-4" />
-              <p className="text-slate-500 mb-4">No page SEO entries yet</p>
-              <p className="text-xs text-slate-400">Click "Add Page SEO" to get started</p>
-            </div>
+            <NoData title="page SEO entries" />
           ) : (
             <div className="space-y-2">
               {pages.map((page) => (

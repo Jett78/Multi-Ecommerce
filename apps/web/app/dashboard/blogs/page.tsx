@@ -3,6 +3,7 @@
 import { useState } from "react";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 import { Search, Plus, Calendar, FileText } from "lucide-react";
+import NoData from "@/components/no-data";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
@@ -73,15 +74,7 @@ export default function BlogsPage() {
           ))}
         </div>
       ) : filteredBlogs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="size-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
-            <FileText className="size-8 text-slate-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-1">No blogs found</h3>
-          <p className="text-sm text-slate-500">
-            {debouncedSearch ? "Try a different search term." : "Get started by creating your first blog."}
-          </p>
-        </div>
+        <NoData title="blog posts" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredBlogs.map((blog) => (
