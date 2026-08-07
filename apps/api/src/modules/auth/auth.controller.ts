@@ -5,7 +5,7 @@ import type { UserSession } from '@thallesp/nestjs-better-auth';
 import { RequirePermissions } from '../../decorators/require-permissions.decorator';
 import { DB_CONNECTION } from '../../db/db.module';
 import { user as userTable, session as sessionTable, account as accountTable, verification as verificationTable } from '../../db/schema';
-import { desc, eq, and } from 'drizzle-orm';
+import { desc, eq, and, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { verifyOTP, sendOTP } from '../../lib/auth';
 import { hashPassword } from '../../lib/password';
@@ -124,14 +124,16 @@ export class AuthController {
     summary: 'Get all users',
     description: 'Returns a list of all registered users. Requires admin session.',
   })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Maximum number of users to return', example: 100 })
-  @ApiQuery({ name: 'offset', required: false, type: Number, description: 'Number of users to skip', example: 0 })
+  @ApiQuery({ name: 'skip', required: false, type: Number, description: 'Number of users to skip', example: 0 })
+  @ApiQuery({ name: 'take', required: false, type: Number, description: 'Number of users to return', example: 10 })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by name or email' })
   @ApiResponse({ status: 200, description: 'Users fetched successfully' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   async getUsers(
     @Session() session: UserSession,
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number,
+    @Query('skip') skip?: string,
+    @Query('take') take?: string,
+    @Query('search') search?: string,
   ) {
     if (!session?.user) {
       return {
@@ -141,18 +143,43 @@ export class AuthController {
       };
     }
 
-    const users = await this.db
-      .select()
-      .from(userTable)
-      .orderBy(desc(userTable.createdAt))
-      .limit(limit || 100)
-      .offset(offset || 0);
+    const skipNum = skip ? parseInt(skip, 10) : 0;
+    const takeNum = take ? parseInt(take, 10) : 10;
+
+    const conditions = [];
+    if (search) {
+      conditions.push(
+        sql`(${userTable.name} ILIKE ${`%${search}%`} OR ${userTable.email} ILIKE ${`%${search}%`})`
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [users, countResult] = await Promise.all([
+      this.db
+        .select()
+        .from(userTable)
+        .where(whereClause)
+        .orderBy(desc(userTable.createdAt))
+        .limit(takeNum)
+        .offset(skipNum),
+      this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(userTable)
+        .where(whereClause),
+    ]);
+
+    const total = Number(countResult[0]?.count || 0);
 
     return {
       success: true,
       statusCode: 200,
       message: 'Users fetched successfully',
       data: users,
+      total,
+      skip: skipNum,
+      take: takeNum,
+      hasMore: skipNum + takeNum < total,
     };
   }
 
