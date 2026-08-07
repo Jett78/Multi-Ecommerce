@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   turbopack: {
-    root: 'C:\\Users\\admin\\trustable',
+    root: '../..',
   },
   async rewrites() {
     return [
@@ -16,7 +16,7 @@ const nextConfig = {
       
       {
         protocol: "https",
-        hostname: "lawsagar.s3.ap-south-1.amazonaws.com",
+        hostname: "trustablecleaningservices.s3.ap-south-1.amazonaws.com",
         port: "",
       },
       {
