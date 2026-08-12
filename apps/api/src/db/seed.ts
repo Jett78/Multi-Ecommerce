@@ -174,6 +174,11 @@ async function seed() {
       { resource: 'navigation', action: 'edit', key: 'navigation.edit', description: 'Edit navigation items' },
       
       { resource: 'dashboard', action: 'view_stats', key: 'dashboard.view_stats', description: 'View dashboard statistics' },
+
+      { resource: 'category', action: 'read', key: 'category.read', description: 'View categories and subcategories' },
+      { resource: 'category', action: 'create', key: 'category.create', description: 'Create categories and subcategories' },
+      { resource: 'category', action: 'edit', key: 'category.edit', description: 'Edit categories and subcategories' },
+      { resource: 'category', action: 'delete', key: 'category.delete', description: 'Delete categories and subcategories' },
     ];
 
     for (const perm of permissionsData) {
@@ -213,6 +218,7 @@ async function seed() {
         'permission.read', 'permission.edit',
         'navigation.read', 'navigation.edit',
         'dashboard.view_stats',
+        'category.read', 'category.create', 'category.edit', 'category.delete',
       ]},
       { role: 'editor', permissions: [
         'blog.read', 'blog.create', 'blog.edit', 'blog.delete',
@@ -223,6 +229,7 @@ async function seed() {
         'brand.read', 'brand.create', 'brand.edit', 'brand.delete',
         'inquiry.read',
         'dashboard.view_stats',
+        'category.read', 'category.create', 'category.edit',
       ]},
       { role: 'manager', permissions: [
         'blog.read',
@@ -233,6 +240,7 @@ async function seed() {
         'brand.read',
         'inquiry.read',
         'dashboard.view_stats',
+        'category.read',
       ]},
     ];
 

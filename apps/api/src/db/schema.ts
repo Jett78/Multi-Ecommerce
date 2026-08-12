@@ -239,15 +239,18 @@ export const paymentSettings = pgTable('payment_settings', {
 });
 
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'completed', 'failed', 'refunded', 'expired', 'cancelled']);
+export const productStatusEnum = pgEnum('product_status', ['draft', 'active', 'archived']);
+export const inventoryTransactionTypeEnum = pgEnum('inventory_transaction_type', ['purchase', 'sale', 'return', 'adjustment', 'damage', 'restock']);
 
 export const orders = pgTable('orders', {
   id: uuid('id').defaultRandom().primaryKey(),
   orderId: varchar('order_id', { length: 255 }).notNull().unique(),
   pidx: varchar('pidx', { length: 255 }),
   userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
-  productName: varchar('product_name', { length: 255 }).notNull(),
-  productId: varchar('product_id', { length: 255 }).notNull(),
-  amount: integer('amount').notNull(),
+  subtotal: integer('subtotal').notNull(),
+  discountAmount: integer('discount_amount').default(0).notNull(),
+  taxAmount: integer('tax_amount').default(0).notNull(),
+  totalAmount: integer('total_amount').notNull(),
   currency: varchar('currency', { length: 10 }).default('NPR').notNull(),
   status: paymentStatusEnum('status').default('pending').notNull(),
   paymentMethod: varchar('payment_method', { length: 50 }),
@@ -255,6 +258,9 @@ export const orders = pgTable('orders', {
   customerName: varchar('customer_name', { length: 255 }),
   customerEmail: varchar('customer_email', { length: 255 }),
   customerPhone: varchar('customer_phone', { length: 50 }),
+  shippingAddress: text('shipping_address'),
+  billingAddress: text('billing_address'),
+  notes: text('notes'),
   metadata: text('metadata'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -411,4 +417,321 @@ export const brands = pgTable('brands', {
 }, (table) => ({
   sortOrderIdx: index('brands_sort_order_idx').on(table.sortOrder),
   isActiveIdx: index('brands_is_active_idx').on(table.isActive),
+}));
+
+export const categories = pgTable('categories', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 500 }).notNull().unique(),
+  imageKey: varchar('image_key', { length: 500 }),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  slugIdx: index('categories_slug_idx').on(table.slug),
+  sortOrderIdx: index('categories_sort_order_idx').on(table.sortOrder),
+}));
+
+export const subcategories = pgTable('subcategories', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 500 }).notNull().unique(),
+  imageKey: varchar('image_key', { length: 500 }),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  categoryId: uuid('category_id').notNull().references(() => categories.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  slugIdx: index('subcategories_slug_idx').on(table.slug),
+  categoryIdIdx: index('subcategories_category_id_idx').on(table.categoryId),
+  sortOrderIdx: index('subcategories_sort_order_idx').on(table.sortOrder),
+}));
+
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  subcategories: many(subcategories),
+}));
+
+export const subcategoriesRelations = relations(subcategories, ({ one }) => ({
+  category: one(categories, {
+    fields: [subcategories.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+// ============================================================
+// PRODUCTS & VARIANTS
+// ============================================================
+
+export const products = pgTable('products', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: varchar('name', { length: 500 }).notNull(),
+  slug: varchar('slug', { length: 500 }).notNull().unique(),
+  description: text('description'),
+  shortDescription: varchar('short_description', { length: 1000 }),
+  categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
+  subcategoryId: uuid('subcategory_id').references(() => subcategories.id, { onDelete: 'set null' }),
+  brandId: uuid('brand_id').references(() => brands.id, { onDelete: 'set null' }),
+  sku: varchar('sku', { length: 100 }).unique(),
+  status: productStatusEnum('status').default('draft').notNull(),
+  isFeatured: boolean('is_featured').default(false).notNull(),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  tags: text('tags').array(),
+  metaTitle: varchar('meta_title', { length: 255 }),
+  metaDescription: text('meta_description'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (table) => ({
+  slugIdx: index('products_slug_idx').on(table.slug),
+  categoryIdIdx: index('products_category_id_idx').on(table.categoryId),
+  subcategoryIdIdx: index('products_subcategory_id_idx').on(table.subcategoryId),
+  brandIdIdx: index('products_brand_id_idx').on(table.brandId),
+  statusIdx: index('products_status_idx').on(table.status),
+  isFeaturedIdx: index('products_is_featured_idx').on(table.isFeatured),
+  skuIdx: index('products_sku_idx').on(table.sku),
+  sortOrderIdx: index('products_sort_order_idx').on(table.sortOrder),
+}));
+
+export const productVariants = pgTable('product_variants', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  productId: uuid('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  sku: varchar('sku', { length: 100 }).notNull().unique(),
+  name: varchar('name', { length: 500 }),
+  price: integer('price').notNull(),
+  compareAtPrice: integer('compare_at_price'),
+  costPrice: integer('cost_price'),
+  stockQuantity: integer('stock_quantity').default(0).notNull(),
+  allowBackorder: boolean('allow_backorder').default(false).notNull(),
+  lowStockThreshold: integer('low_stock_threshold').default(5),
+  weight: integer('weight'),
+  barcode: varchar('barcode', { length: 100 }),
+  isActive: boolean('is_active').default(true).notNull(),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  productIdIdx: index('product_variants_product_id_idx').on(table.productId),
+  skuIdx: index('product_variants_sku_idx').on(table.sku),
+  barcodeIdx: index('product_variants_barcode_idx').on(table.barcode),
+  isActiveIdx: index('product_variants_is_active_idx').on(table.isActive),
+}));
+
+export const variantAttributes = pgTable('variant_attributes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  variantId: uuid('variant_id').notNull().references(() => productVariants.id, { onDelete: 'cascade' }),
+  attributeName: varchar('attribute_name', { length: 100 }).notNull(),
+  attributeValue: varchar('attribute_value', { length: 255 }).notNull(),
+  sortOrder: integer('sort_order').default(0).notNull(),
+}, (table) => ({
+  variantIdIdx: index('variant_attributes_variant_id_idx').on(table.variantId),
+  compoundIdx: index('variant_attributes_compound_idx').on(table.variantId, table.attributeName),
+}));
+
+export const productImages = pgTable('product_images', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }),
+  variantId: uuid('variant_id').references(() => productVariants.id, { onDelete: 'cascade' }),
+  imageKey: varchar('image_key', { length: 500 }).notNull(),
+  altText: varchar('alt_text', { length: 255 }),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  isPrimary: boolean('is_primary').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  productIdIdx: index('product_images_product_id_idx').on(table.productId),
+  variantIdIdx: index('product_images_variant_id_idx').on(table.variantId),
+  primaryIdx: index('product_images_primary_idx').on(table.productId, table.isPrimary),
+}));
+
+// ============================================================
+// REVIEWS
+// ============================================================
+
+export const productReviews = pgTable('product_reviews', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  productId: uuid('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  rating: integer('rating').notNull(),
+  title: varchar('title', { length: 255 }),
+  comment: text('comment'),
+  isVerifiedPurchase: boolean('is_verified_purchase').default(false).notNull(),
+  isApproved: boolean('is_approved').default(false).notNull(),
+  helpfulCount: integer('helpful_count').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  productIdIdx: index('product_reviews_product_id_idx').on(table.productId),
+  userIdIdx: index('product_reviews_user_id_idx').on(table.userId),
+  ratingIdx: index('product_reviews_rating_idx').on(table.rating),
+  isApprovedIdx: index('product_reviews_is_approved_idx').on(table.isApproved),
+}));
+
+// ============================================================
+// INVENTORY
+// ============================================================
+
+export const inventoryTransactions = pgTable('inventory_transactions', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  variantId: uuid('variant_id').notNull().references(() => productVariants.id, { onDelete: 'cascade' }),
+  type: inventoryTransactionTypeEnum('type').notNull(),
+  quantity: integer('quantity').notNull(),
+  quantityBefore: integer('quantity_before').notNull(),
+  quantityAfter: integer('quantity_after').notNull(),
+  reference: varchar('reference', { length: 255 }),
+  notes: text('notes'),
+  createdBy: text('created_by').references(() => user.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  variantIdIdx: index('inventory_transactions_variant_id_idx').on(table.variantId),
+  typeIdx: index('inventory_transactions_type_idx').on(table.type),
+  createdAtIdx: index('inventory_transactions_created_at_idx').on(table.createdAt),
+}));
+
+// ============================================================
+// CART
+// ============================================================
+
+export const carts = pgTable('carts', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  sessionId: varchar('session_id', { length: 255 }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('carts_user_id_idx').on(table.userId),
+  sessionIdIdx: index('carts_session_id_idx').on(table.sessionId),
+  expiresAtIdx: index('carts_expires_at_idx').on(table.expiresAt),
+}));
+
+export const cartItems = pgTable('cart_items', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  cartId: uuid('cart_id').notNull().references(() => carts.id, { onDelete: 'cascade' }),
+  variantId: uuid('variant_id').notNull().references(() => productVariants.id, { onDelete: 'cascade' }),
+  quantity: integer('quantity').notNull(),
+  priceAtAdd: integer('price_at_add').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  cartIdIdx: index('cart_items_cart_id_idx').on(table.cartId),
+  variantIdIdx: index('cart_items_variant_id_idx').on(table.variantId),
+}));
+
+// ============================================================
+// ORDER ITEMS
+// ============================================================
+
+export const orderItems = pgTable('order_items', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orderId: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  variantId: uuid('variant_id').references(() => productVariants.id, { onDelete: 'set null' }),
+  productName: varchar('product_name', { length: 500 }).notNull(),
+  variantName: varchar('variant_name', { length: 500 }),
+  sku: varchar('sku', { length: 100 }),
+  quantity: integer('quantity').notNull(),
+  unitPrice: integer('unit_price').notNull(),
+  subtotal: integer('subtotal').notNull(),
+  discountAmount: integer('discount_amount').default(0).notNull(),
+  taxAmount: integer('tax_amount').default(0).notNull(),
+  totalAmount: integer('total_amount').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  orderIdIdx: index('order_items_order_id_idx').on(table.orderId),
+  variantIdIdx: index('order_items_variant_id_idx').on(table.variantId),
+}));
+
+// ============================================================
+// RELATIONS
+// ============================================================
+
+export const productsRelations = relations(products, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [products.categoryId],
+    references: [categories.id],
+  }),
+  subcategory: one(subcategories, {
+    fields: [products.subcategoryId],
+    references: [subcategories.id],
+  }),
+  brand: one(brands, {
+    fields: [products.brandId],
+    references: [brands.id],
+  }),
+  variants: many(productVariants),
+  images: many(productImages),
+  reviews: many(productReviews),
+}));
+
+export const productVariantsRelations = relations(productVariants, ({ one, many }) => ({
+  product: one(products, {
+    fields: [productVariants.productId],
+    references: [products.id],
+  }),
+  attributes: many(variantAttributes),
+  images: many(productImages),
+  inventoryTransactions: many(inventoryTransactions),
+}));
+
+export const variantAttributesRelations = relations(variantAttributes, ({ one }) => ({
+  variant: one(productVariants, {
+    fields: [variantAttributes.variantId],
+    references: [productVariants.id],
+  }),
+}));
+
+export const productImagesRelations = relations(productImages, ({ one }) => ({
+  product: one(products, {
+    fields: [productImages.productId],
+    references: [products.id],
+  }),
+  variant: one(productVariants, {
+    fields: [productImages.variantId],
+    references: [productVariants.id],
+  }),
+}));
+
+export const productReviewsRelations = relations(productReviews, ({ one }) => ({
+  product: one(products, {
+    fields: [productReviews.productId],
+    references: [products.id],
+  }),
+}));
+
+export const inventoryTransactionsRelations = relations(inventoryTransactions, ({ one }) => ({
+  variant: one(productVariants, {
+    fields: [inventoryTransactions.variantId],
+    references: [productVariants.id],
+  }),
+}));
+
+export const cartsRelations = relations(carts, ({ one, many }) => ({
+  items: many(cartItems),
+}));
+
+export const cartItemsRelations = relations(cartItems, ({ one }) => ({
+  cart: one(carts, {
+    fields: [cartItems.cartId],
+    references: [carts.id],
+  }),
+  variant: one(productVariants, {
+    fields: [cartItems.variantId],
+    references: [productVariants.id],
+  }),
+}));
+
+export const ordersRelations = relations(orders, ({ many }) => ({
+  items: many(orderItems),
+}));
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderItems.orderId],
+    references: [orders.id],
+  }),
+  variant: one(productVariants, {
+    fields: [orderItems.variantId],
+    references: [productVariants.id],
+  }),
 }));

@@ -24,6 +24,7 @@ import { RedirectModule } from './modules/redirect/redirect.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { NavigationModule } from './modules/navigation/navigation.module';
 import { BrandModule } from './modules/brand/brand.module';
+import { CategoryModule } from './modules/category/category.module';
 import { PermissionGuard } from './guards/permission.guard';
 
 @Module({
@@ -49,6 +50,7 @@ import { PermissionGuard } from './guards/permission.guard';
     PermissionModule,
     NavigationModule,
     BrandModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [
