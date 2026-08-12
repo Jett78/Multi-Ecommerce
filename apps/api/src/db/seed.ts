@@ -179,6 +179,14 @@ async function seed() {
       { resource: 'category', action: 'create', key: 'category.create', description: 'Create categories and subcategories' },
       { resource: 'category', action: 'edit', key: 'category.edit', description: 'Edit categories and subcategories' },
       { resource: 'category', action: 'delete', key: 'category.delete', description: 'Delete categories and subcategories' },
+
+      { resource: 'product', action: 'read', key: 'product.read', description: 'View products' },
+      { resource: 'product', action: 'create', key: 'product.create', description: 'Create new products and variants' },
+      { resource: 'product', action: 'edit', key: 'product.edit', description: 'Edit existing products and variants' },
+      { resource: 'product', action: 'delete', key: 'product.delete', description: 'Delete products and variants' },
+      { resource: 'product', action: 'manage_inventory', key: 'product.manage_inventory', description: 'Manage product inventory and stock' },
+
+      { resource: 'review', action: 'moderate', key: 'review.moderate', description: 'Moderate and approve product reviews' },
     ];
 
     for (const perm of permissionsData) {
@@ -219,6 +227,8 @@ async function seed() {
         'navigation.read', 'navigation.edit',
         'dashboard.view_stats',
         'category.read', 'category.create', 'category.edit', 'category.delete',
+        'product.read', 'product.create', 'product.edit', 'product.delete', 'product.manage_inventory',
+        'review.moderate',
       ]},
       { role: 'editor', permissions: [
         'blog.read', 'blog.create', 'blog.edit', 'blog.delete',
@@ -230,6 +240,8 @@ async function seed() {
         'inquiry.read',
         'dashboard.view_stats',
         'category.read', 'category.create', 'category.edit',
+        'product.read', 'product.create', 'product.edit',
+        'review.moderate',
       ]},
       { role: 'manager', permissions: [
         'blog.read',
@@ -241,6 +253,7 @@ async function seed() {
         'inquiry.read',
         'dashboard.view_stats',
         'category.read',
+        'product.read',
       ]},
     ];
 

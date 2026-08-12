@@ -80,6 +80,7 @@ export const seoMetas = pgTable('seo_metas', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   blogId: uuid('blog_id').references(() => blogs.id, { onDelete: 'cascade' }),
   companyProfileId: uuid('company_profile_id').references(() => companyProfiles.id, { onDelete: 'cascade' }),
+  productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }),
 });
 
 export const blogsRelations = relations(blogs, ({ one }) => ({
@@ -95,6 +96,10 @@ export const seoMetasRelations = relations(seoMetas, ({ one }) => ({
   blog: one(blogs, {
     fields: [seoMetas.blogId],
     references: [blogs.id],
+  }),
+  product: one(products, {
+    fields: [seoMetas.productId],
+    references: [products.id],
   }),
 }));
 
@@ -478,8 +483,6 @@ export const products = pgTable('products', {
   isFeatured: boolean('is_featured').default(false).notNull(),
   sortOrder: integer('sort_order').default(0).notNull(),
   tags: text('tags').array(),
-  metaTitle: varchar('meta_title', { length: 255 }),
-  metaDescription: text('meta_description'),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -658,6 +661,10 @@ export const productsRelations = relations(products, ({ one, many }) => ({
   brand: one(brands, {
     fields: [products.brandId],
     references: [brands.id],
+  }),
+  seoMeta: one(seoMetas, {
+    fields: [products.id],
+    references: [seoMetas.productId],
   }),
   variants: many(productVariants),
   images: many(productImages),

@@ -49,9 +49,10 @@ export class KhaltiService {
       .values({
         orderId: purchaseOrderId,
         userId: userId || null,
-        productName: dto.productName,
-        productId: dto.productId,
-        amount: dto.amount,
+        subtotal: dto.amount,
+        discountAmount: 0,
+        taxAmount: 0,
+        totalAmount: dto.amount,
         status: 'pending',
         customerName: dto.customerInfo?.name,
         customerEmail: dto.customerInfo?.email,

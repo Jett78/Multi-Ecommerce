@@ -31,6 +31,12 @@ async function bootstrap() {
 
 This API uses **Better Auth** for authentication with session-based cookies.
 
+### How to Authenticate
+
+1. **Sign up** or **Sign in** using the auth endpoints below
+2. The session cookie (\`better-auth.session_token\`) is set automatically
+3. Click the **Authorize** button above and enter your session token
+
 ### Auth Endpoints (Better Auth)
 
 | Method | Endpoint | Description |
@@ -40,15 +46,6 @@ This API uses **Better Auth** for authentication with session-based cookies.
 | POST | \`/api/auth/sign-out\` | Logout (invalidate session) |
 | GET | \`/api/auth/get-session\` | Get current session |
 | GET | \`/api/auth/ok\` | Health check |
-
-### Sign Up Request
-\`\`\`json
-{
-  "email": "user@example.com",
-  "password": "password123",
-  "name": "John Doe"
-}
-\`\`\`
 
 ### Sign In Request
 \`\`\`json
@@ -64,10 +61,7 @@ This API uses **Better Auth** for authentication with session-based cookies.
   "user": {
     "id": "uuid",
     "name": "John Doe",
-    "email": "user@example.com",
-    "emailVerified": false,
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-01T00:00:00.000Z"
+    "email": "user@example.com"
   },
   "session": {
     "id": "session-id",
@@ -78,9 +72,11 @@ This API uses **Better Auth** for authentication with session-based cookies.
 }
 \`\`\`
 
-**Note:** Session cookie is set automatically on sign-in/sign-up. Use the cookie for authenticated requests.
+**Note:** After sign-in, copy the session token and paste it in the Authorize dialog.
     `)
     .setVersion('1.0')
+    .addCookieAuth('better-auth.session_token')
+    .addSecurityRequirements('cookie')
     .addTag('auth', 'Authentication endpoints (profile)')
     .addTag('blogs', 'Blog management')
     .addTag('upload', 'File upload to S3')
@@ -89,6 +85,9 @@ This API uses **Better Auth** for authentication with session-based cookies.
     .addTag('inquiries', 'Inquiry management')
     .addTag('seo', 'Global SEO settings (meta tags, GTM, Search Console)')
     .addTag('page-seo', 'Per-page SEO settings')
+    .addTag('products', 'Product management')
+    .addTag('categories', 'Category & subcategory management')
+    .addTag('cart', 'Shopping cart')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

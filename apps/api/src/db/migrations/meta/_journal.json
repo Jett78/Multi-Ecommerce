@@ -99,6 +99,13 @@
       "when": 1786516718377,
       "tag": "0013_gifted_sauron",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1786600000000,
+      "tag": "0014_add_products_tables",
+      "breakpoints": true
     }
   ]
 }
