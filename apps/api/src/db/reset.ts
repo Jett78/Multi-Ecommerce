@@ -14,7 +14,6 @@ const tables = [
   'messages',
   'faqs',
   'gallery',
-  'services',
   'team_members',
   'testimonials',
   'page_seo',

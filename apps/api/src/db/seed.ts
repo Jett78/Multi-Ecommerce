@@ -110,11 +110,6 @@ async function seed() {
       { resource: 'blog', action: 'edit', key: 'blog.edit', description: 'Edit existing blogs' },
       { resource: 'blog', action: 'delete', key: 'blog.delete', description: 'Delete blogs' },
       
-      { resource: 'service', action: 'read', key: 'service.read', description: 'View services' },
-      { resource: 'service', action: 'create', key: 'service.create', description: 'Create new services' },
-      { resource: 'service', action: 'edit', key: 'service.edit', description: 'Edit existing services' },
-      { resource: 'service', action: 'delete', key: 'service.delete', description: 'Delete services' },
-      
       { resource: 'testimonial', action: 'read', key: 'testimonial.read', description: 'View testimonials' },
       { resource: 'testimonial', action: 'create', key: 'testimonial.create', description: 'Create new testimonials' },
       { resource: 'testimonial', action: 'edit', key: 'testimonial.edit', description: 'Edit existing testimonials' },
@@ -210,7 +205,6 @@ async function seed() {
     const rolePermissionsData = [
       { role: 'admin', permissions: [
         'blog.read', 'blog.create', 'blog.edit', 'blog.delete',
-        'service.read', 'service.create', 'service.edit', 'service.delete',
         'testimonial.read', 'testimonial.create', 'testimonial.edit', 'testimonial.delete',
         'team.read', 'team.create', 'team.edit', 'team.delete',
         'faq.read', 'faq.create', 'faq.edit', 'faq.delete',
@@ -232,7 +226,6 @@ async function seed() {
       ]},
       { role: 'editor', permissions: [
         'blog.read', 'blog.create', 'blog.edit', 'blog.delete',
-        'service.read', 'service.create', 'service.edit', 'service.delete',
         'testimonial.read', 'testimonial.create', 'testimonial.edit', 'testimonial.delete',
         'team.read', 'team.create', 'team.edit', 'team.delete',
         'faq.read', 'faq.create', 'faq.edit', 'faq.delete',
@@ -245,7 +238,6 @@ async function seed() {
       ]},
       { role: 'manager', permissions: [
         'blog.read',
-        'service.read',
         'testimonial.read',
         'team.read',
         'faq.read',
@@ -279,7 +271,6 @@ async function seed() {
       await db.insert(schema.navigationItems).values([
         { key: 'home', label: 'Home', path: '/', sortOrder: 1, isActive: true },
         { key: 'about', label: 'About', path: '/about', sortOrder: 2, isActive: true },
-        { key: 'services', label: 'Services', path: '/services', sortOrder: 3, isActive: true },
         { key: 'blog', label: 'Blog', path: '/blog', sortOrder: 4, isActive: true },
         { key: 'contact', label: 'Contact', path: '/contact', sortOrder: 5, isActive: true },
       ]);

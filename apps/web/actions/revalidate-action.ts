@@ -32,15 +32,6 @@ export async function revalidateTeamMember(slug: string) {
   revalidateTag(`team-member-${slug}`, "max");
 }
 
-export async function revalidateServices() {
-  revalidateTag("services", "max");
-}
-
-export async function revalidateService(slug: string) {
-  revalidateTag("services", "max");
-  revalidateTag(`service-${slug}`, "max");
-}
-
 export async function revalidateRedirects() {
   revalidateTag("redirects", "max");
 }
@@ -51,4 +42,26 @@ export async function revalidateNavigation() {
 
 export async function revalidateBrands() {
   revalidateTag("brands", "max");
+}
+
+export async function revalidateCategories() {
+  revalidateTag("categories", "max");
+}
+
+export async function revalidateCategory(slug: string) {
+  revalidateTag("categories", "max");
+  revalidateTag(`category-${slug}`, "max");
+}
+
+export async function revalidateSubcategories() {
+  revalidateTag("subcategories", "max");
+}
+
+export async function revalidateProducts() {
+  revalidateTag("products", "max");
+}
+
+export async function revalidateProduct(slug: string) {
+  revalidateTag("products", "max");
+  revalidateTag(`product-${slug}`, "max");
 }
