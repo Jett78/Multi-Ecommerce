@@ -90,7 +90,13 @@ export class CreateVariantDto {
   @Min(0)
   sortOrder?: number;
 
-  @ApiPropertyOptional({ type: [CreateVariantAttributeDto] })
+  @ApiPropertyOptional({
+    type: [CreateVariantAttributeDto],
+    example: [
+      { attributeName: 'Color', attributeValue: 'Blue', sortOrder: 0 },
+      { attributeName: 'Storage', attributeValue: '128GB', sortOrder: 1 },
+    ],
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

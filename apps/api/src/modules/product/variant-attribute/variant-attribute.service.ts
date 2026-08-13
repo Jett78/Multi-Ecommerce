@@ -13,6 +13,10 @@ export class VariantAttributeService {
     return this.repository.create(dto);
   }
 
+  async findAll() {
+    return this.repository.findAll();
+  }
+
   async findById(id: string) {
     const attribute = await this.repository.findById(id);
     if (!attribute) {

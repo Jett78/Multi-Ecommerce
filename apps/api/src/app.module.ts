@@ -19,7 +19,6 @@ import { PaymentSettingsModule } from './modules/payment-settings/payment-settin
 import { KhaltiModule } from './modules/khalti/khalti.module';
 import { DomainModule } from './modules/domain/domain.module';
 import { TeamModule } from './modules/team/team.module';
-import { ServiceModule } from './modules/service/service.module';
 import { RedirectModule } from './modules/redirect/redirect.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { NavigationModule } from './modules/navigation/navigation.module';
@@ -47,7 +46,6 @@ import { PermissionGuard } from './guards/permission.guard';
     KhaltiModule,
     DomainModule,
     TeamModule,
-    ServiceModule,
     RedirectModule,
     PermissionModule,
     NavigationModule,

@@ -1,6 +1,7 @@
 import { IsString, IsOptional, IsBoolean, IsNumber, IsEnum, IsArray, MaxLength, MinLength, Min, ValidateNested } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { CreateVariantDto } from './create-variant.dto';
 
 export class CreateProductSeoMetaDto {
   @ApiPropertyOptional({ example: 'iPhone 15 Pro - Best Price' })
@@ -170,4 +171,45 @@ export class CreateProductDto {
   @ValidateNested()
   @Type(() => CreateProductSeoMetaDto)
   seoMeta?: CreateProductSeoMetaDto;
+
+  @ApiPropertyOptional({ type: [String], example: ['products/iphone-front.jpg'] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  images?: string[];
+
+  @ApiPropertyOptional({
+    type: [CreateVariantDto],
+    description: 'Explicit variants. If provided, these are used instead of auto-creating a default variant from base fields.',
+    example: [
+      {
+        sku: 'APL-IP15P-128-BLU',
+        name: '128GB - Blue',
+        price: 99999,
+        compareAtPrice: 109999,
+        costPrice: 50000,
+        stockQuantity: 25,
+        weight: 200,
+        attributes: [
+          { attributeName: 'Color', attributeValue: 'Blue', sortOrder: 0 },
+          { attributeName: 'Storage', attributeValue: '128GB', sortOrder: 1 },
+        ],
+      },
+      {
+        sku: 'APL-IP15P-256-BLU',
+        name: '256GB - Blue',
+        price: 109999,
+        stockQuantity: 15,
+        attributes: [
+          { attributeName: 'Color', attributeValue: 'Blue', sortOrder: 0 },
+          { attributeName: 'Storage', attributeValue: '256GB', sortOrder: 1 },
+        ],
+      },
+    ],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateVariantDto)
+  variants?: CreateVariantDto[];
 }

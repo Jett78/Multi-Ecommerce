@@ -47,6 +47,16 @@ export interface TeamMemberFormProps {
   teamMember?: import("./team").TeamMember;
 }
 
-export interface ServiceFormProps {
-  service?: import("./service").Service;
+export interface CategoryFormProps {
+  category?: import("./category").Category;
 }
+
+export interface SubcategoryFormProps {
+  subcategory?: import("./category").Subcategory;
+}
+
+export interface ProductFormProps {
+  product?: import("./product").Product;
+}
+
+

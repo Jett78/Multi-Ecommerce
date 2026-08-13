@@ -1,0 +1,20 @@
+"use server";
+
+import { apiClient } from "@/lib/api-client";
+import { API_ROUTES } from "@/config/api-routes";
+import type { Product } from "@/types/product";
+
+export async function getProductById(id: string): Promise<Product | null> {
+  try {
+    const response = await apiClient<{ data: Product }>(
+      `${API_ROUTES.PRODUCT}/${id}`,
+      { next: { tags: [`product-${id}`] } }
+    );
+
+    if (!response || !response.data) return null;
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    return null;
+  }
+}

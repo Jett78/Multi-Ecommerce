@@ -9,6 +9,8 @@ import {
   Users,
   Settings,
   Plus,
+  Package,
+  Tags,
 } from "lucide-react";
 
 const actions = [
@@ -31,10 +33,22 @@ const actions = [
     color: "text-amber-600 bg-amber-50",
   },
   {
+    label: "New Product",
+    href: "/dashboard/products/new",
+    icon: Package,
+    color: "text-emerald-600 bg-emerald-50",
+  },
+  {
+    label: "New Category",
+    href: "/dashboard/categories/new",
+    icon: Tags,
+    color: "text-indigo-600 bg-indigo-50",
+  },
+  {
     label: "SEO Settings",
     href: "/dashboard/seo",
     icon: Globe,
-    color: "text-emerald-600 bg-emerald-50",
+    color: "text-teal-600 bg-teal-50",
   },
   {
     label: "Manage Users",

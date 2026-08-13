@@ -20,10 +20,12 @@ import {
   CreditCard,
   Globe,
   UsersRound,
-  Briefcase,
   ArrowRightLeft,
   Shield,
   Menu,
+  Package,
+  Tags,
+  Boxes,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth-client";
@@ -64,18 +66,27 @@ const navigation: NavItem[] = [
   {
     name: "Content",
     icon: FileText,
-    permissions: ["blog.read", "testimonial.read", "team.read", "service.read", "faq.read", "brand.read"],
+    permissions: ["blog.read", "testimonial.read", "team.read", "faq.read", "brand.read"],
     children: [
       { name: "Blogs", href: "/dashboard/blogs", icon: FileText, permission: "blog.read" },
       { name: "Testimonials", href: "/dashboard/testimonials", icon: Star, permission: "testimonial.read" },
       { name: "Team", href: "/dashboard/team", icon: UsersRound, permission: "team.read" },
-      { name: "Services", href: "/dashboard/services", icon: Briefcase, permission: "service.read" },
       { name: "FAQs", href: "/dashboard/faqs", icon: HelpCircle, permission: "faq.read" },
       { name: "Brands", href: "/dashboard/brands", icon: Star, permission: "brand.read" },
     ],
   },
   { name: "Inquiries", href: "/dashboard/inquiries", icon: MessageSquare, permission: "inquiry.read" },
   { name: "Navigation", href: "/dashboard/navigation", icon: Menu, permission: "navigation.read" },
+  {
+    name: "Ecommerce",
+    icon: Package,
+    permissions: ["category.read", "product.read"],
+    children: [
+      { name: "Categories", href: "/dashboard/categories", icon: Tags, permission: "category.read" },
+      { name: "Subcategories", href: "/dashboard/subcategories", icon: Tags, permission: "category.read" },
+      { name: "Products", href: "/dashboard/products", icon: Package, permission: "product.read" },
+    ],
+  },
   { name: "Users", href: "/dashboard/users", icon: Users, permission: "user.read" },
   { name: "Role Permissions", href: "/dashboard/role-permissions", icon: Shield },
   {

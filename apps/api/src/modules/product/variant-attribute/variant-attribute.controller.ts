@@ -40,6 +40,20 @@ export class VariantAttributeController {
     };
   }
 
+  @AllowAnonymous()
+  @Get()
+  @ApiOperation({ summary: 'Get all variant attributes' })
+  @ApiResponse({ status: 200, type: [VariantAttributeEntity] })
+  async findAll() {
+    const attributes = await this.service.findAll();
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Variant attributes fetched successfully',
+      data: attributes.map((attr) => new VariantAttributeEntity(attr)),
+    };
+  }
+
   @Get(':id')
   @AllowAnonymous()
   @ApiOperation({ summary: 'Get variant attribute by ID' })

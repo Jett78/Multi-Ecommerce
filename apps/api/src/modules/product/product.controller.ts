@@ -18,6 +18,7 @@ import {
   ApiParam,
   ApiBearerAuth,
   ApiCookieAuth,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
 import { RequirePermissions } from '../../decorators/require-permissions.decorator';
@@ -44,6 +45,88 @@ export class ProductController {
   @RequirePermissions('product.create')
   @ApiOperation({ summary: 'Create a new product' })
   @ApiResponse({ status: 201, description: 'Product created successfully', type: ProductEntity })
+  @ApiBody({
+    type: CreateProductDto,
+    examples: {
+      withVariants: {
+        summary: 'Create product with explicit variants',
+        description: 'Product with multiple variants (e.g. different sizes/colors). Each variant has its own SKU, price, stock, and attributes.',
+        value: {
+          name: 'iPhone 15 Pro',
+          slug: 'iphone-15-pro',
+          description: 'Latest iPhone with A17 Pro chip',
+          shortDescription: 'Advanced smartphone from Apple',
+          categoryId: 'string',
+          brandId: 'string',
+          sku: 'APL-IP15P',
+          status: 'draft',
+          isFeatured: false,
+          isActive: true,
+          tags: ['smartphone', 'apple', '5g'],
+          variants: [
+            {
+              sku: 'APL-IP15P-128-BLU',
+              name: '128GB - Blue',
+              price: 99999,
+              compareAtPrice: 109999,
+              costPrice: 50000,
+              stockQuantity: 25,
+              weight: 200,
+              attributes: [
+                { attributeName: 'Color', attributeValue: 'Blue', sortOrder: 0 },
+                { attributeName: 'Storage', attributeValue: '128GB', sortOrder: 1 },
+              ],
+            },
+            {
+              sku: 'APL-IP15P-256-BLU',
+              name: '256GB - Blue',
+              price: 109999,
+              stockQuantity: 15,
+              attributes: [
+                { attributeName: 'Color', attributeValue: 'Blue', sortOrder: 0 },
+                { attributeName: 'Storage', attributeValue: '256GB', sortOrder: 1 },
+              ],
+            },
+          ],
+          seoMeta: {
+            metaTitle: 'iPhone 15 Pro - Best Price',
+            metaDescription: 'Buy iPhone 15 Pro with best price and free shipping',
+            canonicalUrl: 'https://example.com/products/iphone-15-pro',
+            metaRobots: 'index, follow',
+            ogTitle: 'iPhone 15 Pro - Share',
+            ogDescription: 'Check out the new iPhone 15 Pro',
+            ogImageKey: 'products/og-image.jpg',
+          },
+          images: ['products/iphone-front.jpg'],
+        },
+      },
+      withoutVariants: {
+        summary: 'Create simple product (auto-creates default variant)',
+        description: 'Product without explicit variants. A default variant is auto-created from the base price/stock fields.',
+        value: {
+          name: 'iPhone 15 Pro',
+          slug: 'iphone-15-pro',
+          description: 'Latest iPhone with A17 Pro chip',
+          shortDescription: 'Advanced smartphone from Apple',
+          sku: 'APL-IP15P-128',
+          status: 'draft',
+          isFeatured: false,
+          isActive: true,
+          tags: ['smartphone', 'apple', '5g'],
+          price: 99999,
+          compareAtPrice: 109999,
+          costPrice: 50000,
+          stockQuantity: 0,
+          weight: 200,
+          seoMeta: {
+            metaTitle: 'iPhone 15 Pro - Best Price',
+            metaDescription: 'Buy iPhone 15 Pro with best price and free shipping',
+          },
+          images: ['products/iphone-front.jpg'],
+        },
+      },
+    },
+  })
   async create(@Body() dto: CreateProductDto) {
     const product = await this.productService.createProduct(dto);
     return {
@@ -68,6 +151,19 @@ export class ProductController {
       skip: result.skip,
       take: result.take,
       hasMore: result.hasMore,
+    };
+  }
+
+  @AllowAnonymous()
+  @Get('variants')
+  @ApiOperation({ summary: 'Get all product variants' })
+  async listAllVariants() {
+    const variants = await this.productService.findAllVariants();
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Variants fetched successfully',
+      data: variants.map((v) => new VariantEntity(v)),
     };
   }
 
@@ -153,6 +249,34 @@ export class ProductController {
   @RequirePermissions('product.create')
   @ApiOperation({ summary: 'Add a variant to a product' })
   @ApiParam({ name: 'id', description: 'Product UUID' })
+  @ApiBody({
+    type: CreateVariantDto,
+    examples: {
+      variant: {
+        summary: 'Create a product variant',
+        description:
+          'Add a variant (e.g. a 128GB Blue phone) to a product. Pass the product id in the URL path and the variant details in the body.',
+        value: {
+          sku: 'APL-IP15P-128-BLU',
+          name: '128GB - Blue',
+          price: 99999,
+          compareAtPrice: 109999,
+          costPrice: 50000,
+          stockQuantity: 25,
+          allowBackorder: false,
+          lowStockThreshold: 5,
+          weight: 200,
+          barcode: '1234567890123',
+          isActive: true,
+          sortOrder: 0,
+          attributes: [
+            { attributeName: 'Color', attributeValue: 'Blue', sortOrder: 0 },
+            { attributeName: 'Storage', attributeValue: '128GB', sortOrder: 1 },
+          ],
+        },
+      },
+    },
+  })
   async createVariant(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateVariantDto,

@@ -39,6 +39,18 @@ export class ProductRepository {
       .where(eq(schema.productVariants.productId, id))
       .orderBy(schema.productVariants.sortOrder);
 
+    // Fetch attributes for each variant
+    const variantsWithAttributes = await Promise.all(
+      variants.map(async (variant) => {
+        const attributes = await this.db
+          .select()
+          .from(schema.variantAttributes)
+          .where(eq(schema.variantAttributes.variantId, variant.id))
+          .orderBy(schema.variantAttributes.sortOrder);
+        return { ...variant, attributes };
+      })
+    );
+
     const images = await this.db
       .select()
       .from(schema.productImages)
@@ -51,7 +63,7 @@ export class ProductRepository {
       subcategory: result.subcategories,
       brand: result.brands,
       seoMeta: result.seo_metas,
-      variants,
+      variants: variantsWithAttributes,
       images,
     };
   }
@@ -222,6 +234,31 @@ export class ProductRepository {
       .returning();
 
     return product;
+  }
+
+  async findAllVariants() {
+    return this.db
+      .select()
+      .from(schema.productVariants)
+      .orderBy(schema.productVariants.productId, schema.productVariants.sortOrder);
+  }
+
+  async createProductImages(productId: string, imageKeys: string[]) {
+    if (!imageKeys.length) return [];
+    const rows = imageKeys.map((imageKey, index) => ({
+      productId,
+      imageKey,
+      sortOrder: index,
+      isPrimary: index === 0,
+    }));
+    return this.db.insert(schema.productImages).values(rows).returning();
+  }
+
+  async deleteProductImages(productId: string) {
+    return this.db
+      .delete(schema.productImages)
+      .where(eq(schema.productImages.productId, productId))
+      .returning();
   }
 
   async updateSeoMeta(productId: string, data: Partial<typeof schema.seoMetas.$inferInsert>) {

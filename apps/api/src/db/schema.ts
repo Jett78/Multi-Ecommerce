@@ -163,26 +163,6 @@ export const teamMembers = pgTable('team_members', {
   sortOrderIdx: index('team_members_sort_order_idx').on(table.sortOrder),
 }));
 
-export const services = pgTable('services', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  name: varchar('name', { length: 255 }).notNull(),
-  slug: varchar('slug', { length: 500 }).notNull().unique(),
-  imageKey: varchar('image_key', { length: 500 }),
-  gallery: text('gallery').array(),
-  shortDescription: varchar('short_description', { length: 500 }),
-  description: text('description'),
-  price: integer('price'),
-  offerPrice: integer('offer_price'),
-  features: text('features').array(),
-  isActive: boolean('is_active').default(true).notNull(),
-  sortOrder: integer('sort_order').default(0).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
-}, (table) => ({
-  slugIdx: index('services_slug_idx').on(table.slug),
-  sortOrderIdx: index('services_sort_order_idx').on(table.sortOrder),
-}));
-
 export const galleryCategories = pgEnum('gallery_category', [
   'portfolio',
   'team',
@@ -484,6 +464,15 @@ export const products = pgTable('products', {
   sortOrder: integer('sort_order').default(0).notNull(),
   tags: text('tags').array(),
   isActive: boolean('is_active').default(true).notNull(),
+  // Variant fields — used directly when product has no variants.
+  price: integer('price').default(0),
+  compareAtPrice: integer('compare_at_price'),
+  costPrice: integer('cost_price'),
+  stockQuantity: integer('stock_quantity').default(0),
+  allowBackorder: boolean('allow_backorder').default(false),
+  lowStockThreshold: integer('low_stock_threshold').default(5),
+  weight: integer('weight'),
+  barcode: varchar('barcode', { length: 100 }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),

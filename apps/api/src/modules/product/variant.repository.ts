@@ -99,6 +99,12 @@ export class VariantRepository {
     return variant;
   }
 
+  async deleteVariantsByProductId(productId: string) {
+    await this.db
+      .delete(schema.productVariants)
+      .where(eq(schema.productVariants.productId, productId));
+  }
+
   async deleteAllAttributesByVariantId(variantId: string) {
     await this.db
       .delete(schema.variantAttributes)

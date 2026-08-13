@@ -19,11 +19,13 @@ export class CategoryService {
         throw new ConflictException(`Category with slug "${dto.slug}" already exists`);
       }
 
+      const sortOrder = dto.sortOrder ?? (await this.repository.getMaxSortOrder()) + 1;
+
       const category = await this.repository.createCategory({
         name: dto.name,
         slug: dto.slug,
         imageKey: dto.imageKey,
-        sortOrder: dto.sortOrder ?? 0,
+        sortOrder,
         isActive: dto.isActive ?? true,
       });
 
@@ -140,11 +142,14 @@ export class CategoryService {
         throw new ConflictException(`Subcategory with slug "${dto.slug}" already exists`);
       }
 
+      const sortOrder =
+        dto.sortOrder ?? (await this.repository.getMaxSubcategorySortOrder()) + 1;
+
       const subcategory = await this.repository.createSubcategory({
         name: dto.name,
         slug: dto.slug,
         imageKey: dto.imageKey,
-        sortOrder: dto.sortOrder ?? 0,
+        sortOrder,
         isActive: dto.isActive ?? true,
         categoryId: dto.categoryId,
       });

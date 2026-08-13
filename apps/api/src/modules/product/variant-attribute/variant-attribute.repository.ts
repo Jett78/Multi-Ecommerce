@@ -13,6 +13,13 @@ export class VariantAttributeRepository {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
+  async findAll() {
+    return this.db
+      .select()
+      .from(schema.variantAttributes)
+      .orderBy(schema.variantAttributes.variantId, schema.variantAttributes.sortOrder);
+  }
+
   async create(dto: CreateVariantAttributeDto) {
     const [attribute] = await this.db
       .insert(schema.variantAttributes)

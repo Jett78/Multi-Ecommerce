@@ -46,6 +46,30 @@ export class ProductEntity {
   @ApiProperty()
   isActive: boolean;
 
+  @ApiPropertyOptional()
+  price?: number;
+
+  @ApiPropertyOptional()
+  compareAtPrice?: number;
+
+  @ApiPropertyOptional()
+  costPrice?: number;
+
+  @ApiPropertyOptional()
+  stockQuantity?: number;
+
+  @ApiPropertyOptional()
+  allowBackorder?: boolean;
+
+  @ApiPropertyOptional()
+  lowStockThreshold?: number;
+
+  @ApiPropertyOptional()
+  weight?: number;
+
+  @ApiPropertyOptional()
+  barcode?: string;
+
   @ApiProperty()
   createdAt: Date;
 
@@ -85,6 +109,14 @@ export class ProductEntity {
     this.sortOrder = partial.sortOrder;
     this.tags = partial.tags ?? undefined;
     this.isActive = partial.isActive;
+    this.price = partial.price ?? undefined;
+    this.compareAtPrice = partial.compareAtPrice ?? undefined;
+    this.costPrice = partial.costPrice ?? undefined;
+    this.stockQuantity = partial.stockQuantity ?? undefined;
+    this.allowBackorder = partial.allowBackorder ?? undefined;
+    this.lowStockThreshold = partial.lowStockThreshold ?? undefined;
+    this.weight = partial.weight ?? undefined;
+    this.barcode = partial.barcode ?? undefined;
     this.createdAt = partial.createdAt;
     this.updatedAt = partial.updatedAt;
 

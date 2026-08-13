@@ -11,7 +11,6 @@ import {
   Search,
   ChevronDown,
   FileText,
-  Briefcase,
   Star,
   UsersRound,
   HelpCircle,
@@ -49,7 +48,6 @@ interface RolePermissionsMap {
 
 const resourceIcons: Record<string, React.ReactNode> = {
   blog: <FileText className="h-4 w-4" />,
-  service: <Briefcase className="h-4 w-4" />,
   testimonial: <Star className="h-4 w-4" />,
   team: <UsersRound className="h-4 w-4" />,
   faq: <HelpCircle className="h-4 w-4" />,
@@ -66,7 +64,6 @@ const resourceIcons: Record<string, React.ReactNode> = {
 
 const resourceColors: Record<string, { bg: string; text: string; border: string }> = {
   blog: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200" },
-  service: { bg: "bg-purple-50", text: "text-purple-600", border: "border-purple-200" },
   testimonial: { bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-200" },
   team: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200" },
   faq: { bg: "bg-cyan-50", text: "text-cyan-600", border: "border-cyan-200" },

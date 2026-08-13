@@ -69,6 +69,22 @@ export class CategoryRepository {
     };
   }
 
+  async getMaxSortOrder() {
+    const [result] = await this.db
+      .select({ max: sql<number>`coalesce(max(${schema.categories.sortOrder}), 0)` })
+      .from(schema.categories);
+
+    return Number(result?.max ?? 0);
+  }
+
+  async getMaxSubcategorySortOrder() {
+    const [result] = await this.db
+      .select({ max: sql<number>`coalesce(max(${schema.subcategories.sortOrder}), 0)` })
+      .from(schema.subcategories);
+
+    return Number(result?.max ?? 0);
+  }
+
   async findAllCategories(params?: {
     skip?: number;
     take?: number;

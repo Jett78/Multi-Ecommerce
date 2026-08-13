@@ -7,7 +7,6 @@ import { API_ROUTES } from "@/config/api-routes";
 
 const routePermissions: Record<string, string[]> = {
   "/dashboard/blogs": ["blog.read", "blog.create", "blog.edit", "blog.delete"],
-  "/dashboard/services": ["service.read", "service.create", "service.edit", "service.delete"],
   "/dashboard/testimonials": ["testimonial.read", "testimonial.create", "testimonial.edit", "testimonial.delete"],
   "/dashboard/team": ["team.read", "team.create", "team.edit", "team.delete"],
   "/dashboard/faqs": ["faq.read", "faq.create", "faq.edit", "faq.delete"],
@@ -20,6 +19,9 @@ const routePermissions: Record<string, string[]> = {
   "/dashboard/payment-settings": ["payment_settings.read", "payment_settings.edit"],
   "/dashboard/company-profile": ["company_profile.read", "company_profile.edit"],
   "/dashboard/domains": ["domain.read", "domain.create", "domain.edit", "domain.delete"],
+  "/dashboard/categories": ["category.read", "category.create", "category.edit", "category.delete"],
+  "/dashboard/subcategories": ["category.read", "category.create", "category.edit", "category.delete"],
+  "/dashboard/products": ["product.read", "product.create", "product.edit", "product.delete"],
 };
 
 function getRequiredPermissions(pathname: string): string[] | null {

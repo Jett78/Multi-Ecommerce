@@ -16,6 +16,7 @@ interface FormFieldProps<
   placeholder?: string;
   icon?: LucideIcon;
   suffix?: React.ReactNode;
+  hint?: string;
 }
 
 function FormField<
@@ -29,6 +30,7 @@ function FormField<
   placeholder,
   icon: Icon,
   suffix,
+  hint,
   className,
   ...props
 }: FormFieldProps<T>) {
@@ -80,6 +82,7 @@ function FormField<
         </div>
       )}
       {errors && <p className="text-xs font-medium text-rose-500">{errors}</p>}
+      {hint && !errors && <p className="text-xs text-slate-400">{hint}</p>}
     </div>
   );
 }

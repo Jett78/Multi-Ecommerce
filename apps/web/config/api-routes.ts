@@ -17,9 +17,12 @@ export const API_ROUTES = {
   KHALTI_ORDER: `${API_BASE_URL}/khalti/order`,
   DOMAIN: `${API_BASE_URL}/domains`,
   TEAM: `${API_BASE_URL}/team-members`,
-  SERVICE: `${API_BASE_URL}/services`,
   REDIRECT: `${API_BASE_URL}/redirects`,
   PERMISSION: `${API_BASE_URL}/permissions`,
   NAVIGATION: `${API_BASE_URL}/navigation`,
   BRAND: `${API_BASE_URL}/brands`,
+  CATEGORY: `${API_BASE_URL}/categories`,
+  SUBCATEGORY: `${API_BASE_URL}/subcategories`,
+  PRODUCT: `${API_BASE_URL}/products`,
+  PRODUCT_VARIANT: `${API_BASE_URL}/products`,
 } as const;

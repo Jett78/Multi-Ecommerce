@@ -49,30 +49,7 @@ export class ProductService {
         sortOrder: dto.sortOrder ?? 0,
         tags: dto.tags,
         isActive: dto.isActive ?? true,
-      });
-
-      let result: Record<string, any> = { ...product };
-
-      if (dto.seoMeta) {
-        const seoMeta = await this.productRepository.createSeoMeta({
-          ...dto.seoMeta,
-          productId: product.id,
-        });
-        result.seoMeta = seoMeta;
-      }
-
-      // Option A: every product owns at least one variant so stock/pricing always lives on product_variants.
-      // Auto-create a default variant from the base variant fields when the caller did not supply variants.
-      const defaultVariantSku = dto.sku || `${dto.slug}-default`;
-      const skuExists = await this.variantRepository.findVariantBySku(defaultVariantSku);
-      if (skuExists) {
-        throw new ConflictException(`Variant with SKU "${defaultVariantSku}" already exists`);
-      }
-
-      const defaultVariant = await this.variantRepository.createVariant({
-        productId: product.id,
-        sku: defaultVariantSku,
-        name: dto.name,
+        // Store variant fields directly on product (for no-variant products)
         price: dto.price ?? 0,
         compareAtPrice: dto.compareAtPrice,
         costPrice: dto.costPrice,
@@ -81,11 +58,67 @@ export class ProductService {
         lowStockThreshold: dto.lowStockThreshold ?? 5,
         weight: dto.weight,
         barcode: dto.barcode,
-        isActive: dto.isActive ?? true,
-        sortOrder: 0,
       });
 
-      result.variants = [defaultVariant];
+      let result: Record<string, any> = { ...product };
+
+      // Auto-generate SEO meta from product name and short description
+      const seoMeta = await this.productRepository.createSeoMeta({
+        metaTitle: dto.seoMeta?.metaTitle || dto.name,
+        metaDescription: dto.seoMeta?.metaDescription || dto.shortDescription || dto.name,
+        ogTitle: dto.seoMeta?.ogTitle || dto.name,
+        ogDescription: dto.seoMeta?.ogDescription || dto.shortDescription || dto.name,
+        ...(dto.seoMeta?.canonicalUrl && { canonicalUrl: dto.seoMeta.canonicalUrl }),
+        ...(dto.seoMeta?.metaRobots && { metaRobots: dto.seoMeta.metaRobots }),
+        ...(dto.seoMeta?.ogImageKey && { ogImageKey: dto.seoMeta.ogImageKey }),
+        productId: product.id,
+      });
+      result.seoMeta = seoMeta;
+
+      // Only create product_variants when explicit variants are provided
+      if (dto.variants && dto.variants.length > 0) {
+        const createdVariants = [];
+        for (let i = 0; i < dto.variants.length; i++) {
+          const v = dto.variants[i];
+          const variantSku = v.sku;
+          const skuExists = await this.variantRepository.findVariantBySku(variantSku);
+          if (skuExists) {
+            throw new ConflictException(`Variant with SKU "${variantSku}" already exists`);
+          }
+
+          const variant = await this.variantRepository.createVariant({
+            productId: product.id,
+            sku: variantSku,
+            name: v.name,
+            price: v.price,
+            compareAtPrice: v.compareAtPrice,
+            costPrice: v.costPrice,
+            stockQuantity: v.stockQuantity ?? 0,
+            allowBackorder: v.allowBackorder ?? false,
+            lowStockThreshold: v.lowStockThreshold ?? 5,
+            weight: v.weight,
+            barcode: v.barcode,
+            isActive: v.isActive ?? true,
+            sortOrder: v.sortOrder ?? i,
+          });
+
+          if (v.attributes && v.attributes.length > 0) {
+            await this.variantRepository.upsertAttributes(variant.id, v.attributes);
+          }
+
+          const createdVariant = await this.variantRepository.findVariantById(variant.id);
+          createdVariants.push(createdVariant);
+        }
+        result.variants = createdVariants;
+      }
+
+      if (dto.images?.length) {
+        result.images = await this.productRepository.createProductImages(
+          product.id,
+          dto.images,
+        );
+      }
+
       return result;
     } catch (error) {
       this.logger.error(`Failed to create product: ${error.message}`, error.stack);
@@ -157,6 +190,9 @@ export class ProductService {
         }
       }
 
+      // Determine if variants are being added
+      const hasVariants = dto.variants && dto.variants.length > 0;
+
       const updated = await this.productRepository.updateProduct(id, {
         name: dto.name,
         slug: dto.slug,
@@ -171,6 +207,16 @@ export class ProductService {
         sortOrder: dto.sortOrder,
         tags: dto.tags,
         isActive: dto.isActive,
+        // If variants are provided, reset product-level fields to defaults
+        // Otherwise, update them with the provided values
+        price: hasVariants ? 0 : dto.price,
+        compareAtPrice: hasVariants ? null : dto.compareAtPrice,
+        costPrice: hasVariants ? null : dto.costPrice,
+        stockQuantity: hasVariants ? 0 : dto.stockQuantity,
+        allowBackorder: hasVariants ? false : dto.allowBackorder,
+        lowStockThreshold: hasVariants ? 5 : dto.lowStockThreshold,
+        weight: hasVariants ? null : dto.weight,
+        barcode: hasVariants ? null : dto.barcode,
       });
 
       if (dto.seoMeta) {
@@ -182,6 +228,65 @@ export class ProductService {
             productId: id,
           });
         }
+      }
+
+      if (dto.images !== undefined) {
+        await this.productRepository.deleteProductImages(id);
+        if (dto.images.length) {
+          await this.productRepository.createProductImages(id, dto.images);
+        }
+      }
+
+      // If variants are provided, replace all variants
+      if (hasVariants) {
+        // Delete existing variants (cascade deletes attributes)
+        await this.variantRepository.deleteVariantsByProductId(id);
+
+        // Create new variants
+        const createdVariants = [];
+        for (let i = 0; i < dto.variants!.length; i++) {
+          const v = dto.variants![i];
+          const skuExists = await this.variantRepository.findVariantBySku(v.sku);
+          if (skuExists) {
+            throw new ConflictException(`Variant with SKU "${v.sku}" already exists`);
+          }
+
+          const variant = await this.variantRepository.createVariant({
+            productId: id,
+            sku: v.sku,
+            name: v.name,
+            price: v.price,
+            compareAtPrice: v.compareAtPrice,
+            costPrice: v.costPrice,
+            stockQuantity: v.stockQuantity ?? 0,
+            allowBackorder: v.allowBackorder ?? false,
+            lowStockThreshold: v.lowStockThreshold ?? 5,
+            weight: v.weight,
+            barcode: v.barcode,
+            isActive: v.isActive ?? true,
+            sortOrder: v.sortOrder ?? i,
+          });
+
+          if (v.attributes && v.attributes.length > 0) {
+            await this.variantRepository.upsertAttributes(variant.id, v.attributes);
+          }
+
+          const createdVariant = await this.variantRepository.findVariantById(variant.id);
+          createdVariants.push(createdVariant);
+        }
+
+        // Return updated product with variants
+        const result = await this.productRepository.findProductById(id);
+        if (!result) {
+          throw new NotFoundException(`Product with id "${id}" not found after update`);
+        }
+        return result;
+      }
+
+      // If no variants provided but product previously had variants, delete them
+      // (user switched from variants to no-variants mode)
+      if (existing.variants && existing.variants.length > 0) {
+        await this.variantRepository.deleteVariantsByProductId(id);
       }
 
       return updated;
@@ -393,6 +498,15 @@ export class ProductService {
       return review;
     } catch (error) {
       this.logger.error(`Failed to create review: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async findAllVariants() {
+    try {
+      return await this.productRepository.findAllVariants();
+    } catch (error) {
+      this.logger.error(`Failed to fetch variants: ${error.message}`, error.stack);
       throw error;
     }
   }
