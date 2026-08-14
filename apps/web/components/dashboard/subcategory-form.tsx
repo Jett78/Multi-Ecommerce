@@ -123,7 +123,7 @@ export function SubcategoryForm({ subcategory }: SubcategoryFormProps) {
 
         <FileUpload
           defaultImage={values.imageKey}
-          onSuccess={(url) => setField("imageKey", url)}
+          onSuccess={({ url }) => setField("imageKey", url)}
           returnType="url"
           folder="subcategories"
         />

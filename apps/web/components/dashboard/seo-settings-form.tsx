@@ -112,7 +112,7 @@ export function SeoSettingsForm({ seo }: SeoSettingsFormProps) {
             <div className="p-6">
               <FileUpload
                 defaultImage={values.ogImageKey}
-                onSuccess={(url) => setField("ogImageKey", url)}
+                onSuccess={({ url }) => setField("ogImageKey", url)}
                 returnType="url"
                 folder="seo"
               />

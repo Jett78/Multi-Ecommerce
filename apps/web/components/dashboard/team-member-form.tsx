@@ -129,7 +129,7 @@ export function TeamMemberForm({ teamMember }: TeamMemberFormProps) {
 
         <FileUpload
           defaultImage={values.avatar}
-          onSuccess={(url) => setField("avatar", url)}
+          onSuccess={({ url }) => setField("avatar", url)}
           returnType="url"
           folder="team"
         />

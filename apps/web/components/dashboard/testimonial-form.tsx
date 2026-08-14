@@ -106,7 +106,7 @@ export function TestimonialForm({ testimonial }: TestimonialFormProps) {
 
         <FileUpload
           defaultImage={values.avatar}
-          onSuccess={(url) => setField("avatar", url)}
+          onSuccess={({ url }) => setField("avatar", url)}
           returnType="url"
           folder="testimonials"
         />

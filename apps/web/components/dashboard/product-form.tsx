@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import PrimaryButton from "@/components/ui/primary-button";
 import FileUpload from "@/components/ui/file-upload";
+import FileUploadMultiple from "@/components/ui/file-upload-multiple";
 import FormField from "@/components/forms/form-field";
 import { useCrud } from "@/hooks/useCRUD";
 import { useForm } from "@/hooks/useForm";
@@ -75,32 +76,40 @@ export function ProductForm({ product }: ProductFormProps) {
     endpoint: API_ROUTES.CATEGORY,
     queryKey: "categories",
   });
+  const { getAll: getSubcategories } = useCrud<{ id: string; name: string; categoryId: string }>({
+    endpoint: API_ROUTES.SUBCATEGORY,
+    queryKey: "subcategories",
+  });
   const { getAll: getBrands } = useCrud<{ id: string; name: string }>({
     endpoint: API_ROUTES.BRAND,
     queryKey: "brands",
   });
 
   const { data: categoriesData } = getCategories({ take: 100, skip: 0 });
+  const { data: subcategoriesData } = getSubcategories({ take: 100, skip: 0 });
   const { data: brandsData } = getBrands({ take: 100, skip: 0 });
   const categories: { id: string; name: string }[] = categoriesData || [];
+  const allSubcategories: { id: string; name: string; categoryId: string }[] = subcategoriesData || [];
   const brands: { id: string; name: string }[] = brandsData || [];
 
   const { values, errors, setField } = useForm({
     name: product?.name || "",
     slug: product?.slug || "",
     description: product?.description || "",
-    shortDescription: product?.shortDescription || "",
     categoryId: product?.categoryId || "",
     subcategoryId: product?.subcategoryId || "",
     brandId: product?.brandId || "",
     sku: product?.sku || "",
-    status: product?.status || "draft",
+    status: product?.status || "active",
     isFeatured: product?.isFeatured ?? false,
-    sortOrder: product?.sortOrder?.toString() || "",
     tags: product?.tags?.join(", ") || "",
     isActive: product?.isActive ?? true,
-    images: product?.images?.map((img) => img.imageKey) || [],
+    images: product?.images?.map((img) => ({ key: img.imageKey, url: img.url, isPrimary: img.isPrimary })) || [],
   });
+
+  const subcategories = values.categoryId
+    ? allSubcategories.filter((sub) => sub.categoryId === values.categoryId)
+    : [];
 
   // Initialize variants from product data
   // If product has variants array with items, use those
@@ -198,7 +207,6 @@ export function ProductForm({ product }: ProductFormProps) {
       name: values.name,
       slug,
       description: values.description,
-      shortDescription: values.shortDescription,
       categoryId: values.categoryId || undefined,
       subcategoryId: values.subcategoryId || undefined,
       brandId: values.brandId || undefined,
@@ -209,12 +217,8 @@ export function ProductForm({ product }: ProductFormProps) {
       tags: values.tags
         ? values.tags.split(",").map((t: string) => t.trim()).filter(Boolean)
         : undefined,
-      images: values.images,
+      images: values.images.map((img) => img.key),
     };
-
-    if (isEditing && values.sortOrder !== "") {
-      payload.sortOrder = parseInt(values.sortOrder, 10);
-    }
 
     if (useVariants && variants.length > 0) {
       payload.variants = variants.map((v, i) => {
@@ -290,28 +294,37 @@ export function ProductForm({ product }: ProductFormProps) {
           errors={errors.name}
         />
 
-        <FormField
-          label="Slug"
-          name="slug"
-          value={values.slug}
-          onChange={(e) => setField("slug", e.target.value)}
-          placeholder="auto-generated-from-name"
-          errors={errors.slug}
-          hint="Leave empty to auto-generate from name"
-        />
-
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Category</label>
             <select
               name="categoryId"
               value={values.categoryId}
-              onChange={(e) => setField("categoryId", e.target.value)}
+              onChange={(e) => {
+                setField("categoryId", e.target.value);
+                setField("subcategoryId", "");
+              }}
               className={selectClass}
             >
               <option value="">Select a category</option>
               {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Subcategory</label>
+            <select
+              name="subcategoryId"
+              value={values.subcategoryId}
+              onChange={(e) => setField("subcategoryId", e.target.value)}
+              className={selectClass}
+              disabled={!values.categoryId}
+            >
+              <option value="">Select a subcategory</option>
+              {subcategories.map((sub) => (
+                <option key={sub.id} value={sub.id}>{sub.name}</option>
               ))}
             </select>
           </div>
@@ -331,15 +344,6 @@ export function ProductForm({ product }: ProductFormProps) {
             </select>
           </div>
         </div>
-
-        <FormField
-          label="Short Description"
-          name="shortDescription"
-          value={values.shortDescription}
-          onChange={(e) => setField("shortDescription", e.target.value)}
-          placeholder="Brief product summary"
-          errors={errors.shortDescription}
-        />
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Description</label>
@@ -515,7 +519,7 @@ export function ProductForm({ product }: ProductFormProps) {
 
             <div className="grid gap-4 sm:grid-cols-3">
               <FormField
-                label="SKU *"
+                label="SKU"
                 name={`variant-sku-${vi}`}
                 value={variant.sku}
                 onChange={(e) => updateVariant(vi, "sku", e.target.value)}
@@ -678,15 +682,6 @@ export function ProductForm({ product }: ProductFormProps) {
               </select>
             </div>
 
-            <FormField
-              label="Sort Order"
-              name="sortOrder"
-              type="number"
-              value={values.sortOrder}
-              onChange={(e) => setField("sortOrder", e.target.value)}
-              placeholder="Auto-calculated"
-            />
-
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Visibility</label>
               <select
@@ -738,26 +733,43 @@ export function ProductForm({ product }: ProductFormProps) {
           <p className="text-xs text-slate-500 mt-1">Upload one or more product images.</p>
         </div>
 
-        <FileUpload
-          onSuccess={(key) =>
-            setField("images", [...values.images, key as string])
+        <FileUploadMultiple
+          defaultImages={values.images}
+          onSuccess={(newImages) =>
+            setField("images", newImages.map((img, i) => ({
+              ...img,
+              isPrimary: i === 0,
+            })))
           }
-          returnType="key"
           folder="products"
+          maxFiles={10}
+          showPreview={false}
         />
 
         {values.images.length > 0 && (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
-            {values.images.map((key, index) => (
+            {values.images.map((img, index) => (
               <div
-                key={`${key}-${index}`}
-                className="relative h-24 w-full overflow-hidden rounded-md border border-slate-200"
+                key={`${img.key}-${index}`}
+                className={`relative h-24 w-full overflow-hidden rounded-md border-2 ${img.isPrimary ? 'border-primary' : 'border-slate-200'}`}
               >
                 <img
-                  src={key}
+                  src={img.url}
                   alt={`Product image ${index + 1}`}
                   className="h-full w-full object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setField(
+                      "images",
+                      values.images.map((item, i) => ({ ...item, isPrimary: i === index })),
+                    )
+                  }
+                  className={`absolute left-1 top-1 rounded px-1.5 py-0.5 text-xs ${img.isPrimary ? 'bg-primary text-white' : 'bg-black/60 text-white hover:bg-black/80'}`}
+                >
+                  {img.isPrimary ? '★' : '☆'}
+                </button>
                 <button
                   type="button"
                   onClick={() =>

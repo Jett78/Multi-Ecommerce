@@ -87,7 +87,7 @@ export function BrandForm({ brand }: BrandFormProps) {
 
         <FileUpload
           defaultImage={values.imageKey}
-          onSuccess={(url) => setField("imageKey", url)}
+          onSuccess={({ url }) => setField("imageKey", url)}
           returnType="url"
           folder="brands"
         />

@@ -313,7 +313,7 @@ export function CompanyProfileForm({ profile }: CompanyProfileFormProps) {
                 <label className="text-xs font-bold text-slate-700">Main Logo</label>
                 <FileUpload
                   defaultImage={values.logoKey}
-                  onSuccess={(url) => setField("logoKey", url)}
+                  onSuccess={({ url }) => setField("logoKey", url)}
                   returnType="url"
                   folder="company-profile"
                 />
@@ -322,7 +322,7 @@ export function CompanyProfileForm({ profile }: CompanyProfileFormProps) {
                 <label className="text-xs font-bold text-slate-700">Footer Logo</label>
                 <FileUpload
                   defaultImage={values.footerLogoKey}
-                  onSuccess={(url) => setField("footerLogoKey", url)}
+                  onSuccess={({ url }) => setField("footerLogoKey", url)}
                   returnType="url"
                   folder="company-profile"
                 />
@@ -331,7 +331,7 @@ export function CompanyProfileForm({ profile }: CompanyProfileFormProps) {
                 <label className="text-xs font-bold text-slate-700">Favicon</label>
                 <FileUpload
                   defaultImage={values.faviconKey}
-                  onSuccess={(url) => setField("faviconKey", url)}
+                  onSuccess={({ url }) => setField("faviconKey", url)}
                   returnType="url"
                   folder="company-profile"
                 />
