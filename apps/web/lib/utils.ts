@@ -6,11 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPrice(price: number | undefined | null): string {
-  return new Intl.NumberFormat("en-NP", {
-    style: "currency",
-    currency: "NPR",
-    maximumFractionDigits: 0,
-  }).format(price ?? 0);
+  if (price == null) return "Rs. 0";
+  return `Rs. ${price.toLocaleString("en-NP", { maximumFractionDigits: 0 })}`;
 }
 
 export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions): string {

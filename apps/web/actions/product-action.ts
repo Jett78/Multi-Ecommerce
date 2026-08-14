@@ -18,3 +18,31 @@ export async function getProductById(id: string): Promise<Product | null> {
     return null;
   }
 }
+
+export async function getProductBySlug(slug: string): Promise<Product | null> {
+  try {
+    const response = await apiClient<{ data: Product }>(
+      `${API_ROUTES.PRODUCT}/slug/${slug}`,
+      { next: { revalidate: 60 } }
+    );
+
+    if (!response || !response.data) return null;
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching product by slug:", error);
+    return null;
+  }
+}
+
+export async function getAllActiveProductSlugs(): Promise<string[]> {
+  try {
+    const response = await apiClient<{ data: { items: { slug: string }[] } }>(
+      `${API_ROUTES.PRODUCT}?take=100&status=active`
+    );
+
+    return response.data?.items?.map((p) => p.slug) ?? [];
+  } catch (error) {
+    console.error("Error fetching product slugs:", error);
+    return [];
+  }
+}

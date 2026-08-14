@@ -18,7 +18,6 @@ import type { ProductVariant } from "@/types/product";
 
 interface VariantRow {
   sku: string;
-  name: string;
   price: string;
   compareAtPrice: string;
   costPrice: string;
@@ -33,7 +32,6 @@ interface VariantRow {
 function createEmptyVariant(): VariantRow {
   return {
     sku: "",
-    name: "",
     price: "",
     compareAtPrice: "",
     costPrice: "",
@@ -49,7 +47,6 @@ function createEmptyVariant(): VariantRow {
 function variantFromExisting(v: ProductVariant): VariantRow {
   return {
     sku: v.sku,
-    name: v.name || "",
     price: v.price?.toString() || "",
     compareAtPrice: v.compareAtPrice?.toString() || "",
     costPrice: v.costPrice?.toString() || "",
@@ -229,7 +226,6 @@ export function ProductForm({ product }: ProductFormProps) {
           stockQuantity: parseInt(v.stockQuantity, 10) || 0,
           sortOrder: i,
         };
-        if (v.name) variantPayload.name = v.name;
         if (v.compareAtPrice) variantPayload.compareAtPrice = parseInt(v.compareAtPrice, 10);
         if (v.costPrice) variantPayload.costPrice = parseInt(v.costPrice, 10);
         if (v.allowBackorder) variantPayload.allowBackorder = true;
@@ -505,7 +501,6 @@ export function ProductForm({ product }: ProductFormProps) {
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
                 Variant {vi + 1}
-                {variant.name ? ` — ${variant.name}` : ""}
               </h4>
               <button
                 type="button"
@@ -516,20 +511,13 @@ export function ProductForm({ product }: ProductFormProps) {
               </button>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 label="SKU"
                 name={`variant-sku-${vi}`}
                 value={variant.sku}
                 onChange={(e) => updateVariant(vi, "sku", e.target.value)}
                 placeholder="PROD-001-BLU"
-              />
-              <FormField
-                label="Name"
-                name={`variant-name-${vi}`}
-                value={variant.name}
-                onChange={(e) => updateVariant(vi, "name", e.target.value)}
-                placeholder="e.g. Blue / Large"
               />
               <FormField
                 label="Price (paisa) *"
