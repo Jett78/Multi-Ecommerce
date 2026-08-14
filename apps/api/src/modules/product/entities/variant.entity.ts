@@ -12,9 +12,6 @@ export class VariantEntity {
   @ApiProperty()
   sku: string;
 
-  @ApiPropertyOptional()
-  name?: string;
-
   @ApiProperty()
   price: number;
 
@@ -61,7 +58,6 @@ export class VariantEntity {
     this.id = partial.id;
     this.productId = partial.productId;
     this.sku = partial.sku;
-    this.name = partial.name ?? undefined;
     this.price = partial.price;
     this.compareAtPrice = partial.compareAtPrice ?? undefined;
     this.costPrice = partial.costPrice ?? undefined;

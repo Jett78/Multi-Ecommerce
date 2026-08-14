@@ -490,7 +490,6 @@ export const productVariants = pgTable('product_variants', {
   id: uuid('id').defaultRandom().primaryKey(),
   productId: uuid('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
   sku: varchar('sku', { length: 100 }).unique(),
-  name: varchar('name', { length: 500 }),
   price: integer('price').notNull(),
   compareAtPrice: integer('compare_at_price'),
   costPrice: integer('cost_price'),

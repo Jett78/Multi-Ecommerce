@@ -51,7 +51,6 @@ export interface Product extends BaseEntity {
 export interface ProductVariant extends BaseEntity {
   productId: string;
   sku: string;
-  name?: string;
   price: number;
   compareAtPrice?: number;
   costPrice?: number;

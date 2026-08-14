@@ -72,7 +72,6 @@ export class CartRepository {
       variant: {
         id: row.product_variants.id,
         sku: row.product_variants.sku,
-        name: row.product_variants.name,
         price: row.product_variants.price,
         stockQuantity: row.product_variants.stockQuantity,
         allowBackorder: row.product_variants.allowBackorder,

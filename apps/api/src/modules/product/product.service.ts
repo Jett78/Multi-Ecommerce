@@ -105,7 +105,6 @@ export class ProductService {
           const variant = await this.variantRepository.createVariant({
             productId: product.id,
             sku: variantSku || null,
-            name: v.name,
             price: v.price,
             compareAtPrice: v.compareAtPrice,
             costPrice: v.costPrice,
@@ -273,7 +272,6 @@ export class ProductService {
           const variant = await this.variantRepository.createVariant({
             productId: id,
             sku: v.sku || null,
-            name: v.name,
             price: v.price,
             compareAtPrice: v.compareAtPrice,
             costPrice: v.costPrice,
@@ -364,7 +362,6 @@ export class ProductService {
       const variant = await this.variantRepository.createVariant({
         productId,
         sku: dto.sku || null,
-        name: dto.name,
         price: dto.price,
         compareAtPrice: dto.compareAtPrice,
         costPrice: dto.costPrice,
@@ -435,7 +432,6 @@ export class ProductService {
 
       const updated = await this.variantRepository.updateVariant(variantId, {
         sku: dto.sku || null,
-        name: dto.name,
         price: dto.price,
         compareAtPrice: dto.compareAtPrice,
         costPrice: dto.costPrice,

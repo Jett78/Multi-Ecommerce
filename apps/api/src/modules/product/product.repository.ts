@@ -86,6 +86,17 @@ export class ProductRepository {
       .where(eq(schema.productVariants.productId, result.products.id))
       .orderBy(schema.productVariants.sortOrder);
 
+    const variantsWithAttributes = await Promise.all(
+      variants.map(async (variant) => {
+        const attributes = await this.db
+          .select()
+          .from(schema.variantAttributes)
+          .where(eq(schema.variantAttributes.variantId, variant.id))
+          .orderBy(schema.variantAttributes.sortOrder);
+        return { ...variant, attributes };
+      })
+    );
+
     const images = await this.db
       .select()
       .from(schema.productImages)
@@ -98,7 +109,7 @@ export class ProductRepository {
       subcategory: result.subcategories,
       brand: result.brands,
       seoMeta: result.seo_metas,
-      variants,
+      variants: variantsWithAttributes,
       images,
     };
   }

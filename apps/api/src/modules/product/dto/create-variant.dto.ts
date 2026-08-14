@@ -27,12 +27,6 @@ export class CreateVariantDto {
   @MaxLength(100)
   sku?: string;
 
-  @ApiPropertyOptional({ example: '128GB - Blue' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(500)
-  name?: string;
-
   @ApiProperty({ example: 99999 })
   @IsNumber()
   @Min(0)
