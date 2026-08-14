@@ -15,6 +15,19 @@ import { AdjustStockDto } from './dto/adjust-stock.dto';
 export class ProductService {
   private readonly logger = new Logger(ProductService.name);
 
+  private readonly variantFields = ['price', 'compareAtPrice', 'costPrice', 'stockQuantity', 'allowBackorder', 'lowStockThreshold', 'weight', 'barcode'];
+
+  private cleanProduct(product: any) {
+    if (product.variants && product.variants.length > 0) {
+      const cleaned = { ...product };
+      for (const field of this.variantFields) {
+        delete cleaned[field];
+      }
+      return cleaned;
+    }
+    return product;
+  }
+
   constructor(
     private readonly productRepository: ProductRepository,
     private readonly variantRepository: VariantRepository,
@@ -122,7 +135,7 @@ export class ProductService {
         );
       }
 
-      return result;
+      return this.cleanProduct(result);
     } catch (error) {
       this.logger.error(`Failed to create product: ${error.message}`, error.stack);
       throw error;
@@ -141,7 +154,7 @@ export class ProductService {
       const hasMore = skip + take < total;
 
       return {
-        data: products,
+        data: products.map((p) => this.cleanProduct(p)),
         total,
         skip,
         take,
@@ -159,7 +172,7 @@ export class ProductService {
       if (!product) {
         throw new NotFoundException(`Product with id "${id}" not found`);
       }
-      return product;
+      return this.cleanProduct(product);
     } catch (error) {
       this.logger.error(`Failed to fetch product: ${error.message}`, error.stack);
       throw error;
@@ -172,7 +185,7 @@ export class ProductService {
       if (!product) {
         throw new NotFoundException(`Product with slug "${slug}" not found`);
       }
-      return product;
+      return this.cleanProduct(product);
     } catch (error) {
       this.logger.error(`Failed to fetch product by slug: ${error.message}`, error.stack);
       throw error;
@@ -286,7 +299,7 @@ export class ProductService {
         if (!result) {
           throw new NotFoundException(`Product with id "${id}" not found after update`);
         }
-        return result;
+        return this.cleanProduct(result);
       }
 
       // If no variants provided but product previously had variants, delete them
@@ -295,7 +308,7 @@ export class ProductService {
         await this.variantRepository.deleteVariantsByProductId(id);
       }
 
-      return updated;
+      return this.cleanProduct(updated);
     } catch (error) {
       this.logger.error(`Failed to update product: ${error.message}`, error.stack);
       throw error;

@@ -167,6 +167,32 @@ export default function ProductsPage() {
       ),
     },
     {
+      key: "stockQuantity",
+      label: "Stock",
+      render: (row) => {
+        if (row.variants && row.variants.length > 0) {
+          const totalStock = row.variants.reduce((sum, v) => sum + (v.stockQuantity ?? 0), 0);
+          const minThreshold = Math.min(...row.variants.map((v) => v.lowStockThreshold ?? 5));
+          const isLow = totalStock <= minThreshold;
+          return (
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold ${isLow ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+              {isLow && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
+              {totalStock} out of {row.variants.length} variants
+            </span>
+          );
+        }
+        const stock = row.stockQuantity ?? 0;
+        const threshold = row.lowStockThreshold ?? 5;
+        const isLow = stock <= threshold;
+        return (
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold ${isLow ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+            {isLow && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
+            {stock}
+          </span>
+        );
+      },
+    },
+    {
       key: "actions",
       label: "Actions",
       className: "text-right",
