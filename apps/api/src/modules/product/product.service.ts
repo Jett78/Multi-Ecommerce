@@ -39,12 +39,11 @@ export class ProductService {
         name: dto.name,
         slug: dto.slug,
         description: dto.description,
-        shortDescription: dto.shortDescription,
         categoryId: dto.categoryId,
         subcategoryId: dto.subcategoryId,
         brandId: dto.brandId,
         sku: dto.sku,
-        status: dto.status as any || 'draft',
+        status: dto.status as any || 'active',
         isFeatured: dto.isFeatured ?? false,
         sortOrder: dto.sortOrder ?? 0,
         tags: dto.tags,
@@ -62,12 +61,12 @@ export class ProductService {
 
       let result: Record<string, any> = { ...product };
 
-      // Auto-generate SEO meta from product name and short description
+      // Auto-generate SEO meta from product name
       const seoMeta = await this.productRepository.createSeoMeta({
         metaTitle: dto.seoMeta?.metaTitle || dto.name,
-        metaDescription: dto.seoMeta?.metaDescription || dto.shortDescription || dto.name,
+        metaDescription: dto.seoMeta?.metaDescription || dto.name,
         ogTitle: dto.seoMeta?.ogTitle || dto.name,
-        ogDescription: dto.seoMeta?.ogDescription || dto.shortDescription || dto.name,
+        ogDescription: dto.seoMeta?.ogDescription || dto.name,
         ...(dto.seoMeta?.canonicalUrl && { canonicalUrl: dto.seoMeta.canonicalUrl }),
         ...(dto.seoMeta?.metaRobots && { metaRobots: dto.seoMeta.metaRobots }),
         ...(dto.seoMeta?.ogImageKey && { ogImageKey: dto.seoMeta.ogImageKey }),
@@ -81,14 +80,18 @@ export class ProductService {
         for (let i = 0; i < dto.variants.length; i++) {
           const v = dto.variants[i];
           const variantSku = v.sku;
-          const skuExists = await this.variantRepository.findVariantBySku(variantSku);
-          if (skuExists) {
-            throw new ConflictException(`Variant with SKU "${variantSku}" already exists`);
+          
+          // Only check SKU uniqueness if SKU is provided
+          if (variantSku) {
+            const skuExists = await this.variantRepository.findVariantBySku(variantSku);
+            if (skuExists) {
+              throw new ConflictException(`Variant with SKU "${variantSku}" already exists`);
+            }
           }
 
           const variant = await this.variantRepository.createVariant({
             productId: product.id,
-            sku: variantSku,
+            sku: variantSku || null,
             name: v.name,
             price: v.price,
             compareAtPrice: v.compareAtPrice,
@@ -197,7 +200,6 @@ export class ProductService {
         name: dto.name,
         slug: dto.slug,
         description: dto.description,
-        shortDescription: dto.shortDescription,
         categoryId: dto.categoryId,
         subcategoryId: dto.subcategoryId,
         brandId: dto.brandId,
@@ -246,14 +248,18 @@ export class ProductService {
         const createdVariants = [];
         for (let i = 0; i < dto.variants!.length; i++) {
           const v = dto.variants![i];
-          const skuExists = await this.variantRepository.findVariantBySku(v.sku);
-          if (skuExists) {
-            throw new ConflictException(`Variant with SKU "${v.sku}" already exists`);
+          
+          // Only check SKU uniqueness if SKU is provided
+          if (v.sku) {
+            const skuExists = await this.variantRepository.findVariantBySku(v.sku);
+            if (skuExists) {
+              throw new ConflictException(`Variant with SKU "${v.sku}" already exists`);
+            }
           }
 
           const variant = await this.variantRepository.createVariant({
             productId: id,
-            sku: v.sku,
+            sku: v.sku || null,
             name: v.name,
             price: v.price,
             compareAtPrice: v.compareAtPrice,
@@ -334,14 +340,17 @@ export class ProductService {
         throw new NotFoundException(`Product with id "${productId}" not found`);
       }
 
-      const skuExists = await this.variantRepository.findVariantBySku(dto.sku);
-      if (skuExists) {
-        throw new ConflictException(`Variant with SKU "${dto.sku}" already exists`);
+      // Only check SKU uniqueness if SKU is provided
+      if (dto.sku) {
+        const skuExists = await this.variantRepository.findVariantBySku(dto.sku);
+        if (skuExists) {
+          throw new ConflictException(`Variant with SKU "${dto.sku}" already exists`);
+        }
       }
 
       const variant = await this.variantRepository.createVariant({
         productId,
-        sku: dto.sku,
+        sku: dto.sku || null,
         name: dto.name,
         price: dto.price,
         compareAtPrice: dto.compareAtPrice,
@@ -412,7 +421,7 @@ export class ProductService {
       }
 
       const updated = await this.variantRepository.updateVariant(variantId, {
-        sku: dto.sku,
+        sku: dto.sku || null,
         name: dto.name,
         price: dto.price,
         compareAtPrice: dto.compareAtPrice,

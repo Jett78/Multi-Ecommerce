@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, ValidateNested, MaxLength, MinLength, Min } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsNumber, IsArray, ValidateNested, MaxLength, Min } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -21,11 +21,11 @@ export class CreateVariantAttributeDto {
 }
 
 export class CreateVariantDto {
-  @ApiProperty({ example: 'APL-IP15P-128-BLU' })
+  @ApiPropertyOptional({ example: 'APL-IP15P-128-BLU' })
+  @IsOptional()
   @IsString()
-  @MinLength(2)
   @MaxLength(100)
-  sku: string;
+  sku?: string;
 
   @ApiPropertyOptional({ example: '128GB - Blue' })
   @IsOptional()

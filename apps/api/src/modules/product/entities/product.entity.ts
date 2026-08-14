@@ -17,9 +17,6 @@ export class ProductEntity {
   description?: string;
 
   @ApiPropertyOptional()
-  shortDescription?: string;
-
-  @ApiPropertyOptional()
   categoryId?: string;
 
   @ApiPropertyOptional()
@@ -99,7 +96,6 @@ export class ProductEntity {
     this.name = partial.name;
     this.slug = partial.slug;
     this.description = partial.description ?? undefined;
-    this.shortDescription = partial.shortDescription ?? undefined;
     this.categoryId = partial.categoryId ?? undefined;
     this.subcategoryId = partial.subcategoryId ?? undefined;
     this.brandId = partial.brandId ?? undefined;

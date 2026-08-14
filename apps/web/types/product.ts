@@ -4,7 +4,6 @@ export interface Product extends BaseEntity {
   name: string;
   slug: string;
   description?: string;
-  shortDescription?: string;
   categoryId?: string;
   subcategoryId?: string;
   brandId?: string;
@@ -80,6 +79,7 @@ export interface ProductImage {
   productId?: string;
   variantId?: string;
   imageKey: string;
+  url: string;
   altText?: string;
   sortOrder: number;
   isPrimary: boolean;

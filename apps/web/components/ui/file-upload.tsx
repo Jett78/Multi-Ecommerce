@@ -50,8 +50,7 @@ export default function FileUpload({
 
       setPreviewUrl(originalUrl);
 
-      const valueToSend = returnType === "key" ? originalKey : originalUrl;
-      onSuccess?.(valueToSend);
+      onSuccess?.({ key: originalKey, url: originalUrl });
     } else {
       setPreviewUrl(null);
     }

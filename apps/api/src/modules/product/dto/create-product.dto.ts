@@ -63,12 +63,6 @@ export class CreateProductDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ example: 'Advanced smartphone from Apple' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  shortDescription?: string;
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

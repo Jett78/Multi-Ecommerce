@@ -19,12 +19,22 @@ export interface BlogCardProps {
 }
 
 export interface FileUploadProps {
-  onSuccess?: (value: string) => void;
+  onSuccess?: (value: { key: string; url: string }) => void;
   defaultImage?: string;
   className?: string;
-  returnType?: "url" | "key";
+  returnType?: "key" | "url";
   accept?: string;
   folder?: string;
+}
+
+export interface FileUploadMultipleProps {
+  onSuccess?: (value: { key: string; url: string }[]) => void;
+  defaultImages?: { key: string; url: string }[];
+  className?: string;
+  accept?: string;
+  folder?: string;
+  maxFiles?: number;
+  showPreview?: boolean;
 }
 
 export interface BlogPostPageProps {

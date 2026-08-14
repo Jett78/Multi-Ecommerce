@@ -17,9 +17,16 @@ import type { Product } from "@/types/product";
 
 const PAGE_SIZE = 10;
 
+const selectClass = "h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary";
+
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [categoryId, setCategoryId] = useState("");
+  const [subcategoryId, setSubcategoryId] = useState("");
+  const [brandId, setBrandId] = useState("");
+  const [isFeatured, setIsFeatured] = useState("");
+  const [status, setStatus] = useState("");
   const debouncedSearch = useDebounce(search);
 
   const { getAllPaginated } = useCrud<Product>({
@@ -27,10 +34,40 @@ export default function ProductsPage() {
     queryKey: "products",
   });
 
+  const { getAll: getCategories } = useCrud<{ id: string; name: string }>({
+    endpoint: API_ROUTES.CATEGORY,
+    queryKey: "categories",
+  });
+  const { getAll: getSubcategories } = useCrud<{ id: string; name: string; categoryId: string }>({
+    endpoint: API_ROUTES.SUBCATEGORY,
+    queryKey: "subcategories",
+  });
+  const { getAll: getBrands } = useCrud<{ id: string; name: string }>({
+    endpoint: API_ROUTES.BRAND,
+    queryKey: "brands",
+  });
+
+  const { data: categoriesData } = getCategories({ take: 100, skip: 0 });
+  const { data: subcategoriesData } = getSubcategories({ take: 100, skip: 0 });
+  const { data: brandsData } = getBrands({ take: 100, skip: 0 });
+
+  const categories: { id: string; name: string }[] = categoriesData || [];
+  const allSubcategories: { id: string; name: string; categoryId: string }[] = subcategoriesData || [];
+  const brands: { id: string; name: string }[] = brandsData || [];
+
+  const subcategories = categoryId
+    ? allSubcategories.filter((sub) => sub.categoryId === categoryId)
+    : allSubcategories;
+
   const { data, isLoading, isError, error } = getAllPaginated({
     take: PAGE_SIZE,
     skip: (page - 1) * PAGE_SIZE,
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
+    ...(categoryId ? { categoryId } : {}),
+    ...(subcategoryId ? { subcategoryId } : {}),
+    ...(brandId ? { brandId } : {}),
+    ...(isFeatured ? { isFeatured: isFeatured === "true" } : {}),
+    ...(status ? { status } : {}),
   });
 
   const products = data?.items || [];
@@ -42,25 +79,51 @@ export default function ProductsPage() {
     setPage(1);
   };
 
+  const handleFilterChange = (setter: (val: string) => void) => (value: string) => {
+    setter(value);
+    setPage(1);
+  };
+
+  const resetFilters = () => {
+    setCategoryId("");
+    setSubcategoryId("");
+    setBrandId("");
+    setIsFeatured("");
+    setStatus("");
+    setPage(1);
+  };
+
+  const hasActiveFilters = categoryId || subcategoryId || brandId || isFeatured || status;
+
   const columns: Column<Product>[] = [
+    {
+      key: "name",
+      label: "SN",
+      render: (_row, rowIndex) => (
+        <span className="text-sm text-slate-600">{(page - 1) * PAGE_SIZE + rowIndex + 1}</span>
+      ),
+    },
     {
       key: "name",
       label: "Product",
       render: (row) => (
         <div className="flex items-center gap-3">
-          {row.images?.[0]?.imageKey ? (
-            <Image
-              src={row.images[0].imageKey}
-              alt={row.name}
-              width={40}
-              height={40}
-              className="h-10 w-10 rounded-lg object-cover"
-            />
-          ) : (
-            <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold">
-              {row.name.charAt(0).toUpperCase()}
-            </div>
-          )}
+          {(() => {
+            const primaryImage = row.images?.find((img) => img.isPrimary) || row.images?.[0];
+            return primaryImage?.url ? (
+              <Image
+                src={primaryImage.url}
+                alt={row.name}
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold">
+                {row.name.charAt(0).toUpperCase()}
+              </div>
+            );
+          })()}
           <div>
             <span className="font-bold text-slate-900">{row.name}</span>
             <p className="text-xs text-slate-400">{row.sku || "—"}</p>
@@ -109,7 +172,7 @@ export default function ProductsPage() {
       className: "text-right",
       render: (row) => (
         <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/products/${row.id}/edit`} />
+          <EditButton href={`/dashboard/products/edit/${row.id}`} />
           <DeleteButton
             id={row.id}
             endpoint={API_ROUTES.PRODUCT}
@@ -137,6 +200,8 @@ export default function ProductsPage() {
         description="Manage your product catalog."
         path="products"
       />
+
+      {/* Search */}
       <div className="relative w-full shrink-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
         <Input
@@ -145,6 +210,80 @@ export default function ProductsPage() {
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-md border border-slate-200 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-bold text-slate-900">Filters</h3>
+          {hasActiveFilters && (
+            <button
+              onClick={resetFilters}
+              className="text-xs text-primary hover:underline"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          <select
+            value={categoryId}
+            onChange={(e) => {
+              handleFilterChange(setCategoryId)(e.target.value);
+              setSubcategoryId("");
+            }}
+            className={selectClass}
+          >
+            <option value="">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={subcategoryId}
+            onChange={(e) => handleFilterChange(setSubcategoryId)(e.target.value)}
+            className={selectClass}
+            disabled={!categoryId}
+          >
+            <option value="">All Subcategories</option>
+            {subcategories.map((sub) => (
+              <option key={sub.id} value={sub.id}>{sub.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={brandId}
+            onChange={(e) => handleFilterChange(setBrandId)(e.target.value)}
+            className={selectClass}
+          >
+            <option value="">All Brands</option>
+            {brands.map((brand) => (
+              <option key={brand.id} value={brand.id}>{brand.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={isFeatured}
+            onChange={(e) => handleFilterChange(setIsFeatured)(e.target.value)}
+            className={selectClass}
+          >
+            <option value="">All Featured</option>
+            <option value="true">Featured</option>
+            <option value="false">Not Featured</option>
+          </select>
+
+          <select
+            value={status}
+            onChange={(e) => handleFilterChange(setStatus)(e.target.value)}
+            className={selectClass}
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="draft">Draft</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
       </div>
 
       <DataTable

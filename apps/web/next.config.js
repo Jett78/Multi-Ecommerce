@@ -16,7 +16,7 @@ const nextConfig = {
       
       {
         protocol: "https",
-        hostname: "trustablecleaningservices.s3.ap-south-1.amazonaws.com",
+        hostname: "lawsagar.s3.ap-south-1.amazonaws.com",
         port: "",
       },
       {

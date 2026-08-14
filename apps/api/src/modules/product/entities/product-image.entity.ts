@@ -13,6 +13,9 @@ export class ProductImageEntity {
   @ApiProperty()
   imageKey: string;
 
+  @ApiProperty()
+  url: string;
+
   @ApiPropertyOptional()
   altText?: string;
 
@@ -30,9 +33,21 @@ export class ProductImageEntity {
     this.productId = partial.productId ?? undefined;
     this.variantId = partial.variantId ?? undefined;
     this.imageKey = partial.imageKey;
+    this.url = this.buildUrl(partial.imageKey);
     this.altText = partial.altText ?? undefined;
     this.sortOrder = partial.sortOrder;
     this.isPrimary = partial.isPrimary;
     this.createdAt = partial.createdAt;
+  }
+
+  private buildUrl(key: string): string {
+    const cloudfrontUrl = process.env.AWS_CLOUDFRONT_URL || '';
+    const bucketName = process.env.S3_BUCKET_NAME || '';
+    const region = process.env.AWS_REGION || 'ap-south-1';
+
+    if (cloudfrontUrl) {
+      return `https://${cloudfrontUrl}/${key}`;
+    }
+    return `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
   }
 }

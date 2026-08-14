@@ -454,7 +454,6 @@ export const products = pgTable('products', {
   name: varchar('name', { length: 500 }).notNull(),
   slug: varchar('slug', { length: 500 }).notNull().unique(),
   description: text('description'),
-  shortDescription: varchar('short_description', { length: 1000 }),
   categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
   subcategoryId: uuid('subcategory_id').references(() => subcategories.id, { onDelete: 'set null' }),
   brandId: uuid('brand_id').references(() => brands.id, { onDelete: 'set null' }),
@@ -490,7 +489,7 @@ export const products = pgTable('products', {
 export const productVariants = pgTable('product_variants', {
   id: uuid('id').defaultRandom().primaryKey(),
   productId: uuid('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
-  sku: varchar('sku', { length: 100 }).notNull().unique(),
+  sku: varchar('sku', { length: 100 }).unique(),
   name: varchar('name', { length: 500 }),
   price: integer('price').notNull(),
   compareAtPrice: integer('compare_at_price'),

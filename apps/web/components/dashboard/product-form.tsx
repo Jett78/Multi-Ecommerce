@@ -12,6 +12,7 @@ import { useFormSubmit } from "@/hooks/useFormSubmit";
 import { API_ROUTES } from "@/config/api-routes";
 import { revalidateProducts } from "@/actions/revalidate-action";
 import SubmittingLoader from "@/components/dashboard/submitting-loader";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import type { ProductFormProps } from "@/types/components";
 import type { ProductVariant } from "@/types/product";
 
@@ -347,13 +348,11 @@ export function ProductForm({ product }: ProductFormProps) {
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Description</label>
-          <textarea
-            name="description"
-            value={values.description}
-            onChange={(e) => setField("description", e.target.value)}
-            rows={6}
-            className="flex w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50"
+          <TiptapEditor
+            content={values.description}
+            onChange={(content) => setField("description", content)}
             placeholder="Product description"
+            className="min-h-[200px] max-h-[300px]"
           />
         </div>
 
@@ -667,7 +666,7 @@ export function ProductForm({ product }: ProductFormProps) {
             <p className="text-xs text-slate-500 mt-1">Control visibility and status.</p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-slate-700">Status</label>
               <select
@@ -696,33 +695,63 @@ export function ProductForm({ product }: ProductFormProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="isFeatured"
-              checked={values.isFeatured}
-              onChange={(e) => setField("isFeatured", e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/20"
-            />
-            <label htmlFor="isFeatured" className="text-sm font-medium text-slate-700">
-              Featured product
-            </label>
+          <div
+            onClick={() => setField("isFeatured", !values.isFeatured)}
+            className={`flex items-center gap-4 rounded-lg border-2 p-4 cursor-pointer transition-all ${
+              values.isFeatured
+                ? 'border-amber-400 bg-amber-50'
+                : 'border-slate-200 bg-white hover:border-slate-300'
+            }`}
+          >
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+              values.isFeatured ? 'bg-amber-400 text-white' : 'bg-slate-100 text-slate-400'
+            }`}>
+              <svg className="h-5 w-5" fill={values.isFeatured ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className={`text-sm font-semibold ${values.isFeatured ? 'text-amber-900' : 'text-slate-700'}`}>
+                Featured Product
+              </p>
+              <p className="text-xs text-slate-500">
+                Display this product on the homepage highlight section
+              </p>
+            </div>
+            <div className={`relative h-6 w-11 rounded-full transition-colors ${values.isFeatured ? 'bg-amber-400' : 'bg-slate-200'}`}>
+              <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${values.isFeatured ? 'translate-x-5' : 'translate-x-0'}`} />
+            </div>
           </div>
         </div>
       )}
 
       {!isEditing && (
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="isFeatured"
-            checked={values.isFeatured}
-            onChange={(e) => setField("isFeatured", e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary/20"
-          />
-          <label htmlFor="isFeatured" className="text-sm font-medium text-slate-700">
-            Featured product
-          </label>
+        <div
+          onClick={() => setField("isFeatured", !values.isFeatured)}
+          className={`flex items-center gap-4 rounded-lg border-2 p-4 cursor-pointer transition-all ${
+            values.isFeatured
+              ? 'border-amber-400 bg-amber-50'
+              : 'border-slate-200 bg-white hover:border-slate-300'
+          }`}
+        >
+          <div className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+            values.isFeatured ? 'bg-amber-400 text-white' : 'bg-slate-100 text-slate-400'
+          }`}>
+            <svg className="h-5 w-5" fill={values.isFeatured ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <p className={`text-sm font-semibold ${values.isFeatured ? 'text-amber-900' : 'text-slate-700'}`}>
+              Featured Product
+            </p>
+            <p className="text-xs text-slate-500">
+              Display this product on the homepage highlight section
+            </p>
+          </div>
+          <div className={`relative h-6 w-11 rounded-full transition-colors ${values.isFeatured ? 'bg-amber-400' : 'bg-slate-200'}`}>
+            <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${values.isFeatured ? 'translate-x-5' : 'translate-x-0'}`} />
+          </div>
         </div>
       )}
 
@@ -756,7 +785,7 @@ export function ProductForm({ product }: ProductFormProps) {
                 <img
                   src={img.url}
                   alt={`Product image ${index + 1}`}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain"
                 />
                 <button
                   type="button"

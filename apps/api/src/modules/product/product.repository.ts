@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DB_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
-import { eq, ilike, or, and, sql, desc, gte, lte } from 'drizzle-orm';
+import { eq, ilike, or, and, sql, desc, gte, lte, inArray } from 'drizzle-orm';
 
 @Injectable()
 export class ProductRepository {
@@ -168,12 +168,86 @@ export class ProductRepository {
       .limit(params?.take || 10)
       .offset(params?.skip || 0);
 
-    return products.map((row) => ({
-      ...row.products,
-      category: row.categories,
-      subcategory: row.subcategories,
-      brand: row.brands,
-    }));
+    const productIds = products.map((row) => row.products.id).filter((id): id is string => id !== null);
+
+    if (productIds.length === 0) {
+      return [];
+    }
+
+    // Batch fetch variants, images, and SEO meta for all products
+    const [allVariants, allImages, allSeoMetas, allAttributes] = await Promise.all([
+      this.db
+        .select()
+        .from(schema.productVariants)
+        .where(inArray(schema.productVariants.productId, productIds))
+        .orderBy(schema.productVariants.sortOrder),
+      this.db
+        .select()
+        .from(schema.productImages)
+        .where(inArray(schema.productImages.productId, productIds))
+        .orderBy(schema.productImages.sortOrder),
+      this.db
+        .select()
+        .from(schema.seoMetas)
+        .where(inArray(schema.seoMetas.productId, productIds)),
+      this.db
+        .select()
+        .from(schema.variantAttributes)
+        .innerJoin(schema.productVariants, eq(schema.variantAttributes.variantId, schema.productVariants.id))
+        .where(inArray(schema.productVariants.productId, productIds))
+        .orderBy(schema.variantAttributes.sortOrder),
+    ]);
+
+    // Group by product ID
+    const variantsByProduct = new Map<string, typeof allVariants>();
+    const imagesByProduct = new Map<string, typeof allImages>();
+    const seoMetaByProduct = new Map<string, typeof allSeoMetas>();
+    const attributesByVariant = new Map<string, typeof allAttributes>();
+
+    for (const variant of allVariants) {
+      const list = variantsByProduct.get(variant.productId) || [];
+      list.push(variant);
+      variantsByProduct.set(variant.productId, list);
+    }
+
+    for (const image of allImages) {
+      if (!image.productId) continue;
+      const list = imagesByProduct.get(image.productId) || [];
+      list.push(image);
+      imagesByProduct.set(image.productId, list);
+    }
+
+    for (const seo of allSeoMetas) {
+      if (!seo.productId) continue;
+      seoMetaByProduct.set(seo.productId, [seo]);
+    }
+
+    for (const attr of allAttributes) {
+      const variantId = (attr as any).product_variants?.id || (attr as any).variant_id;
+      if (variantId) {
+        const list = attributesByVariant.get(variantId) || [];
+        list.push(attr);
+        attributesByVariant.set(variantId, list);
+      }
+    }
+
+    return products.map((row) => {
+      const productId = row.products.id;
+      const variants = (variantsByProduct.get(productId) || []).map((v) => ({
+        ...v,
+        attributes: attributesByVariant.get(v.id) || [],
+      }));
+
+      return {
+        ...row.products,
+        category: row.categories,
+        subcategory: row.subcategories,
+        brand: row.brands,
+        seoMeta: seoMetaByProduct.get(productId)?.[0] || null,
+        variants,
+        images: imagesByProduct.get(productId) || [],
+      };
+    });
   }
 
   async countProducts(params?: {
