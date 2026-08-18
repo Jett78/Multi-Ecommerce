@@ -68,6 +68,12 @@ export class ProductEntity {
   barcode?: string;
 
   @ApiProperty()
+  averageRating: number;
+
+  @ApiProperty()
+  reviewCount: number;
+
+  @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()
@@ -113,6 +119,8 @@ export class ProductEntity {
     this.lowStockThreshold = partial.lowStockThreshold ?? undefined;
     this.weight = partial.weight ?? undefined;
     this.barcode = partial.barcode ?? undefined;
+    this.averageRating = partial.averageRating ?? 0;
+    this.reviewCount = partial.reviewCount ?? 0;
     this.createdAt = partial.createdAt;
     this.updatedAt = partial.updatedAt;
 

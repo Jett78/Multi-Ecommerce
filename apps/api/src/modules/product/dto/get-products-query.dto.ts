@@ -62,4 +62,12 @@ export class GetProductsQueryDto {
   @IsNumber()
   @Min(0)
   maxPrice?: number;
+
+  @ApiPropertyOptional({ example: 4, description: 'Minimum average rating (1-5)' })
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsNumber()
+  @Min(1)
+  @Max(5)
+  minRating?: number;
 }

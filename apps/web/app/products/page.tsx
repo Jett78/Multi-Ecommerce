@@ -14,6 +14,7 @@ export default function ProductsPage() {
     brandId: "",
     minPrice: "",
     maxPrice: "",
+    minRating: "",
   });
 
   const { getAllPaginated } = useCrud<Product>({
@@ -30,6 +31,7 @@ export default function ProductsPage() {
     ...(filters.brandId && { brandId: filters.brandId }),
     ...(filters.minPrice && { minPrice: parseInt(filters.minPrice) }),
     ...(filters.maxPrice && { maxPrice: parseInt(filters.maxPrice) }),
+    ...(filters.minRating && { minRating: parseInt(filters.minRating) * 10 }),
   });
 
   const products = productsData?.items || [];

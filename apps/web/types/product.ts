@@ -21,6 +21,8 @@ export interface Product extends BaseEntity {
   lowStockThreshold?: number;
   weight?: number;
   barcode?: string;
+  averageRating: number;
+  reviewCount: number;
   category?: {
     id: string;
     name: string;

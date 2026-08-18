@@ -143,11 +143,11 @@ export class ProductService {
 
   async findAllProducts(query: GetProductsQueryDto) {
     try {
-      const { skip = 0, take = 10, search, status, categoryId, subcategoryId, brandId, isFeatured, minPrice, maxPrice } = query;
+      const { skip = 0, take = 10, search, status, categoryId, subcategoryId, brandId, isFeatured, minPrice, maxPrice, minRating } = query;
 
       const [products, total] = await Promise.all([
-        this.productRepository.findAllProducts({ skip, take, search, status, categoryId, subcategoryId, brandId, isFeatured, minPrice, maxPrice }),
-        this.productRepository.countProducts({ search, status, categoryId, subcategoryId, brandId, isFeatured }),
+        this.productRepository.findAllProducts({ skip, take, search, status, categoryId, subcategoryId, brandId, isFeatured, minPrice, maxPrice, minRating }),
+        this.productRepository.countProducts({ search, status, categoryId, subcategoryId, brandId, isFeatured, minRating }),
       ]);
 
       const hasMore = skip + take < total;
@@ -508,6 +508,7 @@ export class ProductService {
         rating: dto.rating,
         title: dto.title,
         comment: dto.comment,
+        images: dto.images || [],
         isVerifiedPurchase: hasPurchased,
         isApproved: false,
         helpfulCount: 0,
@@ -557,6 +558,27 @@ export class ProductService {
     }
   }
 
+  async getRatingBreakdown(productId: string) {
+    try {
+      const product = await this.productRepository.findProductById(productId);
+      if (!product) {
+        throw new NotFoundException(`Product with id "${productId}" not found`);
+      }
+
+      const breakdown = await this.reviewRepository.getRatingBreakdown(productId);
+      const avgRating = await this.reviewRepository.getAverageRating(productId);
+
+      return {
+        averageRating: avgRating.avgRating,
+        totalReviews: avgRating.totalReviews,
+        breakdown,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to get rating breakdown: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
   async approveReview(reviewId: string) {
     try {
       const review = await this.reviewRepository.findReviewById(reviewId);
@@ -564,7 +586,12 @@ export class ProductService {
         throw new NotFoundException(`Review with id "${reviewId}" not found`);
       }
 
-      return await this.reviewRepository.updateReview(reviewId, { isApproved: true });
+      const updatedReview = await this.reviewRepository.updateReview(reviewId, { isApproved: true });
+      
+      // Update product's denormalized rating fields
+      await this.reviewRepository.updateProductRating(review.productId);
+      
+      return updatedReview;
     } catch (error) {
       this.logger.error(`Failed to approve review: ${error.message}`, error.stack);
       throw error;
@@ -578,10 +605,39 @@ export class ProductService {
         throw new NotFoundException(`Review with id "${reviewId}" not found`);
       }
 
+      const productId = review.productId;
       await this.reviewRepository.deleteReview(reviewId);
+      
+      // Update product's denormalized rating fields
+      await this.reviewRepository.updateProductRating(productId);
+      
       return { message: 'Review deleted successfully' };
     } catch (error) {
       this.logger.error(`Failed to delete review: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async findAllReviewsForAdmin(query: GetReviewsQueryDto) {
+    try {
+      const { skip = 0, take = 10, rating, isApproved } = query;
+
+      const [reviews, total] = await Promise.all([
+        this.reviewRepository.findAllReviews(undefined, { skip, take, rating, isApproved }),
+        this.reviewRepository.countReviews(undefined, { rating, isApproved }),
+      ]);
+
+      const hasMore = skip + take < total;
+
+      return {
+        data: reviews,
+        total,
+        skip,
+        take,
+        hasMore,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to fetch reviews for admin: ${error.message}`, error.stack);
       throw error;
     }
   }

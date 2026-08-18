@@ -125,6 +125,7 @@ export class ProductRepository {
     isFeatured?: boolean;
     minPrice?: number;
     maxPrice?: number;
+    minRating?: number;
   }) {
     const conditions = [];
 
@@ -164,6 +165,10 @@ export class ProductRepository {
 
     if (params?.maxPrice !== undefined) {
       conditions.push(lte(sql`(SELECT MIN(price) FROM product_variants WHERE product_variants.product_id = ${schema.products.id})`, params.maxPrice));
+    }
+
+    if (params?.minRating !== undefined) {
+      conditions.push(gte(schema.products.averageRating, params.minRating));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -268,6 +273,7 @@ export class ProductRepository {
     subcategoryId?: string;
     brandId?: string;
     isFeatured?: boolean;
+    minRating?: number;
   }) {
     const conditions = [];
 
@@ -299,6 +305,10 @@ export class ProductRepository {
 
     if (params?.isFeatured !== undefined) {
       conditions.push(eq(schema.products.isFeatured, params.isFeatured));
+    }
+
+    if (params?.minRating !== undefined) {
+      conditions.push(gte(schema.products.averageRating, params.minRating));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

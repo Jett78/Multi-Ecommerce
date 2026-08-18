@@ -19,8 +19,10 @@ import {
   ApiBearerAuth,
   ApiCookieAuth,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
-import { AllowAnonymous } from '@thallesp/nestjs-better-auth';
+import { AllowAnonymous, Session } from '@thallesp/nestjs-better-auth';
+import type { UserSession } from '@thallesp/nestjs-better-auth';
 import { RequirePermissions } from '../../decorators/require-permissions.decorator';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -362,8 +364,12 @@ export class ProductController {
   async createReview(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateReviewDto,
+    @Session() session: UserSession,
   ) {
-    const review = await this.productService.createReview(id, '', dto);
+    if (!session?.user) {
+      return { success: false, statusCode: 401, message: 'Not authenticated' };
+    }
+    const review = await this.productService.createReview(id, session.user.id, dto);
     return {
       success: true,
       statusCode: 201,
@@ -395,6 +401,20 @@ export class ProductController {
     };
   }
 
+  @AllowAnonymous()
+  @Get(':id/rating-breakdown')
+  @ApiOperation({ summary: 'Get rating breakdown for a product' })
+  @ApiParam({ name: 'id', description: 'Product UUID' })
+  async getRatingBreakdown(@Param('id', ParseUUIDPipe) id: string) {
+    const result = await this.productService.getRatingBreakdown(id);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Rating breakdown fetched successfully',
+      data: result,
+    };
+  }
+
   @Put('reviews/:reviewId/approve')
   @ApiCookieAuth()
   @RequirePermissions('review.moderate')
@@ -423,6 +443,31 @@ export class ProductController {
       success: true,
       statusCode: 200,
       message: result.message,
+    };
+  }
+
+  @Get('reviews/all')
+  @ApiCookieAuth()
+  @RequirePermissions('review.moderate')
+  @ApiOperation({ summary: 'Get all reviews for admin moderation' })
+  @ApiQuery({ name: 'skip', required: false, type: Number, description: 'Number of items to skip' })
+  @ApiQuery({ name: 'take', required: false, type: Number, description: 'Number of items to take' })
+  @ApiQuery({ name: 'rating', required: false, type: Number, description: 'Filter by rating (1-5)' })
+  @ApiQuery({ name: 'isApproved', required: false, type: Boolean, description: 'Filter by approval status' })
+  @ApiResponse({ status: 200, description: 'Reviews fetched successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - requires review.moderate permission' })
+  async findAllReviewsForAdmin(@Query() query: GetReviewsQueryDto) {
+    const result = await this.productService.findAllReviewsForAdmin(query);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Reviews fetched successfully',
+      data: result.data.map((r) => new ReviewEntity(r)),
+      total: result.total,
+      skip: result.skip,
+      take: result.take,
+      hasMore: result.hasMore,
     };
   }
 

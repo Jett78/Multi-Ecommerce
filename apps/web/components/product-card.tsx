@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/types/product";
 import { formatPrice } from "@/lib/utils";
+import Rating from "@/components/rating";
 
 interface ProductCardProps {
   product: Product;
@@ -82,6 +83,14 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             </span>
           )}
         </div>
+        {product.reviewCount > 0 && (
+          <Rating
+            rating={product.averageRating}
+            size="sm"
+            showValue
+            reviewCount={product.reviewCount}
+          />
+        )}
       </div>
     </Link>
   );

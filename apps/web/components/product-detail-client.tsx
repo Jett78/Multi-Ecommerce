@@ -6,6 +6,9 @@ import type { Product, ProductVariant } from "@/types/product";
 import { ChevronLeft } from "lucide-react";
 import ProductImages from "@/components/product-images";
 import ProductInfo from "@/components/product-info";
+import RatingSummary from "@/components/rating-summary";
+import ReviewList from "@/components/review-list";
+import ReviewForm from "@/components/review-form";
 
 interface ProductDetailClientProps {
   product: Product;
@@ -52,6 +55,25 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             selectedVariant={selectedVariant}
             onSelectVariant={setSelectedVariant}
           />
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-16 pt-16 border-t-4 border-black">
+          <div className="grid lg:grid-cols-3 gap-12">
+            {/* Rating Summary - Left Side */}
+            <div className="lg:col-span-1">
+              <h2 className="font-syne font-bold text-3xl mb-6">CUSTOMER REVIEWS</h2>
+              <RatingSummary productId={product.id} />
+              <div className="mt-6">
+                <ReviewForm productId={product.id} />
+              </div>
+            </div>
+
+            {/* Reviews List - Right Side */}
+            <div className="lg:col-span-2">
+              <ReviewList productId={product.id} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

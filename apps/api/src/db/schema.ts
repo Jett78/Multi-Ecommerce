@@ -472,6 +472,9 @@ export const products = pgTable('products', {
   lowStockThreshold: integer('low_stock_threshold').default(5),
   weight: integer('weight'),
   barcode: varchar('barcode', { length: 100 }),
+  // Rating fields (denormalized for performance)
+  averageRating: integer('average_rating').default(0).notNull(),
+  reviewCount: integer('review_count').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -484,6 +487,7 @@ export const products = pgTable('products', {
   isFeaturedIdx: index('products_is_featured_idx').on(table.isFeatured),
   skuIdx: index('products_sku_idx').on(table.sku),
   sortOrderIdx: index('products_sort_order_idx').on(table.sortOrder),
+  averageRatingIdx: index('products_average_rating_idx').on(table.averageRating),
 }));
 
 export const productVariants = pgTable('product_variants', {
@@ -546,6 +550,7 @@ export const productReviews = pgTable('product_reviews', {
   rating: integer('rating').notNull(),
   title: varchar('title', { length: 255 }),
   comment: text('comment'),
+  images: text('images').array().default([]).notNull(),
   isVerifiedPurchase: boolean('is_verified_purchase').default(false).notNull(),
   isApproved: boolean('is_approved').default(false).notNull(),
   helpfulCount: integer('helpful_count').default(0).notNull(),
