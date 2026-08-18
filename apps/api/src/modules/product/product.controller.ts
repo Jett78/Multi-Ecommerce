@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -31,16 +32,25 @@ import { CreateVariantDto } from './dto/create-variant.dto';
 import { UpdateVariantDto } from './dto/update-variant.dto';
 import { AdjustStockDto } from './dto/adjust-stock.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { CreateReviewReplyDto } from './dto/create-review-reply.dto';
 import { GetProductsQueryDto } from './dto/get-products-query.dto';
 import { GetReviewsQueryDto } from './dto/get-reviews-query.dto';
 import { ProductEntity } from './entities/product.entity';
 import { VariantEntity } from './entities/variant.entity';
-import { ReviewEntity } from './entities/review.entity';
+import { ReviewEntity, ReviewReplyEntity } from './entities/review.entity';
+import { DB_CONNECTION } from '../../db/db.module';
+import { user as userTable } from '../../db/schema';
+import { eq } from 'drizzle-orm';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 
 @ApiTags('products')
 @Controller('products')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    @Inject(DB_CONNECTION)
+    private readonly db: NodePgDatabase<Record<string, never>>,
+  ) {}
 
   @Post()
   @ApiCookieAuth()
@@ -483,6 +493,91 @@ export class ProductController {
       statusCode: 200,
       message: 'Review marked as helpful',
       data: new ReviewEntity(review),
+    };
+  }
+
+  // ============================================================
+  // REVIEW REPLIES
+  // ============================================================
+
+  @Post('reviews/:reviewId/replies')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Reply to a review' })
+  @ApiParam({ name: 'reviewId', description: 'Review UUID' })
+  async createReviewReply(
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+    @Body() dto: CreateReviewReplyDto,
+    @Session() session: UserSession,
+  ) {
+    if (!session?.user) {
+      return { success: false, statusCode: 401, message: 'Not authenticated' };
+    }
+
+    const userRecord = await this.db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.id, session.user.id))
+      .limit(1);
+
+    const userRole = userRecord[0]?.role || 'customer';
+
+    const reply = await this.productService.createReviewReply(
+      reviewId,
+      session.user.id,
+      dto,
+      userRole,
+    );
+
+    return {
+      success: true,
+      statusCode: 201,
+      message: 'Reply posted successfully',
+      data: new ReviewReplyEntity(reply),
+    };
+  }
+
+  @AllowAnonymous()
+  @Get('reviews/:reviewId/replies')
+  @ApiOperation({ summary: 'Get replies for a review' })
+  @ApiParam({ name: 'reviewId', description: 'Review UUID' })
+  async getReviewReplies(@Param('reviewId', ParseUUIDPipe) reviewId: string) {
+    const replies = await this.productService.getReviewReplies(reviewId);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Replies fetched successfully',
+      data: replies.map((r) => new ReviewReplyEntity(r)),
+    };
+  }
+
+  @Delete('reviews/:reviewId/replies/:replyId')
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Delete a reply' })
+  @ApiParam({ name: 'reviewId', description: 'Review UUID' })
+  @ApiParam({ name: 'replyId', description: 'Reply UUID' })
+  async deleteReviewReply(
+    @Param('reviewId', ParseUUIDPipe) reviewId: string,
+    @Param('replyId', ParseUUIDPipe) replyId: string,
+    @Session() session: UserSession,
+  ) {
+    if (!session?.user) {
+      return { success: false, statusCode: 401, message: 'Not authenticated' };
+    }
+
+    const userRecord = await this.db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.id, session.user.id))
+      .limit(1);
+
+    const userRole = userRecord[0]?.role || 'customer';
+
+    await this.productService.deleteReviewReply(replyId, session.user.id, userRole);
+
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Reply deleted successfully',
     };
   }
 }

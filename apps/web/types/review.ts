@@ -1,5 +1,20 @@
 import { BaseEntity } from "./base-entity";
 
+export interface ReviewReply {
+  id: string;
+  reviewId: string;
+  parentId?: string;
+  userId?: string;
+  comment: string;
+  isAdminReply: boolean;
+  createdAt: string;
+  updatedAt: string;
+  userName?: string;
+  userImage?: string;
+  userRole?: string;
+  replies?: ReviewReply[];
+}
+
 export interface Review extends BaseEntity {
   productId: string;
   userId?: string;
@@ -18,6 +33,8 @@ export interface Review extends BaseEntity {
   userImage?: string;
   userRole?: string;
   isEmailVerified?: boolean;
+  replies?: ReviewReply[];
+  replyCount?: number;
 }
 
 export interface ReviewListResponse {
@@ -56,4 +73,8 @@ export interface CreateReviewPayload {
   rating: number;
   title?: string;
   comment?: string;
+}
+
+export interface CreateReviewReplyPayload {
+  comment: string;
 }

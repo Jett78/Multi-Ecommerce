@@ -84,3 +84,52 @@ export class ReviewEntity {
     this.isEmailVerified = partial.isEmailVerified ?? undefined;
   }
 }
+
+export class ReviewReplyEntity {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  reviewId: string;
+
+  @ApiPropertyOptional()
+  parentId?: string;
+
+  @ApiPropertyOptional()
+  userId?: string;
+
+  @ApiProperty()
+  comment: string;
+
+  @ApiProperty()
+  isAdminReply: boolean;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
+
+  @ApiPropertyOptional()
+  userName?: string;
+
+  @ApiPropertyOptional()
+  userImage?: string;
+
+  @ApiPropertyOptional()
+  userRole?: string;
+
+  constructor(partial: Record<string, any>) {
+    this.id = partial.id;
+    this.reviewId = partial.reviewId;
+    this.parentId = partial.parentId ?? undefined;
+    this.userId = partial.userId ?? undefined;
+    this.comment = partial.comment;
+    this.isAdminReply = partial.isAdminReply;
+    this.createdAt = partial.createdAt;
+    this.updatedAt = partial.updatedAt;
+    this.userName = partial.userName?.trim() ?? undefined;
+    this.userImage = partial.userImage ?? undefined;
+    this.userRole = partial.userRole ?? undefined;
+  }
+}

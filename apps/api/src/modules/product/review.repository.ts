@@ -296,4 +296,63 @@ export class ReviewRepository {
 
     return ratingBreakdown;
   }
+
+  // ============================================================
+  // REVIEW REPLIES
+  // ============================================================
+
+  async createReply(data: typeof schema.reviewReplies.$inferInsert) {
+    const [reply] = await this.db.insert(schema.reviewReplies).values(data).returning();
+    return reply;
+  }
+
+  async findReplyById(id: string) {
+    const [reply] = await this.db
+      .select()
+      .from(schema.reviewReplies)
+      .where(eq(schema.reviewReplies.id, id));
+
+    return reply || null;
+  }
+
+  async findRepliesByReviewId(reviewId: string) {
+    const replies = await this.db
+      .select({
+        id: schema.reviewReplies.id,
+        reviewId: schema.reviewReplies.reviewId,
+        parentId: schema.reviewReplies.parentId,
+        userId: schema.reviewReplies.userId,
+        comment: schema.reviewReplies.comment,
+        isAdminReply: schema.reviewReplies.isAdminReply,
+        createdAt: schema.reviewReplies.createdAt,
+        updatedAt: schema.reviewReplies.updatedAt,
+        userName: schema.user.name,
+        userImage: schema.user.image,
+        userRole: schema.user.role,
+      })
+      .from(schema.reviewReplies)
+      .leftJoin(schema.user, eq(schema.reviewReplies.userId, schema.user.id))
+      .where(eq(schema.reviewReplies.reviewId, reviewId))
+      .orderBy(desc(schema.reviewReplies.createdAt));
+
+    return replies;
+  }
+
+  async countRepliesByReviewId(reviewId: string) {
+    const [result] = await this.db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.reviewReplies)
+      .where(eq(schema.reviewReplies.reviewId, reviewId));
+
+    return Number(result.count);
+  }
+
+  async deleteReply(id: string) {
+    const [reply] = await this.db
+      .delete(schema.reviewReplies)
+      .where(eq(schema.reviewReplies.id, id))
+      .returning();
+
+    return reply;
+  }
 }

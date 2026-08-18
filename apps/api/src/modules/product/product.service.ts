@@ -7,6 +7,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateVariantDto } from './dto/create-variant.dto';
 import { UpdateVariantDto } from './dto/update-variant.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { CreateReviewReplyDto } from './dto/create-review-reply.dto';
 import { GetProductsQueryDto } from './dto/get-products-query.dto';
 import { GetReviewsQueryDto } from './dto/get-reviews-query.dto';
 import { AdjustStockDto } from './dto/adjust-stock.dto';
@@ -652,6 +653,85 @@ export class ProductService {
       return await this.reviewRepository.incrementHelpfulCount(reviewId);
     } catch (error) {
       this.logger.error(`Failed to mark review helpful: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  // ============================================================
+  // REVIEW REPLIES
+  // ============================================================
+
+  async createReviewReply(reviewId: string, userId: string, dto: CreateReviewReplyDto, userRole: string) {
+    try {
+      const review = await this.reviewRepository.findReviewById(reviewId);
+      if (!review) {
+        throw new NotFoundException(`Review with id "${reviewId}" not found`);
+      }
+
+      const isAdmin = ['super_admin', 'admin', 'manager', 'editor'].includes(userRole);
+      const isOwner = review.userId === userId;
+
+      if (!isAdmin && !isOwner) {
+        throw new BadRequestException('You can only reply to your own reviews');
+      }
+
+      // If replying to another reply, validate parent exists
+      if (dto.parentId) {
+        const parentReply = await this.reviewRepository.findReplyById(dto.parentId);
+        if (!parentReply) {
+          throw new NotFoundException(`Parent reply with id "${dto.parentId}" not found`);
+        }
+        if (parentReply.reviewId !== reviewId) {
+          throw new BadRequestException('Parent reply does not belong to this review');
+        }
+      }
+
+      const reply = await this.reviewRepository.createReply({
+        reviewId,
+        parentId: dto.parentId || null,
+        userId,
+        comment: dto.comment,
+        isAdminReply: isAdmin,
+      });
+
+      return reply;
+    } catch (error) {
+      this.logger.error(`Failed to create review reply: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async getReviewReplies(reviewId: string) {
+    try {
+      const review = await this.reviewRepository.findReviewById(reviewId);
+      if (!review) {
+        throw new NotFoundException(`Review with id "${reviewId}" not found`);
+      }
+
+      return await this.reviewRepository.findRepliesByReviewId(reviewId);
+    } catch (error) {
+      this.logger.error(`Failed to fetch review replies: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async deleteReviewReply(replyId: string, userId: string, userRole: string) {
+    try {
+      const reply = await this.reviewRepository.findReplyById(replyId);
+      if (!reply) {
+        throw new NotFoundException(`Reply with id "${replyId}" not found`);
+      }
+
+      const isAdmin = ['super_admin', 'admin', 'manager', 'editor'].includes(userRole);
+      const isOwner = reply.userId === userId;
+
+      if (!isAdmin && !isOwner) {
+        throw new BadRequestException('You can only delete your own replies');
+      }
+
+      return await this.reviewRepository.deleteReply(replyId);
+    } catch (error) {
+      this.logger.error(`Failed to delete review reply: ${error.message}`, error.stack);
       throw error;
     }
   }

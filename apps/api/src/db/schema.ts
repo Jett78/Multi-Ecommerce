@@ -563,6 +563,21 @@ export const productReviews = pgTable('product_reviews', {
   isApprovedIdx: index('product_reviews_is_approved_idx').on(table.isApproved),
 }));
 
+export const reviewReplies = pgTable('review_replies', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  reviewId: uuid('review_id').notNull().references(() => productReviews.id, { onDelete: 'cascade' }),
+  parentId: uuid('parent_id').references((): any => reviewReplies.id, { onDelete: 'cascade' }),
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  comment: text('comment').notNull(),
+  isAdminReply: boolean('is_admin_reply').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  reviewIdIdx: index('review_replies_review_id_idx').on(table.reviewId),
+  parentIdIdx: index('review_replies_parent_id_idx').on(table.parentId),
+  userIdIdx: index('review_replies_user_id_idx').on(table.userId),
+}));
+
 // ============================================================
 // INVENTORY
 // ============================================================
@@ -691,11 +706,25 @@ export const productImagesRelations = relations(productImages, ({ one }) => ({
   }),
 }));
 
-export const productReviewsRelations = relations(productReviews, ({ one }) => ({
+export const productReviewsRelations = relations(productReviews, ({ one, many }) => ({
   product: one(products, {
     fields: [productReviews.productId],
     references: [products.id],
   }),
+  replies: many(reviewReplies),
+}));
+
+export const reviewRepliesRelations = relations(reviewReplies, ({ one, many }) => ({
+  review: one(productReviews, {
+    fields: [reviewReplies.reviewId],
+    references: [productReviews.id],
+  }),
+  parent: one(reviewReplies, {
+    fields: [reviewReplies.parentId],
+    references: [reviewReplies.id],
+    relationName: 'replyReplies',
+  }),
+  replies: many(reviewReplies, { relationName: 'replyReplies' }),
 }));
 
 export const inventoryTransactionsRelations = relations(inventoryTransactions, ({ one }) => ({
