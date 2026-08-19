@@ -1,8 +1,13 @@
 "use client";
 
+import * as React from "react";
+import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import type { Product, ProductVariant } from "@/types/product";
-import { ShoppingBag, Check, X } from "lucide-react";
+import { ShoppingBag, Check, X, Zap } from "lucide-react";
+import { dispatchOpenCart } from "@/components/cart/cart-icon";
+import { useCartStore } from "@/stores/cart-store";
+import { showSuccess, showError } from "@/lib/toast-helper";
 
 interface ProductInfoProps {
   product: Product;
@@ -11,12 +16,15 @@ interface ProductInfoProps {
 }
 
 export default function ProductInfo({ product, selectedVariant, onSelectVariant }: ProductInfoProps) {
+  const router = useRouter();
   const hasVariants = product.variants && product.variants.length > 0;
+  const [quantity, setQuantity] = React.useState(1);
 
   const currentPrice = selectedVariant?.price ?? product.price ?? 0;
   const currentComparePrice = selectedVariant?.compareAtPrice ?? product.compareAtPrice;
   const currentStock = selectedVariant?.stockQuantity ?? product.stockQuantity ?? 0;
   const isInStock = currentStock > 0;
+  const currentVariantId = selectedVariant?.id || product.variants?.[0]?.id;
 
   const attributeGroups: Record<string, Set<string>> = hasVariants
     ? product.variants!.reduce((acc, variant) => {
@@ -29,6 +37,55 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
         return acc;
       }, {} as Record<string, Set<string>>)
     : {};
+
+  const handleAddToCart = () => {
+    if (!isInStock) return;
+    if (!currentVariantId) {
+      showError("This product is not available for purchase");
+      return;
+    }
+
+    const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
+
+    useCartStore.getState().addItem({
+      variantId: currentVariantId,
+      priceAtAdd: currentPrice,
+      productName: product.name,
+      productSlug: product.slug,
+      variantSku: selectedVariant?.sku ?? null,
+      stockQuantity: currentStock,
+      allowBackorder: selectedVariant?.allowBackorder ?? product.allowBackorder ?? false,
+      imageUrl: primaryImage?.url,
+      productId: product.id,
+    }, quantity);
+
+    dispatchOpenCart();
+    showSuccess("Added to cart");
+  };
+
+  const handleBuyNow = () => {
+    if (!isInStock) return;
+    if (!currentVariantId) {
+      showError("This product is not available for purchase");
+      return;
+    }
+
+    const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
+
+    useCartStore.getState().addItem({
+      variantId: currentVariantId,
+      priceAtAdd: currentPrice,
+      productName: product.name,
+      productSlug: product.slug,
+      variantSku: selectedVariant?.sku ?? null,
+      stockQuantity: currentStock,
+      allowBackorder: selectedVariant?.allowBackorder ?? product.allowBackorder ?? false,
+      imageUrl: primaryImage?.url,
+      productId: product.id,
+    }, quantity);
+
+    router.push("/checkout?buyNow=true");
+  };
 
   return (
     <div className="space-y-8">
@@ -149,8 +206,34 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
         </div>
       )}
 
+      {/* Quantity Selector */}
+      {isInStock && (
+        <div className="flex items-center gap-4">
+          <span className="font-space text-sm font-bold text-zinc-600">QUANTITY:</span>
+          <div className="flex items-center border-2 border-zinc-200">
+            <button
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              className="px-4 py-2 text-lg font-bold text-zinc-600 hover:bg-zinc-100 transition-colors"
+            >
+              -
+            </button>
+            <span className="w-12 text-center font-space text-sm font-bold">{quantity}</span>
+            <button
+              onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
+              className="px-4 py-2 text-lg font-bold text-zinc-600 hover:bg-zinc-100 transition-colors"
+            >
+              +
+            </button>
+          </div>
+          <span className="font-space text-xs text-zinc-400">
+            {currentStock} available
+          </span>
+        </div>
+      )}
+
       {/* Add to Cart Button */}
       <button
+        onClick={handleAddToCart}
         disabled={!isInStock}
         className={`w-full py-4 font-space text-sm font-bold transition-all ${
           isInStock
@@ -167,6 +250,19 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
           "OUT OF STOCK"
         )}
       </button>
+
+      {/* Buy Now Button */}
+      {isInStock && (
+        <button
+          onClick={handleBuyNow}
+          className="w-full py-4 font-space text-sm font-bold bg-secondarymain text-white transition-all hover:bg-secondarymain/90 active:scale-95"
+        >
+          <span className="flex items-center justify-center gap-2">
+            <Zap size={18} />
+            BUY NOW
+          </span>
+        </button>
+      )}
 
       {/* Description */}
       {product.description && (

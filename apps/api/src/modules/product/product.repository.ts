@@ -86,16 +86,27 @@ export class ProductRepository {
       .where(eq(schema.productVariants.productId, result.products.id))
       .orderBy(schema.productVariants.sortOrder);
 
-    const variantsWithAttributes = await Promise.all(
-      variants.map(async (variant) => {
-        const attributes = await this.db
+    const variantIds = variants.map(v => v.id);
+
+    const allAttributes = variantIds.length > 0
+      ? await this.db
           .select()
           .from(schema.variantAttributes)
-          .where(eq(schema.variantAttributes.variantId, variant.id))
-          .orderBy(schema.variantAttributes.sortOrder);
-        return { ...variant, attributes };
-      })
-    );
+          .where(inArray(schema.variantAttributes.variantId, variantIds))
+          .orderBy(schema.variantAttributes.sortOrder)
+      : [];
+
+    const attributesByVariant = new Map<string, typeof allAttributes>();
+    for (const attr of allAttributes) {
+      const list = attributesByVariant.get(attr.variantId) || [];
+      list.push(attr);
+      attributesByVariant.set(attr.variantId, list);
+    }
+
+    const variantsWithAttributes = variants.map((variant) => ({
+      ...variant,
+      attributes: attributesByVariant.get(variant.id) || [],
+    }));
 
     const images = await this.db
       .select()

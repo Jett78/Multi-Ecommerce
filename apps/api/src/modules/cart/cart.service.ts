@@ -31,6 +31,17 @@ export class CartService {
     }
   }
 
+  async getCartCount(userId?: string, sessionId?: string) {
+    try {
+      const cart = await this.cartRepository.findOrCreateCart(userId, sessionId);
+      const total = await this.cartRepository.getCartTotal(cart.id);
+      return { itemCount: total.itemCount };
+    } catch (error) {
+      this.logger.error(`Failed to get cart count: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
   async addToCart(variantId: string, quantity: number, userId?: string, sessionId?: string) {
     try {
       const variant = await this.variantRepository.findVariantById(variantId);

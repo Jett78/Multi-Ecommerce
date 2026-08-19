@@ -42,6 +42,19 @@ export class CartController {
   }
 
   @AllowAnonymous()
+  @Get('count')
+  @ApiOperation({ summary: 'Get cart item count' })
+  async getCartCount(@Query('sessionId') sessionId?: string) {
+    const result = await this.cartService.getCartCount(undefined, sessionId);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Cart count fetched successfully',
+      data: result,
+    };
+  }
+
+  @AllowAnonymous()
   @Post('items')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Add item to cart' })

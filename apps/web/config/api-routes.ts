@@ -25,4 +25,10 @@ export const API_ROUTES = {
   SUBCATEGORY: `${API_BASE_URL}/subcategories`,
   PRODUCT: `${API_BASE_URL}/products`,
   PRODUCT_VARIANT: `${API_BASE_URL}/products`,
+  CART: `${API_BASE_URL}/cart`,
+  CART_COUNT: `${API_BASE_URL}/cart/count`,
+  ORDERS: `${API_BASE_URL}/orders`,
+  ORDER_STATS: `${API_BASE_URL}/orders/stats`,
+  MY_ORDERS: `${API_BASE_URL}/orders/my`,
+  STRIPE: `${API_BASE_URL}/stripe`,
 } as const;

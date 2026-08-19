@@ -126,6 +126,23 @@ export class ProductService {
           createdVariants.push(createdVariant);
         }
         result.variants = createdVariants;
+      } else {
+        // Auto-create a default variant for simple products (no variants)
+        const defaultVariant = await this.variantRepository.createVariant({
+          productId: product.id,
+          sku: dto.sku || null,
+          price: dto.price ?? 0,
+          compareAtPrice: dto.compareAtPrice,
+          costPrice: dto.costPrice,
+          stockQuantity: dto.stockQuantity ?? 0,
+          allowBackorder: dto.allowBackorder ?? false,
+          lowStockThreshold: dto.lowStockThreshold ?? 5,
+          weight: dto.weight,
+          barcode: dto.barcode,
+          isActive: true,
+          sortOrder: 0,
+        });
+        result.variants = [defaultVariant];
       }
 
       if (dto.images?.length) {
@@ -305,6 +322,25 @@ export class ProductService {
       // (user switched from variants to no-variants mode)
       if (existing.variants && existing.variants.length > 0) {
         await this.variantRepository.deleteVariantsByProductId(id);
+      }
+
+      // Auto-create default variant if product has no variants
+      const updatedProduct = await this.productRepository.findProductById(id);
+      if (updatedProduct && (!updatedProduct.variants || updatedProduct.variants.length === 0)) {
+        await this.variantRepository.createVariant({
+          productId: id,
+          sku: dto.sku || null,
+          price: dto.price ?? 0,
+          compareAtPrice: dto.compareAtPrice,
+          costPrice: dto.costPrice,
+          stockQuantity: dto.stockQuantity ?? 0,
+          allowBackorder: dto.allowBackorder ?? false,
+          lowStockThreshold: dto.lowStockThreshold ?? 5,
+          weight: dto.weight,
+          barcode: dto.barcode,
+          isActive: true,
+          sortOrder: 0,
+        });
       }
 
       return this.cleanProduct(updated);

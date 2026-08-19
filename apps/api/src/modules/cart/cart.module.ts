@@ -9,6 +9,6 @@ import { DbModule } from '../../db/db.module';
   imports: [DbModule, ProductModule],
   controllers: [CartController],
   providers: [CartService, CartRepository],
-  exports: [CartService],
+  exports: [CartService, CartRepository],
 })
 export class CartModule {}

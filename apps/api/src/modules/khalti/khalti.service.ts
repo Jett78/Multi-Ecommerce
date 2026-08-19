@@ -87,10 +87,10 @@ export class KhaltiService {
 
       if (!response.ok) {
         this.logger.error('Khalti initiate failed', data);
-        // Update order status to failed
+        // Update order payment status to failed
         await this.db
           .update(schema.orders)
-          .set({ status: 'failed', updatedAt: new Date() })
+          .set({ paymentStatus: 'failed', updatedAt: new Date() })
           .where(eq(schema.orders.id, order.id));
         throw new BadRequestException(data.detail || data.message || 'Khalti payment initiation failed');
       }
@@ -113,10 +113,10 @@ export class KhaltiService {
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       this.logger.error('Khalti API error', error);
-      // Update order status to failed
+      // Update order payment status to failed
       await this.db
         .update(schema.orders)
-        .set({ status: 'failed', updatedAt: new Date() })
+        .set({ paymentStatus: 'failed', updatedAt: new Date() })
         .where(eq(schema.orders.id, order.id));
       throw new BadRequestException('Failed to connect to Khalti payment gateway');
     }
@@ -157,7 +157,7 @@ export class KhaltiService {
         .limit(1);
 
       if (order) {
-        const statusMap: Record<string, typeof order.status> = {
+        const paymentStatusMap: Record<string, typeof order.paymentStatus> = {
           'Completed': 'completed',
           'Pending': 'pending',
           'Refunded': 'refunded',
@@ -165,19 +165,29 @@ export class KhaltiService {
           'User canceled': 'cancelled',
         };
 
-        const newStatus = statusMap[data.status] || 'pending';
+        const orderStatusMap: Record<string, typeof order.status> = {
+          'Completed': 'confirmed',
+          'Pending': 'pending',
+          'Refunded': 'pending',
+          'Expired': 'cancelled',
+          'User canceled': 'cancelled',
+        };
+
+        const newPaymentStatus = paymentStatusMap[data.status] || 'pending';
+        const newOrderStatus = orderStatusMap[data.status] || 'pending';
 
         await this.db
           .update(schema.orders)
           .set({
-            status: newStatus,
+            status: newOrderStatus,
+            paymentStatus: newPaymentStatus,
             transactionId: data.transaction_id,
             paymentMethod: 'khalti',
             updatedAt: new Date(),
           })
           .where(eq(schema.orders.id, order.id));
 
-        this.logger.log(`Order ${order.orderId} updated to status: ${newStatus}`);
+        this.logger.log(`Order ${order.orderId} updated to status: ${newOrderStatus}, payment: ${newPaymentStatus}`);
       }
 
       return {

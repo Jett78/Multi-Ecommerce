@@ -4,8 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ShoppingCart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CartIcon, dispatchOpenCart } from "@/components/cart/cart-icon";
+import { CartSidebar } from "@/components/cart/cart-sidebar";
 import type { CompanyProfile } from "@/types/company-profile";
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -32,6 +34,13 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
   const [showNavbar, setShowNavbar] = React.useState(true);
   const [lastScrollY, setLastScrollY] = React.useState(0);
   const [isOpen, setIsOpen] = React.useState(false);
+  const [cartOpen, setCartOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleOpenCart = () => setCartOpen(true);
+    window.addEventListener("open-cart", handleOpenCart);
+    return () => window.removeEventListener("open-cart", handleOpenCart);
+  }, []);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -122,6 +131,9 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                 })}
               </nav>
 
+              {/* Cart Icon */}
+              <CartIcon onClick={() => setCartOpen(true)} />
+
               {/* WhatsApp button */}
               {company?.whatsappNumber && (
                 <Link
@@ -202,6 +214,17 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
             </div>
           </nav>
 
+          {/* Cart Link */}
+          <div className="border-t border-gray-100 p-4">
+            <button
+              onClick={() => { setIsOpen(false); setCartOpen(true); }}
+              className="flex w-full items-center rounded-xl px-4 py-3 text-base font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:text-gray-900"
+            >
+              <ShoppingCart className="mr-3 h-5 w-5" />
+              Cart
+            </button>
+          </div>
+
           {/* WhatsApp CTA */}
           {company?.whatsappNumber && (
             <div className="border-t border-gray-100 p-4">
@@ -217,6 +240,9 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
           )}
         </div>
       </div>
+
+      {/* Cart Sidebar */}
+      <CartSidebar open={cartOpen} onClose={() => setCartOpen(false)} />
     </>
   );
 }

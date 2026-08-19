@@ -43,6 +43,20 @@ export class VariantRepository {
     };
   }
 
+  async findProductByVariantId(variantId: string) {
+    const [result] = await this.db
+      .select({
+        id: schema.products.id,
+        name: schema.products.name,
+        slug: schema.products.slug,
+      })
+      .from(schema.productVariants)
+      .innerJoin(schema.products, eq(schema.productVariants.productId, schema.products.id))
+      .where(eq(schema.productVariants.id, variantId));
+
+    return result || null;
+  }
+
   async findVariantBySku(sku: string) {
     const [variant] = await this.db
       .select()

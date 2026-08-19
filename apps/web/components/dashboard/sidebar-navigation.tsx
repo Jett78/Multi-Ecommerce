@@ -80,12 +80,13 @@ const navigation: NavItem[] = [
   {
     name: "Ecommerce",
     icon: Package,
-    permissions: ["category.read", "product.read", "review.moderate"],
+    permissions: ["category.read", "product.read", "review.moderate", "order.read"],
     children: [
       { name: "Categories", href: "/dashboard/categories", icon: Tags, permission: "category.read" },
       { name: "Subcategories", href: "/dashboard/subcategories", icon: Tags, permission: "category.read" },
       { name: "Products", href: "/dashboard/products", icon: Package, permission: "product.read" },
       { name: "Reviews", href: "/dashboard/reviews", icon: Star, permission: "review.moderate" },
+      { name: "Orders", href: "/dashboard/orders", icon: CreditCard, permission: "order.read" },
     ],
   },
   { name: "Users", href: "/dashboard/users", icon: Users, permission: "user.read" },

@@ -14,6 +14,7 @@ interface NavigationApiResponse {
 const DEFAULT_NAV_ITEMS: NavigationItem[] = [
   { id: "1", key: "home", label: "Home", path: "/", sortOrder: 1, isActive: true, createdAt: "", updatedAt: "" },
   { id: "2", key: "about", label: "About", path: "/about", sortOrder: 2, isActive: true, createdAt: "", updatedAt: "" },
+  { id: "3", key: "products", label: "Products", path: "/products", sortOrder: 3, isActive: true, createdAt: "", updatedAt: "" },
   { id: "4", key: "blog", label: "Blog", path: "/blog", sortOrder: 4, isActive: true, createdAt: "", updatedAt: "" },
   { id: "5", key: "contact", label: "Contact", path: "/contact", sortOrder: 5, isActive: true, createdAt: "", updatedAt: "" },
 ];
