@@ -224,6 +224,8 @@ export const paymentSettings = pgTable('payment_settings', {
 });
 
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'completed', 'failed', 'refunded', 'expired', 'cancelled']);
+export const paymentMethodEnum = pgEnum('payment_method', ['khalti', 'cod', 'stripe']);
+export const orderStatusEnum = pgEnum('order_status', ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']);
 export const productStatusEnum = pgEnum('product_status', ['draft', 'active', 'archived']);
 export const inventoryTransactionTypeEnum = pgEnum('inventory_transaction_type', ['purchase', 'sale', 'return', 'adjustment', 'damage', 'restock']);
 
@@ -237,9 +239,11 @@ export const orders = pgTable('orders', {
   taxAmount: integer('tax_amount').default(0).notNull(),
   totalAmount: integer('total_amount').notNull(),
   currency: varchar('currency', { length: 10 }).default('NPR').notNull(),
-  status: paymentStatusEnum('status').default('pending').notNull(),
-  paymentMethod: varchar('payment_method', { length: 50 }),
+  status: orderStatusEnum('status').default('pending').notNull(),
+  paymentStatus: paymentStatusEnum('payment_status').default('pending').notNull(),
+  paymentMethod: paymentMethodEnum('payment_method'),
   transactionId: varchar('transaction_id', { length: 255 }),
+  stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }),
   customerName: varchar('customer_name', { length: 255 }),
   customerEmail: varchar('customer_email', { length: 255 }),
   customerPhone: varchar('customer_phone', { length: 50 }),
@@ -254,6 +258,7 @@ export const orders = pgTable('orders', {
   pidxIdx: index('orders_pidx_idx').on(table.pidx),
   userIdIdx: index('orders_user_id_idx').on(table.userId),
   statusIdx: index('orders_status_idx').on(table.status),
+  paymentStatusIdx: index('orders_payment_status_idx').on(table.paymentStatus),
 }));
 
 // Better Auth tables
@@ -749,7 +754,11 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   }),
 }));
 
-export const ordersRelations = relations(orders, ({ many }) => ({
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  user: one(user, {
+    fields: [orders.userId],
+    references: [user.id],
+  }),
   items: many(orderItems),
 }));
 

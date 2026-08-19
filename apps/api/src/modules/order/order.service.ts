@@ -1,0 +1,238 @@
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { OrderRepository } from './order.repository';
+import { VariantRepository } from '../product/variant.repository';
+import { randomUUID } from 'crypto';
+
+@Injectable()
+export class OrderService {
+  private readonly logger = new Logger(OrderService.name);
+
+  constructor(
+    private readonly orderRepository: OrderRepository,
+    private readonly variantRepository: VariantRepository,
+  ) {}
+
+  async createOrderFromCart(userId: string, dto: {
+    items: { variantId: string; quantity: number; priceAtAdd: number }[];
+    paymentMethod: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone?: string;
+    shippingAddress: string;
+    billingAddress?: string;
+    notes?: string;
+  }) {
+    try {
+      if (!dto.items || dto.items.length === 0) {
+        throw new BadRequestException('Cart is empty');
+      }
+
+      // Validate stock for all items using variant repository
+      const orderItems: { variantId: string; productName: string; quantity: number; unitPrice: number }[] = [];
+
+      for (const item of dto.items) {
+        const variant = await this.variantRepository.findVariantById(item.variantId);
+        if (!variant) {
+          throw new NotFoundException(`Variant "${item.variantId}" not found`);
+        }
+
+        if (!variant.allowBackorder && variant.stockQuantity < item.quantity) {
+          throw new BadRequestException(
+            `Insufficient stock for variant "${variant.sku || variant.id}". Available: ${variant.stockQuantity}`
+          );
+        }
+
+        const product = await this.variantRepository.findProductByVariantId(item.variantId);
+        orderItems.push({
+          variantId: item.variantId,
+          productName: product?.name || 'Unknown Product',
+          quantity: item.quantity,
+          unitPrice: item.priceAtAdd,
+        });
+      }
+
+      // Calculate totals
+      const subtotal = orderItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+      const totalAmount = subtotal;
+
+      // Generate order ID
+      const orderId = `ORD-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
+
+      // Create order
+      const order = await this.orderRepository.createOrder({
+        orderId,
+        userId,
+        subtotal,
+        totalAmount,
+        paymentMethod: dto.paymentMethod,
+        customerName: dto.customerName,
+        customerEmail: dto.customerEmail,
+        customerPhone: dto.customerPhone,
+        shippingAddress: dto.shippingAddress,
+        billingAddress: dto.billingAddress,
+        notes: dto.notes,
+      });
+
+      // Create order items and decrement stock
+      for (const item of orderItems) {
+        await this.orderRepository.createOrderItem({
+          orderId: order.id,
+          variantId: item.variantId,
+          productName: item.productName,
+          variantName: `SKU-${item.variantId.slice(0, 8)}`,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalAmount: item.unitPrice * item.quantity,
+        });
+
+        // Decrement stock
+        await this.variantRepository.adjustStock(item.variantId, -item.quantity, orderId, `Order ${orderId}`);
+      }
+
+      // Return order with items
+      const createdItems = await this.orderRepository.findOrderItems(order.id);
+      return {
+        ...order,
+        items: createdItems,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to create order: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async createOrderFromBuyNow(userId: string, dto: {
+    variantId: string;
+    quantity: number;
+    paymentMethod: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone?: string;
+    shippingAddress: string;
+    billingAddress?: string;
+    notes?: string;
+  }) {
+    try {
+      // Get variant details
+      const variant = await this.variantRepository.findVariantById(dto.variantId);
+      if (!variant) {
+        throw new NotFoundException(`Variant with id "${dto.variantId}" not found`);
+      }
+
+      // Validate stock
+      if (!variant.allowBackorder && variant.stockQuantity < dto.quantity) {
+        throw new BadRequestException(
+          `Insufficient stock. Available: ${variant.stockQuantity}`
+        );
+      }
+
+      // Get product name
+      const product = await this.variantRepository.findProductByVariantId(dto.variantId);
+      const productName = product?.name || 'Unknown Product';
+
+      // Calculate totals
+      const subtotal = variant.price * dto.quantity;
+      const totalAmount = subtotal;
+
+      // Generate order ID
+      const orderId = `ORD-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
+
+      // Create order
+      const order = await this.orderRepository.createOrder({
+        orderId,
+        userId,
+        subtotal,
+        totalAmount,
+        paymentMethod: dto.paymentMethod,
+        customerName: dto.customerName,
+        customerEmail: dto.customerEmail,
+        customerPhone: dto.customerPhone,
+        shippingAddress: dto.shippingAddress,
+        billingAddress: dto.billingAddress,
+        notes: dto.notes,
+      });
+
+      // Create order item
+      await this.orderRepository.createOrderItem({
+        orderId: order.id,
+        variantId: dto.variantId,
+        productName,
+        variantName: `SKU-${variant.sku || variant.id.slice(0, 8)}`,
+        quantity: dto.quantity,
+        unitPrice: variant.price,
+        totalAmount: variant.price * dto.quantity,
+        sku: variant.sku || undefined,
+      });
+
+      // Return order with items
+      const orderItems = await this.orderRepository.findOrderItems(order.id);
+      return {
+        ...order,
+        items: orderItems,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to create buy now order: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async getOrderById(id: string) {
+    const order = await this.orderRepository.findOrderById(id);
+    if (!order) {
+      throw new NotFoundException(`Order with id "${id}" not found`);
+    }
+
+    const items = await this.orderRepository.findOrderItems(order.id);
+    return {
+      ...order,
+      items,
+    };
+  }
+
+  async getOrderByOrderId(orderId: string) {
+    const order = await this.orderRepository.findOrderByOrderId(orderId);
+    if (!order) {
+      throw new NotFoundException(`Order with id "${orderId}" not found`);
+    }
+
+    const items = await this.orderRepository.findOrderItems(order.id);
+    return {
+      ...order,
+      items,
+    };
+  }
+
+  async getUserOrders(userId: string, page: number = 1, limit: number = 10) {
+    return this.orderRepository.findOrdersByUserId(userId, page, limit);
+  }
+
+  async getAllOrders(page: number = 1, limit: number = 10, filters?: {
+    status?: string;
+    paymentMethod?: string;
+    paymentStatus?: string;
+  }) {
+    return this.orderRepository.findAllOrders(page, limit, filters);
+  }
+
+  async updateOrderStatus(id: string, status: string) {
+    const order = await this.orderRepository.findOrderById(id);
+    if (!order) {
+      throw new NotFoundException(`Order with id "${id}" not found`);
+    }
+
+    return this.orderRepository.updateOrderStatus(id, status);
+  }
+
+  async updatePaymentStatus(id: string, paymentStatus: string, transactionId?: string) {
+    const order = await this.orderRepository.findOrderById(id);
+    if (!order) {
+      throw new NotFoundException(`Order with id "${id}" not found`);
+    }
+
+    return this.orderRepository.updatePaymentStatus(id, paymentStatus, transactionId);
+  }
+
+  async getOrderStats() {
+    return this.orderRepository.getOrderStats();
+  }
+}

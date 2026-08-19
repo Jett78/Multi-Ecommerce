@@ -137,6 +137,9 @@ async function seed() {
       
       { resource: 'inquiry', action: 'read', key: 'inquiry.read', description: 'View inquiries' },
       { resource: 'inquiry', action: 'delete', key: 'inquiry.delete', description: 'Delete inquiries' },
+
+      { resource: 'order', action: 'read', key: 'order.read', description: 'View orders' },
+      { resource: 'order', action: 'manage', key: 'order.manage', description: 'Manage order status and fulfillment' },
       
       { resource: 'company_profile', action: 'read', key: 'company_profile.read', description: 'View company profile' },
       { resource: 'company_profile', action: 'edit', key: 'company_profile.edit', description: 'Edit company profile' },
@@ -211,6 +214,7 @@ async function seed() {
         'brand.read', 'brand.create', 'brand.edit', 'brand.delete',
         'user.read', 'user.create',
         'inquiry.read', 'inquiry.delete',
+        'order.read', 'order.manage',
         'company_profile.read', 'company_profile.edit',
         'seo.read', 'seo.edit',
         'page_seo.read', 'page_seo.create', 'page_seo.edit', 'page_seo.delete',
@@ -271,6 +275,7 @@ async function seed() {
       await db.insert(schema.navigationItems).values([
         { key: 'home', label: 'Home', path: '/', sortOrder: 1, isActive: true },
         { key: 'about', label: 'About', path: '/about', sortOrder: 2, isActive: true },
+        { key: 'products', label: 'Products', path: '/products', sortOrder: 3, isActive: true },
         { key: 'blog', label: 'Blog', path: '/blog', sortOrder: 4, isActive: true },
         { key: 'contact', label: 'Contact', path: '/contact', sortOrder: 5, isActive: true },
       ]);
