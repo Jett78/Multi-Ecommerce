@@ -2,6 +2,11 @@ export type PaymentMethod = 'khalti' | 'cod' | 'stripe';
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded' | 'expired' | 'cancelled';
 
+export interface OrderItemAttribute {
+  attributeName: string;
+  attributeValue: string;
+}
+
 export interface OrderItem {
   id: string;
   orderId: string;
@@ -12,6 +17,8 @@ export interface OrderItem {
   unitPrice: number;
   totalAmount: number;
   sku: string | null;
+  image: string | null;
+  attributes?: OrderItemAttribute[];
   product: {
     id: string;
     name: string;
@@ -43,6 +50,7 @@ export interface Order {
   customerPhone: string | null;
   shippingAddress: string | null;
   billingAddress: string | null;
+  landmark: string | null;
   notes: string | null;
   metadata: string | null;
   createdAt: string;
@@ -64,12 +72,8 @@ export interface CreateOrderPayload {
   customerPhone?: string;
   shippingAddress: string;
   billingAddress?: string;
+  landmark?: string;
   notes?: string;
-}
-
-export interface CreateBuyNowOrderPayload extends CreateOrderPayload {
-  variantId: string;
-  quantity: number;
 }
 
 export interface OrderListResponse {

@@ -52,9 +52,15 @@ function CartItemRow({
         <h3 className="text-sm font-semibold text-gray-900 leading-tight">
           {item.productName}
         </h3>
-        <p className="mt-0.5 text-xs text-gray-500">
-          {item.variantSku || item.variantId.slice(0, 8)}
-        </p>
+        {item.attributes && item.attributes.length > 0 ? (
+          <p className="mt-0.5 text-xs text-gray-500">
+            {item.attributes.map((a) => `${a.attributeName}: ${a.attributeValue}`).join(", ")}
+          </p>
+        ) : item.variantSku ? (
+          <p className="mt-0.5 text-xs text-gray-500">
+            {item.variantSku}
+          </p>
+        ) : null}
         <div className="mt-2 inline-flex items-center rounded-lg border border-gray-200">
           <button
             onClick={() => updateQuantity(item.variantId, item.quantity - 1)}

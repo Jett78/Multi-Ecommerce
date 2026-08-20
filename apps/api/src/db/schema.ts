@@ -249,6 +249,7 @@ export const orders = pgTable('orders', {
   customerPhone: varchar('customer_phone', { length: 50 }),
   shippingAddress: text('shipping_address'),
   billingAddress: text('billing_address'),
+  landmark: text('landmark'),
   notes: text('notes'),
   metadata: text('metadata'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),

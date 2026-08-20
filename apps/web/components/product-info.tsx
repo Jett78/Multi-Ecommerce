@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import type { Product, ProductVariant } from "@/types/product";
-import { ShoppingBag, Check, X, Zap } from "lucide-react";
+import { ShoppingBag, Check, X } from "lucide-react";
 import { dispatchOpenCart } from "@/components/cart/cart-icon";
 import { useCartStore } from "@/stores/cart-store";
 import { showSuccess, showError } from "@/lib/toast-helper";
@@ -16,7 +15,6 @@ interface ProductInfoProps {
 }
 
 export default function ProductInfo({ product, selectedVariant, onSelectVariant }: ProductInfoProps) {
-  const router = useRouter();
   const hasVariants = product.variants && product.variants.length > 0;
   const [quantity, setQuantity] = React.useState(1);
 
@@ -57,34 +55,11 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
       allowBackorder: selectedVariant?.allowBackorder ?? product.allowBackorder ?? false,
       imageUrl: primaryImage?.url,
       productId: product.id,
+      attributes: selectedVariant?.attributes?.map((a) => ({ attributeName: a.attributeName, attributeValue: a.attributeValue })),
     }, quantity);
 
     dispatchOpenCart();
     showSuccess("Added to cart");
-  };
-
-  const handleBuyNow = () => {
-    if (!isInStock) return;
-    if (!currentVariantId) {
-      showError("This product is not available for purchase");
-      return;
-    }
-
-    const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
-
-    useCartStore.getState().addItem({
-      variantId: currentVariantId,
-      priceAtAdd: currentPrice,
-      productName: product.name,
-      productSlug: product.slug,
-      variantSku: selectedVariant?.sku ?? null,
-      stockQuantity: currentStock,
-      allowBackorder: selectedVariant?.allowBackorder ?? product.allowBackorder ?? false,
-      imageUrl: primaryImage?.url,
-      productId: product.id,
-    }, quantity);
-
-    router.push("/checkout?buyNow=true");
   };
 
   return (
@@ -250,19 +225,6 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
           "OUT OF STOCK"
         )}
       </button>
-
-      {/* Buy Now Button */}
-      {isInStock && (
-        <button
-          onClick={handleBuyNow}
-          className="w-full py-4 font-space text-sm font-bold bg-secondarymain text-white transition-all hover:bg-secondarymain/90 active:scale-95"
-        >
-          <span className="flex items-center justify-center gap-2">
-            <Zap size={18} />
-            BUY NOW
-          </span>
-        </button>
-      )}
 
       {/* Description */}
       {product.description && (

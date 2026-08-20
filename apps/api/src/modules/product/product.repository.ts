@@ -39,17 +39,27 @@ export class ProductRepository {
       .where(eq(schema.productVariants.productId, id))
       .orderBy(schema.productVariants.sortOrder);
 
-    // Fetch attributes for each variant
-    const variantsWithAttributes = await Promise.all(
-      variants.map(async (variant) => {
-        const attributes = await this.db
+    const variantIds = variants.map(v => v.id);
+
+    const allAttributes = variantIds.length > 0
+      ? await this.db
           .select()
           .from(schema.variantAttributes)
-          .where(eq(schema.variantAttributes.variantId, variant.id))
-          .orderBy(schema.variantAttributes.sortOrder);
-        return { ...variant, attributes };
-      })
-    );
+          .where(inArray(schema.variantAttributes.variantId, variantIds))
+          .orderBy(schema.variantAttributes.sortOrder)
+      : [];
+
+    const attributesByVariant = new Map<string, typeof allAttributes>();
+    for (const attr of allAttributes) {
+      const list = attributesByVariant.get(attr.variantId) || [];
+      list.push(attr);
+      attributesByVariant.set(attr.variantId, list);
+    }
+
+    const variantsWithAttributes = variants.map((variant) => ({
+      ...variant,
+      attributes: attributesByVariant.get(variant.id) || [],
+    }));
 
     const images = await this.db
       .select()
@@ -202,7 +212,7 @@ export class ProductRepository {
     }
 
     // Batch fetch variants, images, and SEO meta for all products
-    const [allVariants, allImages, allSeoMetas, allAttributes] = await Promise.all([
+    const [allVariants, allImages, allSeoMetas] = await Promise.all([
       this.db
         .select()
         .from(schema.productVariants)
@@ -217,13 +227,17 @@ export class ProductRepository {
         .select()
         .from(schema.seoMetas)
         .where(inArray(schema.seoMetas.productId, productIds)),
-      this.db
-        .select()
-        .from(schema.variantAttributes)
-        .innerJoin(schema.productVariants, eq(schema.variantAttributes.variantId, schema.productVariants.id))
-        .where(inArray(schema.productVariants.productId, productIds))
-        .orderBy(schema.variantAttributes.sortOrder),
     ]);
+
+    const variantIds = allVariants.map(v => v.id);
+
+    const allAttributes = variantIds.length > 0
+      ? await this.db
+          .select()
+          .from(schema.variantAttributes)
+          .where(inArray(schema.variantAttributes.variantId, variantIds))
+          .orderBy(schema.variantAttributes.sortOrder)
+      : [];
 
     // Group by product ID
     const variantsByProduct = new Map<string, typeof allVariants>();
@@ -250,12 +264,9 @@ export class ProductRepository {
     }
 
     for (const attr of allAttributes) {
-      const variantId = (attr as any).product_variants?.id || (attr as any).variant_id;
-      if (variantId) {
-        const list = attributesByVariant.get(variantId) || [];
-        list.push(attr);
-        attributesByVariant.set(variantId, list);
-      }
+      const list = attributesByVariant.get(attr.variantId) || [];
+      list.push(attr);
+      attributesByVariant.set(attr.variantId, list);
     }
 
     return products.map((row) => {

@@ -14,6 +14,7 @@ export interface CartItem {
   allowBackorder: boolean;
   imageUrl?: string;
   productId: string;
+  attributes?: { attributeName: string; attributeValue: string }[];
 }
 
 interface CartStore {

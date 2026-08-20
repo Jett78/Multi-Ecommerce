@@ -3,18 +3,19 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { Session, UserSession } from '@thallesp/nestjs-better-auth';
+import { AllowAnonymous, Session, UserSession } from '@thallesp/nestjs-better-auth';
 import { RequirePermissions } from '../../decorators/require-permissions.decorator';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { CreateBuyNowOrderDto } from './dto/create-buy-now-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { GetOrdersQueryDto } from './dto/get-orders-query.dto';
 
 @Controller('orders')
@@ -22,23 +23,20 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post('checkout')
+  @AllowAnonymous()
   @HttpCode(HttpStatus.CREATED)
   async checkout(
     @Session() session: UserSession,
     @Body() dto: CreateOrderDto,
   ) {
     const userId = session?.user?.id;
-    return this.orderService.createOrderFromCart(userId, dto);
-  }
-
-  @Post('buy-now')
-  @HttpCode(HttpStatus.CREATED)
-  async buyNow(
-    @Session() session: UserSession,
-    @Body() dto: CreateBuyNowOrderDto,
-  ) {
-    const userId = session?.user?.id;
-    return this.orderService.createOrderFromBuyNow(userId, dto);
+    const result = await this.orderService.createOrderFromCart(userId, dto);
+    return {
+      success: true,
+      statusCode: 201,
+      message: 'Order placed successfully',
+      data: result,
+    };
   }
 
   @Get('my')
@@ -48,17 +46,29 @@ export class OrderController {
     @Query('limit') limit?: string,
   ) {
     const userId = session?.user?.id;
-    return this.orderService.getUserOrders(
+    const result = await this.orderService.getUserOrders(
       userId,
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 10,
     );
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Orders fetched successfully',
+      data: result,
+    };
   }
 
   @Get('stats')
   @RequirePermissions('order.read')
   async getStats() {
-    return this.orderService.getOrderStats();
+    const result = await this.orderService.getOrderStats();
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Order stats fetched successfully',
+      data: result,
+    };
   }
 
   @Get()
@@ -66,15 +76,28 @@ export class OrderController {
   async findAll(
     @Query() query: GetOrdersQueryDto,
   ) {
-    return this.orderService.getAllOrders(
-      query.page ? parseInt(query.page, 10) : 1,
-      query.limit ? parseInt(query.limit, 10) : 10,
+    const page = query.page ? parseInt(query.page, 10) : 1;
+    const limit = query.limit ? parseInt(query.limit, 10) : 10;
+    const result = await this.orderService.getAllOrders(
+      page,
+      limit,
       {
         status: query.status,
         paymentMethod: query.paymentMethod,
         paymentStatus: query.paymentStatus,
+        sort: query.sort,
       },
     );
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Orders fetched successfully',
+      data: result.orders,
+      total: result.totalCount,
+      skip: (page - 1) * limit,
+      take: limit,
+      hasMore: page < result.totalPages,
+    };
   }
 
   @Get(':id')
@@ -92,7 +115,12 @@ export class OrderController {
       }
     }
 
-    return order;
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Order fetched successfully',
+      data: order,
+    };
   }
 
   @Put(':id/status')
@@ -101,6 +129,38 @@ export class OrderController {
     @Param('id') id: string,
     @Body() dto: UpdateOrderStatusDto,
   ) {
-    return this.orderService.updateOrderStatus(id, dto.status);
+    const result = await this.orderService.updateOrderStatus(id, dto.status);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Order status updated successfully',
+      data: result,
+    };
+  }
+
+  @Put(':id/payment-status')
+  @RequirePermissions('order.manage')
+  async updatePaymentStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdatePaymentStatusDto,
+  ) {
+    const result = await this.orderService.updatePaymentStatus(id, dto.paymentStatus, dto.transactionId);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Payment status updated successfully',
+      data: result,
+    };
+  }
+
+  @Delete(':id')
+  @RequirePermissions('order.manage')
+  async remove(@Param('id') id: string) {
+    await this.orderService.deleteOrder(id);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Order deleted successfully',
+    };
   }
 }

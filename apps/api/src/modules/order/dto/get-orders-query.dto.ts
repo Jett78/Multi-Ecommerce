@@ -23,4 +23,9 @@ export class GetOrdersQueryDto {
   @IsOptional()
   @IsIn(['pending', 'completed', 'failed', 'refunded', 'expired', 'cancelled'])
   paymentStatus?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sort?: string;
 }

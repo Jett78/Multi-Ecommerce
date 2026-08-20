@@ -20,6 +20,7 @@ export class OrderService {
     customerPhone?: string;
     shippingAddress: string;
     billingAddress?: string;
+    landmark?: string;
     notes?: string;
   }) {
     try {
@@ -70,6 +71,7 @@ export class OrderService {
         customerPhone: dto.customerPhone,
         shippingAddress: dto.shippingAddress,
         billingAddress: dto.billingAddress,
+        landmark: dto.landmark,
         notes: dto.notes,
       });
 
@@ -97,81 +99,6 @@ export class OrderService {
       };
     } catch (error) {
       this.logger.error(`Failed to create order: ${error.message}`, error.stack);
-      throw error;
-    }
-  }
-
-  async createOrderFromBuyNow(userId: string, dto: {
-    variantId: string;
-    quantity: number;
-    paymentMethod: string;
-    customerName: string;
-    customerEmail: string;
-    customerPhone?: string;
-    shippingAddress: string;
-    billingAddress?: string;
-    notes?: string;
-  }) {
-    try {
-      // Get variant details
-      const variant = await this.variantRepository.findVariantById(dto.variantId);
-      if (!variant) {
-        throw new NotFoundException(`Variant with id "${dto.variantId}" not found`);
-      }
-
-      // Validate stock
-      if (!variant.allowBackorder && variant.stockQuantity < dto.quantity) {
-        throw new BadRequestException(
-          `Insufficient stock. Available: ${variant.stockQuantity}`
-        );
-      }
-
-      // Get product name
-      const product = await this.variantRepository.findProductByVariantId(dto.variantId);
-      const productName = product?.name || 'Unknown Product';
-
-      // Calculate totals
-      const subtotal = variant.price * dto.quantity;
-      const totalAmount = subtotal;
-
-      // Generate order ID
-      const orderId = `ORD-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
-
-      // Create order
-      const order = await this.orderRepository.createOrder({
-        orderId,
-        userId,
-        subtotal,
-        totalAmount,
-        paymentMethod: dto.paymentMethod,
-        customerName: dto.customerName,
-        customerEmail: dto.customerEmail,
-        customerPhone: dto.customerPhone,
-        shippingAddress: dto.shippingAddress,
-        billingAddress: dto.billingAddress,
-        notes: dto.notes,
-      });
-
-      // Create order item
-      await this.orderRepository.createOrderItem({
-        orderId: order.id,
-        variantId: dto.variantId,
-        productName,
-        variantName: `SKU-${variant.sku || variant.id.slice(0, 8)}`,
-        quantity: dto.quantity,
-        unitPrice: variant.price,
-        totalAmount: variant.price * dto.quantity,
-        sku: variant.sku || undefined,
-      });
-
-      // Return order with items
-      const orderItems = await this.orderRepository.findOrderItems(order.id);
-      return {
-        ...order,
-        items: orderItems,
-      };
-    } catch (error) {
-      this.logger.error(`Failed to create buy now order: ${error.message}`, error.stack);
       throw error;
     }
   }
@@ -210,6 +137,7 @@ export class OrderService {
     status?: string;
     paymentMethod?: string;
     paymentStatus?: string;
+    sort?: string;
   }) {
     return this.orderRepository.findAllOrders(page, limit, filters);
   }
@@ -230,6 +158,15 @@ export class OrderService {
     }
 
     return this.orderRepository.updatePaymentStatus(id, paymentStatus, transactionId);
+  }
+
+  async deleteOrder(id: string) {
+    const order = await this.orderRepository.findOrderById(id);
+    if (!order) {
+      throw new NotFoundException(`Order with id "${id}" not found`);
+    }
+
+    return this.orderRepository.deleteOrder(id);
   }
 
   async getOrderStats() {

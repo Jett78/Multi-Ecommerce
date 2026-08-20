@@ -15,18 +15,31 @@ export async function apiClient<T>(
     ...(options.headers as Record<string, string>),
   };
 
-  const response = await fetch(url, {
-    ...fetchOptions,
-    headers,
-    credentials: "include",
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(url, {
+      ...fetchOptions,
+      headers,
+      credentials: "include",
+    });
+  } catch (networkError) {
+    const error: ApiError = {
+      success: false,
+      statusCode: 0,
+      message:
+        "Could not connect to the server. Please check your internet connection and try again.",
+      errors: undefined,
+    };
+    throw error;
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     const error: ApiError = {
       success: false,
       statusCode: response.status,
-      message: errorData.message || `HTTP error ${response.status}`,
+      message: errorData.message || `Request failed with status ${response.status}`,
       errors: errorData.errors,
     };
     throw error;

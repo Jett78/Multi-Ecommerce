@@ -47,5 +47,9 @@ export class CreateOrderDto {
 
   @IsString()
   @IsOptional()
+  landmark?: string;
+
+  @IsString()
+  @IsOptional()
   notes?: string;
 }

@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DB_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
-import { eq, sql, desc, and, count } from 'drizzle-orm';
+import { eq, sql, desc, asc, and, count, inArray, or } from 'drizzle-orm';
 
 @Injectable()
 export class OrderRepository {
@@ -26,6 +26,7 @@ export class OrderRepository {
     customerPhone?: string;
     shippingAddress?: string;
     billingAddress?: string;
+    landmark?: string;
     notes?: string;
     metadata?: string;
   }) {
@@ -46,6 +47,7 @@ export class OrderRepository {
         customerPhone: data.customerPhone,
         shippingAddress: data.shippingAddress,
         billingAddress: data.billingAddress,
+        landmark: data.landmark,
         notes: data.notes,
         metadata: data.metadata,
       })
@@ -101,33 +103,127 @@ export class OrderRepository {
   }
 
   async findOrderItems(orderId: string) {
-    const items = await this.db
-      .select()
+    const rows = await this.db
+      .select({
+        item: schema.orderItems,
+        product: {
+          id: schema.products.id,
+          name: schema.products.name,
+          slug: schema.products.slug,
+        },
+        variant: {
+          id: schema.productVariants.id,
+          sku: schema.productVariants.sku,
+        },
+      })
       .from(schema.orderItems)
       .innerJoin(schema.productVariants, eq(schema.orderItems.variantId, schema.productVariants.id))
       .innerJoin(schema.products, eq(schema.productVariants.productId, schema.products.id))
       .where(eq(schema.orderItems.orderId, orderId));
 
-    return items.map((row) => ({
-      id: row.order_items.id,
-      orderId: row.order_items.orderId,
-      variantId: row.order_items.variantId,
-      productName: row.order_items.productName,
-      variantName: row.order_items.variantName,
-      quantity: row.order_items.quantity,
-      unitPrice: row.order_items.unitPrice,
-      totalAmount: row.order_items.totalAmount,
-      sku: row.order_items.sku,
-      product: {
-        id: row.products.id,
-        name: row.products.name,
-        slug: row.products.slug,
-      },
-      variant: {
-        id: row.product_variants.id,
-        sku: row.product_variants.sku,
-      },
-    }));
+    const variantIds = rows.map((r) => r.variant.id);
+    const productIds = rows.map((r) => r.product.id);
+
+    const attributes = variantIds.length
+      ? await this.db
+          .select()
+          .from(schema.variantAttributes)
+          .where(inArray(schema.variantAttributes.variantId, variantIds))
+          .orderBy(schema.variantAttributes.sortOrder)
+      : [];
+
+    const images = variantIds.length || productIds.length
+      ? await this.db
+          .select()
+          .from(schema.productImages)
+          .where(
+            or(
+              inArray(schema.productImages.variantId, variantIds),
+              inArray(schema.productImages.productId, productIds),
+            ),
+          )
+          .orderBy(schema.productImages.sortOrder)
+      : [];
+
+    const attributesByVariant = new Map<string, typeof attributes>();
+    for (const attr of attributes) {
+      const list = attributesByVariant.get(attr.variantId) || [];
+      list.push(attr);
+      attributesByVariant.set(attr.variantId, list);
+    }
+
+    const imagesByVariant = new Map<string, typeof images>();
+    const imagesByProduct = new Map<string, typeof images>();
+    for (const img of images) {
+      if (img.variantId) {
+        const list = imagesByVariant.get(img.variantId) || [];
+        list.push(img);
+        imagesByVariant.set(img.variantId, list);
+      }
+      if (img.productId) {
+        const list = imagesByProduct.get(img.productId) || [];
+        list.push(img);
+        imagesByProduct.set(img.productId, list);
+      }
+    }
+
+    return rows.map((row) => {
+      const variantImages = imagesByVariant.get(row.variant.id) || [];
+      let imageRow =
+        variantImages.find((i) => i.isPrimary) ||
+        variantImages[0] ||
+        (imagesByProduct.get(row.product.id) || []).find((i) => i.isPrimary) ||
+        (imagesByProduct.get(row.product.id) || [])[0] ||
+        null;
+
+      const imageKey = imageRow?.imageKey || null;
+
+      return {
+        id: row.item.id,
+        orderId: row.item.orderId,
+        variantId: row.item.variantId,
+        productName: row.item.productName,
+        variantName: row.item.variantName,
+        quantity: row.item.quantity,
+        unitPrice: row.item.unitPrice,
+        totalAmount: row.item.totalAmount,
+        sku: row.item.sku,
+        image: imageKey ? this.buildImageUrl(imageKey) : null,
+        attributes: (attributesByVariant.get(row.variant.id) || []).map((a) => ({
+          attributeName: a.attributeName,
+          attributeValue: a.attributeValue,
+        })),
+        product: {
+          id: row.product.id,
+          name: row.product.name,
+          slug: row.product.slug,
+        },
+        variant: {
+          id: row.variant.id,
+          sku: row.variant.sku,
+        },
+      };
+    });
+  }
+
+  private buildImageUrl(key: string): string {
+    const cloudfrontUrl = process.env.AWS_CLOUDFRONT_URL || '';
+    const bucketName = process.env.S3_BUCKET_NAME || '';
+    const region = process.env.AWS_REGION || 'ap-south-1';
+
+    if (cloudfrontUrl) {
+      return `https://${cloudfrontUrl}/${key}`;
+    }
+    return `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
+  }
+
+  async deleteOrder(id: string) {
+    await this.db.delete(schema.orderItems).where(eq(schema.orderItems.orderId, id));
+    const [deleted] = await this.db
+      .delete(schema.orders)
+      .where(eq(schema.orders.id, id))
+      .returning();
+    return deleted;
   }
 
   async findOrdersByUserId(userId: string, page: number = 1, limit: number = 10) {
@@ -159,6 +255,7 @@ export class OrderRepository {
     status?: string;
     paymentMethod?: string;
     paymentStatus?: string;
+    sort?: string;
   }) {
     const offset = (page - 1) * limit;
     const conditions: any[] = [];
@@ -175,11 +272,16 @@ export class OrderRepository {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+    const orderBy =
+      filters?.sort === 'asc'
+        ? asc(schema.orders.createdAt)
+        : desc(schema.orders.createdAt);
+
     const orders = await this.db
       .select()
       .from(schema.orders)
       .where(whereClause)
-      .orderBy(desc(schema.orders.createdAt))
+      .orderBy(orderBy)
       .limit(limit)
       .offset(offset);
 
