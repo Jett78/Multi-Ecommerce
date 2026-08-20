@@ -11,26 +11,30 @@ export class OrderRepository {
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
-  async createOrder(data: {
-    orderId: string;
-    userId: string;
-    subtotal: number;
-    discountAmount?: number;
-    taxAmount?: number;
-    totalAmount: number;
-    currency?: string;
-    status?: string;
-    paymentMethod?: string;
-    customerName?: string;
-    customerEmail?: string;
-    customerPhone?: string;
-    shippingAddress?: string;
-    billingAddress?: string;
-    landmark?: string;
-    notes?: string;
-    metadata?: string;
-  }) {
-    const [order] = await this.db
+  async createOrder(
+    data: {
+      orderId: string;
+      userId: string;
+      subtotal: number;
+      discountAmount?: number;
+      taxAmount?: number;
+      totalAmount: number;
+      currency?: string;
+      status?: string;
+      paymentMethod?: string;
+      customerName?: string;
+      customerEmail?: string;
+      customerPhone?: string;
+      shippingAddress?: string;
+      billingAddress?: string;
+      landmark?: string;
+      notes?: string;
+      metadata?: string;
+    },
+    tx?: NodePgDatabase<typeof schema>,
+  ) {
+    const db = tx ?? this.db;
+    const [order] = await db
       .insert(schema.orders)
       .values({
         orderId: data.orderId,
@@ -56,17 +60,21 @@ export class OrderRepository {
     return order;
   }
 
-  async createOrderItem(data: {
-    orderId: string;
-    variantId: string;
-    productName: string;
-    variantName?: string;
-    quantity: number;
-    unitPrice: number;
-    totalAmount: number;
-    sku?: string;
-  }) {
-    const [item] = await this.db
+  async createOrderItem(
+    data: {
+      orderId: string;
+      variantId: string;
+      productName: string;
+      variantName?: string;
+      quantity: number;
+      unitPrice: number;
+      totalAmount: number;
+      sku?: string;
+    },
+    tx?: NodePgDatabase<typeof schema>,
+  ) {
+    const db = tx ?? this.db;
+    const [item] = await db
       .insert(schema.orderItems)
       .values({
         orderId: data.orderId,
@@ -102,8 +110,9 @@ export class OrderRepository {
     return order || null;
   }
 
-  async findOrderItems(orderId: string) {
-    const rows = await this.db
+  async findOrderItems(orderId: string, tx?: NodePgDatabase<typeof schema>) {
+    const db = tx ?? this.db;
+    const rows = await db
       .select({
         item: schema.orderItems,
         product: {
@@ -125,7 +134,7 @@ export class OrderRepository {
     const productIds = rows.map((r) => r.product.id);
 
     const attributes = variantIds.length
-      ? await this.db
+      ? await db
           .select()
           .from(schema.variantAttributes)
           .where(inArray(schema.variantAttributes.variantId, variantIds))
@@ -133,7 +142,7 @@ export class OrderRepository {
       : [];
 
     const images = variantIds.length || productIds.length
-      ? await this.db
+      ? await db
           .select()
           .from(schema.productImages)
           .where(

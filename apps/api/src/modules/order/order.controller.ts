@@ -12,12 +12,15 @@ import {
 } from '@nestjs/common';
 import { AllowAnonymous, Session, UserSession } from '@thallesp/nestjs-better-auth';
 import { RequirePermissions } from '../../decorators/require-permissions.decorator';
+import { ApiTags, ApiOperation, ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { GetOrdersQueryDto } from './dto/get-orders-query.dto';
+import { OrderResponse, OrderListResponse, OrderStatsResponse, OrderCreatedResponse } from './dto/order-response.dto';
 
+@ApiTags('Orders')
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
@@ -25,6 +28,8 @@ export class OrderController {
   @Post('checkout')
   @AllowAnonymous()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Place an order from cart (checkout)' })
+  @ApiCreatedResponse({ type: OrderCreatedResponse })
   async checkout(
     @Session() session: UserSession,
     @Body() dto: CreateOrderDto,
@@ -40,6 +45,8 @@ export class OrderController {
   }
 
   @Get('my')
+  @ApiOperation({ summary: 'Get the current user orders' })
+  @ApiOkResponse({ type: OrderListResponse })
   async getMyOrders(
     @Session() session: UserSession,
     @Query('page') page?: string,
@@ -61,6 +68,8 @@ export class OrderController {
 
   @Get('stats')
   @RequirePermissions('order.read')
+  @ApiOperation({ summary: 'Get order statistics' })
+  @ApiOkResponse({ type: OrderStatsResponse })
   async getStats() {
     const result = await this.orderService.getOrderStats();
     return {
@@ -73,6 +82,8 @@ export class OrderController {
 
   @Get()
   @RequirePermissions('order.read')
+  @ApiOperation({ summary: 'List all orders (admin)' })
+  @ApiOkResponse({ type: OrderListResponse })
   async findAll(
     @Query() query: GetOrdersQueryDto,
   ) {
@@ -101,6 +112,8 @@ export class OrderController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Get a single order by ID' })
+  @ApiOkResponse({ type: OrderResponse })
   async findOne(
     @Param('id') id: string,
     @Session() session: UserSession,
@@ -125,6 +138,8 @@ export class OrderController {
 
   @Put(':id/status')
   @RequirePermissions('order.manage')
+  @ApiOperation({ summary: 'Update order status (admin)' })
+  @ApiOkResponse({ type: OrderResponse })
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateOrderStatusDto,
@@ -140,6 +155,8 @@ export class OrderController {
 
   @Put(':id/payment-status')
   @RequirePermissions('order.manage')
+  @ApiOperation({ summary: 'Update payment status (admin)' })
+  @ApiOkResponse({ type: OrderResponse })
   async updatePaymentStatus(
     @Param('id') id: string,
     @Body() dto: UpdatePaymentStatusDto,

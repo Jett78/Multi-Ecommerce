@@ -103,15 +103,7 @@ export default function AdminOrdersPage() {
         </div>
       ),
     },
-    {
-      key: "items",
-      label: "Items",
-      render: (order) => (
-        <span className="text-sm text-gray-600">
-          {order.items?.length || 0} {(order.items?.length || 0) === 1 ? "item" : "items"}
-        </span>
-      ),
-    },
+   
     {
       key: "total",
       label: "Total",

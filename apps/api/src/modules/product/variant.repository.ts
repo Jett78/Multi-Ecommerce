@@ -16,8 +16,9 @@ export class VariantRepository {
     return variant;
   }
 
-  async findVariantById(id: string) {
-    const [result] = await this.db
+  async findVariantById(id: string, tx?: NodePgDatabase<typeof schema>) {
+    const db = tx ?? this.db;
+    const [result] = await db
       .select()
       .from(schema.productVariants)
       .where(eq(schema.productVariants.id, id));
@@ -43,8 +44,9 @@ export class VariantRepository {
     };
   }
 
-  async findProductByVariantId(variantId: string) {
-    const [result] = await this.db
+  async findProductByVariantId(variantId: string, tx?: NodePgDatabase<typeof schema>) {
+    const db = tx ?? this.db;
+    const [result] = await db
       .select({
         id: schema.products.id,
         name: schema.products.name,
@@ -94,8 +96,9 @@ export class VariantRepository {
     }));
   }
 
-  async updateVariant(id: string, data: Partial<typeof schema.productVariants.$inferInsert>) {
-    const [variant] = await this.db
+  async updateVariant(id: string, data: Partial<typeof schema.productVariants.$inferInsert>, tx?: NodePgDatabase<typeof schema>) {
+    const db = tx ?? this.db;
+    const [variant] = await db
       .update(schema.productVariants)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(schema.productVariants.id, id))
@@ -145,16 +148,17 @@ export class VariantRepository {
     return inserted;
   }
 
-  async adjustStock(variantId: string, quantityChange: number, reference?: string, notes?: string, createdBy?: string) {
-    const variant = await this.findVariantById(variantId);
+  async adjustStock(variantId: string, quantityChange: number, reference?: string, notes?: string, createdBy?: string, tx?: NodePgDatabase<typeof schema>) {
+    const db = tx ?? this.db;
+    const variant = await this.findVariantById(variantId, tx);
     if (!variant) throw new Error('Variant not found');
 
     const quantityBefore = variant.stockQuantity;
     const quantityAfter = quantityBefore + quantityChange;
 
-    const updated = await this.updateVariant(variantId, { stockQuantity: quantityAfter });
+    const updated = await this.updateVariant(variantId, { stockQuantity: quantityAfter }, tx);
 
-    const [transaction] = await this.db
+    const [transaction] = await db
       .insert(schema.inventoryTransactions)
       .values({
         variantId,
