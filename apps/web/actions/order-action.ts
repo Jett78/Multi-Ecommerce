@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { apiClient } from "@/lib/api-client";
 import { API_ROUTES } from "@/config/api-routes";
 import type {
@@ -7,12 +8,34 @@ import type {
   OrderListResponse,
   OrderStats,
   CreateOrderPayload,
-  CreateBuyNowOrderPayload,
 } from "@/types/order";
+
+import { ApiError } from "@/types/base-entity";
+
+export async function getOrderByIdServer(id: string): Promise<Order | null> {
+  try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+
+    const response = await apiClient<{ success: boolean; data: Order }>(
+      `${API_ROUTES.ORDERS}/${id}`,
+      cookieHeader ? { headers: { Cookie: cookieHeader } } : {}
+    );
+
+    if (!response || !response.success || !response.data) return null;
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching order:", error);
+    return null;
+  }
+}
 
 export async function createOrderFromCart(
   payload: CreateOrderPayload
-): Promise<Order | null> {
+): Promise<Order> {
   try {
     const response = await apiClient<{ success: boolean; data: Order }>(
       API_ROUTES.ORDERS + "/checkout",
@@ -22,31 +45,22 @@ export async function createOrderFromCart(
       }
     );
 
-    if (!response || !response.success || !response.data) return null;
+    if (!response || !response.success || !response.data) {
+      throw new Error("Failed to place order. Please try again.");
+    }
     return response.data;
   } catch (error) {
-    console.error("Error creating order:", error);
-    throw error;
-  }
-}
-
-export async function createOrderFromBuyNow(
-  payload: CreateBuyNowOrderPayload
-): Promise<Order | null> {
-  try {
-    const response = await apiClient<{ success: boolean; data: Order }>(
-      API_ROUTES.ORDERS + "/buy-now",
-      {
-        method: "POST",
-        body: JSON.stringify(payload),
+    console.error("Order creation error:", error);
+    if (error && typeof error === "object" && "message" in error) {
+      const apiError = error as ApiError;
+      if (!apiError.statusCode) {
+        throw new Error(
+          "We couldn't reach the server to place your order. Please check your connection and try again."
+        );
       }
-    );
-
-    if (!response || !response.success || !response.data) return null;
-    return response.data;
-  } catch (error) {
-    console.error("Error creating buy now order:", error);
-    throw error;
+      throw new Error(apiError.message || "Failed to place order. Please try again.");
+    }
+    throw new Error("Failed to place order. Please try again.");
   }
 }
 

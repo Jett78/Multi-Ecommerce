@@ -10,6 +10,7 @@ const routePermissions: Record<string, string[]> = {
   "/dashboard/testimonials": ["testimonial.read", "testimonial.create", "testimonial.edit", "testimonial.delete"],
   "/dashboard/team": ["team.read", "team.create", "team.edit", "team.delete"],
   "/dashboard/faqs": ["faq.read", "faq.create", "faq.edit", "faq.delete"],
+  "/dashboard/orders": ["order.read", "order.manage"],
   "/dashboard/inquiries": ["inquiry.read", "inquiry.delete"],
   "/dashboard/users": ["user.read", "user.create", "user.edit", "user.delete"],
   "/dashboard/role-permissions": ["permission.read", "permission.edit"],

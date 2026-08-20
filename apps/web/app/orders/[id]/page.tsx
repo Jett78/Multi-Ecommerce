@@ -185,6 +185,12 @@ export default function OrderDetailPage() {
                 {order.shippingAddress || "Not provided"}
               </p>
             </div>
+            {order.landmark && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Landmark</h3>
+                <p className="mt-2 text-sm text-gray-600 whitespace-pre-line">{order.landmark}</p>
+              </div>
+            )}
             <div>
               <h3 className="text-sm font-semibold text-gray-900">Payment</h3>
               <p className="mt-2 text-sm text-gray-600">
