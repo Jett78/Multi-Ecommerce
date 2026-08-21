@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DB_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 
 @Injectable()
 export class ShippingAddressRepository {
@@ -21,7 +21,7 @@ export class ShippingAddressRepository {
       .select()
       .from(schema.shippingAddresses)
       .where(eq(schema.shippingAddresses.userId, userId))
-      .orderBy(schema.shippingAddresses.isDefault, schema.shippingAddresses.createdAt);
+      .orderBy(desc(schema.shippingAddresses.isDefault), schema.shippingAddresses.createdAt);
   }
 
   async findById(id: string) {

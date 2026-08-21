@@ -1,12 +1,13 @@
 "use client";
 
-import { Home, Building2, MapPin, Star, Pencil, Trash2, Check } from "lucide-react";
+import { Home, Building2, MapPin, Star, Pencil, Trash2, Check, Loader2 } from "lucide-react";
 import type { ShippingAddress } from "@/types/address";
 
 interface AddressCardProps {
   address: ShippingAddress;
   selected?: boolean;
   selectable?: boolean;
+  loadingDefault?: boolean;
   onSelect?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -23,6 +24,7 @@ export function AddressCard({
   address,
   selected = false,
   selectable = false,
+  loadingDefault = false,
   onSelect,
   onEdit,
   onDelete,
@@ -85,9 +87,13 @@ export function AddressCard({
               e.stopPropagation();
               onSetDefault();
             }}
-            className="text-xs font-medium text-primarymain hover:underline"
+            disabled={loadingDefault}
+            className="flex items-center gap-1 text-xs font-medium text-primarymain hover:underline disabled:opacity-50"
           >
-            Set default
+            {loadingDefault ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : null}
+            {loadingDefault ? "Setting..." : "Set default"}
           </button>
         )}
         {onEdit && (
