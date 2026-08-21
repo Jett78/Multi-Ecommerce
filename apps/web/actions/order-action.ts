@@ -37,11 +37,18 @@ export async function createOrderFromCart(
   payload: CreateOrderPayload
 ): Promise<Order> {
   try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+
     const response = await apiClient<{ success: boolean; data: Order }>(
       API_ROUTES.ORDERS + "/checkout",
       {
         method: "POST",
         body: JSON.stringify(payload),
+        ...(cookieHeader ? { headers: { Cookie: cookieHeader } } : {}),
       }
     );
 
@@ -69,12 +76,19 @@ export async function getMyOrders(
   limit: number = 10
 ): Promise<OrderListResponse | null> {
   try {
+    const cookieStore = await cookies();
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+
     const searchParams = new URLSearchParams();
     searchParams.set("page", String(page));
     searchParams.set("limit", String(limit));
 
     const response = await apiClient<{ success: boolean; data: OrderListResponse }>(
-      `${API_ROUTES.MY_ORDERS}?${searchParams.toString()}`
+      `${API_ROUTES.MY_ORDERS}?${searchParams.toString()}`,
+      cookieHeader ? { headers: { Cookie: cookieHeader } } : {}
     );
 
     if (!response || !response.success || !response.data) return null;

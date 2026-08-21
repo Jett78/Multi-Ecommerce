@@ -263,6 +263,26 @@ export const orders = pgTable('orders', {
 }));
 
 // Better Auth tables
+export const addressTypeEnum = pgEnum('address_type', ['home', 'office', 'other']);
+
+export const shippingAddresses = pgTable('shipping_addresses', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  type: addressTypeEnum('type').default('home').notNull(),
+  label: varchar('label', { length: 100 }),
+  provinceId: integer('province_id').notNull(),
+  provinceName: varchar('province_name', { length: 100 }).notNull(),
+  district: varchar('district', { length: 100 }).notNull(),
+  municipality: varchar('municipality', { length: 100 }).notNull(),
+  landmark: text('landmark'),
+  streetAddress: text('street_address').notNull(),
+  isDefault: boolean('is_default').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('shipping_addresses_user_id_idx').on(table.userId),
+}));
+
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),

@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import PrimaryButton from "@/components/ui/primary-button";
 import SubmittingLoader from "@/components/dashboard/submitting-loader";
 import AvatarUpload from "@/components/ui/avatar-upload";
+import { ProfileAddresses } from "@/components/address/profile-addresses";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
@@ -299,6 +301,10 @@ export default function UserProfilePage() {
           </div>
         </form>
       </div>
+
+      {/* Saved Addresses */}
+      <ProfileAddresses />
+
     </div>
   );
 }

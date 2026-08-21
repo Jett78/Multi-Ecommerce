@@ -3,14 +3,16 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CreditCard, Truck, ShieldCheck, MapPin, User, Mail, Phone, FileText, ChevronDown, Lock, Loader2 } from "lucide-react";
+import { CreditCard, Truck, ShieldCheck, User, Mail, Phone, FileText, Lock, Loader2 } from "lucide-react";
 import { createOrderFromCart } from "@/actions/order-action";
 import { useCartStore } from "@/stores/cart-store";
 import { showSuccess, showError } from "@/lib/toast-helper";
-import { provinces } from "@/data/nepal-geography";
 import { useSession, signIn } from "@/lib/auth-client";
+import { API_ROUTES } from "@/config/api-routes";
 import PrimaryButton from "@/components/ui/primary-button";
+import { SavedAddressSelector } from "@/components/address/saved-address-selector";
 import type { PaymentMethod } from "@/types/order";
+import type { ShippingAddress } from "@/types/address";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -29,11 +31,6 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
     customerName: "",
     customerEmail: "",
     customerPhone: "",
-    province: "",
-    district: "",
-    localLevel: "",
-    landmark: "",
-    streetAddress: "",
     notes: "",
   });
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("cod");
@@ -44,6 +41,13 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
   const [loginPassword, setLoginPassword] = React.useState("");
   const [loginError, setLoginError] = React.useState("");
   const [isLoggingIn, setIsLoggingIn] = React.useState(false);
+  const [selectedAddressId, setSelectedAddressId] = React.useState<string | undefined>(undefined);
+  const [selectedAddress, setSelectedAddress] = React.useState<ShippingAddress | null>(null);
+
+  const applyAddress = (addr: ShippingAddress) => {
+    setSelectedAddress(addr);
+    setSelectedAddressId(addr.id);
+  };
 
   // Prefill contact details from the authenticated session
   React.useEffect(() => {
@@ -52,34 +56,36 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
         ...prev,
         customerName: prev.customerName || session.user.name || "",
         customerEmail: prev.customerEmail || session.user.email || "",
-        customerPhone: prev.customerPhone || session.user.phone || "",
       }));
     }
   }, [isAuthenticated, session?.user]);
 
-  const selectedProvince = provinces.find((p) => p.id === Number(formData.province));
-  const selectedDistrict = selectedProvince?.districts.find((d) => d.name === formData.district);
-  const availableDistricts = selectedProvince?.districts || [];
-  const availableLocalLevels = selectedDistrict?.localLevels || [];
+  // Fetch profile to prefill phone (session user object may not include phone)
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+    const controller = new AbortController();
+    fetch(API_ROUTES.AUTH_PROFILE, { credentials: "include", signal: controller.signal })
+      .then((r) => r.json())
+      .then((d) => {
+        const phone = d?.data?.phone;
+        if (phone) {
+          setFormData((prev) => ({ ...prev, customerPhone: prev.customerPhone || phone }));
+        }
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [isAuthenticated]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => {
-      const next = { ...prev, [name]: value };
-      if (name === "province") {
-        next.district = "";
-        next.localLevel = "";
-      }
-      if (name === "district") {
-        next.localLevel = "";
-      }
-      return next;
-    });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const fullAddress = [formData.streetAddress, formData.localLevel, formData.district, formData.province ? `Province ${formData.province}` : "", "Nepal"]
-    .filter(Boolean)
-    .join(", ");
+  const fullAddress = selectedAddress
+    ? [selectedAddress.streetAddress, selectedAddress.municipality, selectedAddress.district, `Province ${selectedAddress.provinceId}`, "Nepal"]
+        .filter(Boolean)
+        .join(", ")
+    : "";
 
   const placeOrder = async () => {
     setIsSubmitting(true);
@@ -96,14 +102,14 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
         customerPhone: formData.customerPhone,
         shippingAddress: fullAddress,
         billingAddress: fullAddress,
-        landmark: formData.landmark || undefined,
+        landmark: selectedAddress?.landmark || undefined,
         notes: formData.notes || undefined,
       });
 
       showSuccess("Order placed successfully!");
       clearCart();
       if (onClose) onClose();
-      router.push(`/order/confirmation/${order.id}`);
+      router.push("/profile/user");
     } catch (error: any) {
       const message = error?.message || "Failed to place order. Please try again.";
       showError(message);
@@ -120,8 +126,8 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
       return;
     }
 
-    if (!formData.province || !formData.district || !formData.localLevel || !formData.streetAddress) {
-      showError("Please fill in your complete address");
+    if (!selectedAddressId) {
+      showError("Please select a delivery address");
       return;
     }
 
@@ -200,33 +206,40 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
           <p className="mt-3 text-base text-gray-500">Complete your order</p>
         </div>
 
+        {/* Saved address selector — OUTSIDE the form to avoid nested <form> (invalid HTML) */}
+        {isAuthenticated && (
+          <div className="mb-6">
+            <SavedAddressSelector selectedId={selectedAddressId} onApply={applyAddress} />
+          </div>
+        )}
+
+        {!isAuthenticated && (
+          <div className="mb-6 rounded-3xl border border-primarymain/30 bg-primarymain/5 p-6 shadow-sm">
+            <div className="flex items-start gap-4">
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primarymain/10 text-primarymain">
+                <Lock className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-base font-bold text-gray-900">Please log in to checkout</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  You need to be signed in to place your order. Your details will be prefilled after you log in.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowLogin(true)}
+                  className="mt-3 inline-flex items-center justify-center rounded-xl bg-primarymain px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primarymain/90 active:scale-[0.98]"
+                >
+                  Login to continue
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="grid gap-8 lg:grid-cols-5">
             {/* Left: Forms */}
             <div className="lg:col-span-3 space-y-6">
-              {/* Login prompt (only when not authenticated) */}
-              {!isAuthenticated && (
-                <div className="rounded-3xl border border-primarymain/30 bg-primarymain/5 p-6 shadow-sm">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primarymain/10 text-primarymain">
-                      <Lock className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <h2 className="text-base font-bold text-gray-900">Please log in to checkout</h2>
-                      <p className="mt-1 text-sm text-gray-500">
-                        You need to be signed in to place your order. Your details will be prefilled after you log in.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setShowLogin(true)}
-                        className="mt-3 inline-flex items-center justify-center rounded-xl bg-primarymain px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primarymain/90 active:scale-[0.98]"
-                      >
-                        Login to continue
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Contact Information */}
               <div className="rounded-3xl border border-gray-100 bg-white/80 backdrop-blur-sm p-8 shadow-xl shadow-indigo-100/10">
@@ -295,144 +308,28 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                 </div>
               </div>
 
-              {/* Shipping Address */}
+              {/* Order Notes */}
               <div className="rounded-3xl border border-gray-100 bg-white/80 backdrop-blur-sm p-8 shadow-xl shadow-indigo-100/10">
                 <div className="mb-6 flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primarymain text-white">
-                    <MapPin className="h-5 w-5" />
+                    <FileText className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-gray-900">Shipping Address</h2>
-                    <p className="text-xs text-gray-400">Where should we deliver?</p>
+                    <h2 className="text-lg font-bold text-gray-900">Order Notes</h2>
+                    <p className="text-xs text-gray-400">Any special delivery instructions?</p>
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                      Province <span className="text-red-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <select
-                        name="province"
-                        value={formData.province}
-                        onChange={handleInputChange}
-                        required
-                        className="block w-full appearance-none rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 pr-10 text-sm text-gray-900 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none"
-                      >
-                        <option value="">Select Province</option>
-                        {provinces.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            Province {p.id} - {p.name}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                      District <span className="text-red-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <select
-                        name="district"
-                        value={formData.district}
-                        onChange={handleInputChange}
-                        required
-                        disabled={!formData.province}
-                        className="block w-full appearance-none rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 pr-10 text-sm text-gray-900 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <option value="">
-                          {formData.province ? "Select District" : "Select Province first"}
-                        </option>
-                        {availableDistricts.map((d) => (
-                          <option key={d.name} value={d.name}>
-                            {d.name}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                      Municipality / Rural Municipality <span className="text-red-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <select
-                        name="localLevel"
-                        value={formData.localLevel}
-                        onChange={handleInputChange}
-                        required
-                        disabled={!formData.district}
-                        className="block w-full appearance-none rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 pr-10 text-sm text-gray-900 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <option value="">
-                          {formData.district ? "Select Local Level" : "Select District first"}
-                        </option>
-                        {availableLocalLevels.map((l) => (
-                          <option key={l} value={l}>
-                            {l}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-300" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                      Landmark
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        name="landmark"
-                        value={formData.landmark}
-                        onChange={handleInputChange}
-                        placeholder="Near temple, school, etc."
-                        className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                      Street Address <span className="text-red-400">*</span>
-                    </label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-300" />
-                      <textarea
-                        name="streetAddress"
-                        value={formData.streetAddress}
-                        onChange={handleInputChange}
-                        required
-                        rows={2}
-                        placeholder="Ward number, street name, house number..."
-                        className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
-                      Order Notes (Optional)
-                    </label>
-                    <div className="relative">
-                      <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-300" />
-                      <textarea
-                        name="notes"
-                        value={formData.notes}
-                        onChange={handleInputChange}
-                        rows={2}
-                        placeholder="Any special delivery instructions..."
-                        className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none"
-                      />
-                    </div>
-                  </div>
+                <div className="relative">
+                  <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-300" />
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    rows={2}
+                    placeholder="Any special delivery instructions..."
+                    className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none"
+                  />
                 </div>
               </div>
 

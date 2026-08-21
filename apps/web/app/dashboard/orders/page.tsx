@@ -90,7 +90,7 @@ export default function AdminOrdersPage() {
       key: "orderId",
       label: "Order ID",
       render: (order) => (
-        <span className="text-sm font-medium text-gray-900">{order.orderId}</span>
+        <span className="text-sm font-medium text-gray-900">#{order.orderId.slice(-8)}</span>
       ),
     },
     {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { User, Settings, Shield, LogOut } from "lucide-react";
+import { User, Settings, Shield, LogOut, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth-client";
 import { showSuccess } from "@/lib/toast-helper";
@@ -20,6 +20,7 @@ import {
 
 const navItems = [
   { name: "Profile", href: "/profile/user", icon: User },
+  { name: "My Orders", href: "/profile/user/orders", icon: Package },
   { name: "Account Settings", href: "/profile/user/settings", icon: Settings },
   { name: "Security", href: "/profile/user/security", icon: Shield },
 ];
