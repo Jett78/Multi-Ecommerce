@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { Plus, Loader2, X } from "lucide-react";
+import { Plus, Loader2, X, MapPin } from "lucide-react";
 import { useCrud } from "@/hooks/useCRUD";
 import { useQueryClient } from "@tanstack/react-query";
 import { API_ROUTES } from "@/config/api-routes";
@@ -135,15 +135,15 @@ export function SavedAddressSelector({ selectedId, onApply }: SavedAddressSelect
   };
 
   return (
-    <div className="rounded-3xl border border-gray-100 bg-white/80 backdrop-blur-sm p-8 shadow-xl shadow-indigo-100/10">
+    <div>
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primarymain text-white">
-            <Plus className="h-5 w-5" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <MapPin className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Delivery Address</h2>
+            <h2 className="text-base font-bold text-gray-900">Delivery Address</h2>
             <p className="text-xs text-gray-400">
               {list.length > 0 ? "Select a saved address or add a new one" : "Add your delivery address to continue"}
             </p>
