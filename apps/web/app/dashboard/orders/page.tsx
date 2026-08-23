@@ -108,9 +108,14 @@ export default function AdminOrdersPage() {
       key: "total",
       label: "Total",
       render: (order) => (
-        <span className="text-sm font-semibold text-gray-900">
-          Rs. {order.totalAmount.toLocaleString()}
-        </span>
+        <div className="text-right">
+          <span className="text-sm font-semibold text-gray-900">
+            Rs. {order.totalAmount.toLocaleString()}
+          </span>
+          {order.discountAmount > 0 && (
+            <p className="text-[10px] text-emerald-600 font-medium">- Rs. {order.discountAmount.toLocaleString()} off</p>
+          )}
+        </div>
       ),
     },
     {

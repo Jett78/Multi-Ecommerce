@@ -1,3 +1,5 @@
+import type { AppliedCoupon } from "@/types/coupon";
+
 export interface CartItem {
   variantId: string;
   quantity: number;
@@ -24,4 +26,38 @@ export interface CartStore {
   setCoupon: (coupon: AppliedCoupon | null) => void;
   removeCoupon: () => void;
   discountedTotal: () => number;
+}
+
+export interface CartState {
+  id: string;
+  sessionId: string | null;
+  userId: string | null;
+  items: {
+    id: string;
+    variantId: string;
+    quantity: number;
+    priceAtAdd: number;
+    product: {
+      id: string;
+      name: string;
+      slug: string;
+      price: number;
+    };
+    variant: {
+      id: string;
+      sku: string;
+      stockQuantity: number;
+      allowBackorder: boolean;
+      price: number;
+    };
+    imageUrl?: string;
+  }[];
+  totalAmount: number;
+  totalItems: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CartCountState {
+  totalItems: number;
 }

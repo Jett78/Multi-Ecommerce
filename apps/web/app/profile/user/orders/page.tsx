@@ -103,7 +103,12 @@ export default function ProfileOrdersPage() {
       label: "Total",
       className: "text-right",
       render: (row) => (
-        <span className="font-bold text-slate-900">Rs. {row.totalAmount.toLocaleString()}</span>
+        <div className="text-right">
+          <span className="font-bold text-slate-900">Rs. {row.totalAmount.toLocaleString()}</span>
+          {row.discountAmount > 0 && (
+            <p className="text-[10px] text-emerald-600 font-medium">- Rs. {row.discountAmount.toLocaleString()} off</p>
+          )}
+        </div>
       ),
     },
     {

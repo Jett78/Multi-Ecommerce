@@ -83,7 +83,12 @@ export default async function OrderDetailPage({
             </div>
             {order.discountAmount > 0 && (
               <div className="flex justify-between text-slate-600">
-                <span>Discount</span>
+                <span>
+                  Discount
+                  {order.orderCoupons && order.orderCoupons.length > 0 && (
+                    <span className="ml-1 font-mono text-xs">({order.orderCoupons[0]?.couponCode})</span>
+                  )}
+                </span>
                 <span>- {formatCurrency(order.discountAmount)}</span>
               </div>
             )}

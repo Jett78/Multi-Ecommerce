@@ -3,7 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { X, Plus, Minus, ArrowRight, Truck, Check } from "lucide-react";
-import { useCartStore, type CartItem } from "@/stores/cart-store";
+import { useCartStore } from "@/stores/cart-store";
+import type { CartItem } from "@/types/cart";
 import { cn } from "@/lib/utils";
 
 function CartItemRow({
