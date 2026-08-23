@@ -25,6 +25,7 @@ import {
   Menu,
   Package,
   Tags,
+  Tag,
   Boxes,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -80,13 +81,14 @@ const navigation: NavItem[] = [
   {
     name: "Ecommerce",
     icon: Package,
-    permissions: ["category.read", "product.read", "review.moderate", "order.read"],
+    permissions: ["category.read", "product.read", "review.moderate", "order.read", "discount.read"],
     children: [
       { name: "Categories", href: "/dashboard/categories", icon: Tags, permission: "category.read" },
       { name: "Subcategories", href: "/dashboard/subcategories", icon: Tags, permission: "category.read" },
       { name: "Products", href: "/dashboard/products", icon: Package, permission: "product.read" },
       { name: "Reviews", href: "/dashboard/reviews", icon: Star, permission: "review.moderate" },
       { name: "Orders", href: "/dashboard/orders", icon: CreditCard, permission: "order.read" },
+      { name: "Coupons", href: "/dashboard/coupons", icon: Tag, permission: "discount.read" },
     ],
   },
   { name: "Users", href: "/dashboard/users", icon: Users, permission: "user.read" },

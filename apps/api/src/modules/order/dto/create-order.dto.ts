@@ -77,4 +77,9 @@ export class CreateOrderDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Coupon code to apply', example: 'SAVE10' })
+  @IsString()
+  @IsOptional()
+  couponCode?: string;
 }

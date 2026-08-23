@@ -252,6 +252,7 @@ export const orders = pgTable('orders', {
   landmark: text('landmark'),
   notes: text('notes'),
   metadata: text('metadata'),
+  couponId: uuid('coupon_id').references(() => coupons.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
@@ -775,12 +776,66 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   }),
 }));
 
+export const couponTypeEnum = pgEnum('coupon_type', ['fixed', 'percentage', 'free_shipping']);
+
+export const coupons = pgTable('coupons', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  code: varchar('code', { length: 50 }).notNull().unique(),
+  type: couponTypeEnum('type').notNull(),
+  value: integer('value').notNull().default(0),
+  minOrderAmount: integer('min_order_amount'),
+  maxDiscountAmount: integer('max_discount_amount'),
+  usageLimit: integer('usage_limit'),
+  usageCount: integer('usage_count').default(0).notNull(),
+  perUserLimit: integer('per_user_limit'),
+  productIds: uuid('product_ids').array(),
+  categoryIds: uuid('category_ids').array(),
+  startsAt: timestamp('starts_at', { withTimezone: true }),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  isActive: boolean('is_active').default(true).notNull(),
+  description: text('description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  codeIdx: index('coupons_code_idx').on(table.code),
+  isActiveIdx: index('coupons_is_active_idx').on(table.isActive),
+  expiresAtIdx: index('coupons_expires_at_idx').on(table.expiresAt),
+}));
+
+export const orderCoupons = pgTable('order_coupons', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  orderId: uuid('order_id').notNull().references(() => orders.id, { onDelete: 'cascade' }),
+  couponId: uuid('coupon_id').notNull().references(() => coupons.id, { onDelete: 'restrict' }),
+  couponCode: varchar('coupon_code', { length: 50 }).notNull(),
+  discountAmount: integer('discount_amount').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  orderIdIdx: index('order_coupons_order_id_idx').on(table.orderId),
+  couponIdIdx: index('order_coupons_coupon_id_idx').on(table.couponId),
+}));
+
+export const couponsRelations = relations(coupons, ({ many }) => ({
+  orderCoupons: many(orderCoupons),
+}));
+
+export const orderCouponsRelations = relations(orderCoupons, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderCoupons.orderId],
+    references: [orders.id],
+  }),
+  coupon: one(coupons, {
+    fields: [orderCoupons.couponId],
+    references: [coupons.id],
+  }),
+}));
+
 export const ordersRelations = relations(orders, ({ one, many }) => ({
   user: one(user, {
     fields: [orders.userId],
     references: [user.id],
   }),
   items: many(orderItems),
+  orderCoupons: many(orderCoupons),
 }));
 
 export const orderItemsRelations = relations(orderItems, ({ one }) => ({

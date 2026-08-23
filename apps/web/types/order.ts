@@ -53,9 +53,20 @@ export interface Order {
   landmark: string | null;
   notes: string | null;
   metadata: string | null;
+  couponId: string | null;
   createdAt: string;
   updatedAt: string;
   items?: OrderItem[];
+  orderCoupons?: OrderCoupon[];
+}
+
+export interface OrderCoupon {
+  id: string;
+  orderId: string;
+  couponId: string;
+  couponCode: string;
+  discountAmount: number;
+  createdAt: string;
 }
 
 export interface CreateOrderItem {
@@ -74,6 +85,7 @@ export interface CreateOrderPayload {
   billingAddress?: string;
   landmark?: string;
   notes?: string;
+  couponCode?: string;
 }
 
 export interface OrderListResponse {

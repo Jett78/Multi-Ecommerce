@@ -2,35 +2,16 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { CartItem, CartStore } from "@/types/cart";
+import type { AppliedCoupon } from "@/types/coupon";
 
-export interface CartItem {
-  variantId: string;
-  quantity: number;
-  priceAtAdd: number;
-  productName: string;
-  productSlug: string;
-  variantSku: string | null;
-  stockQuantity: number;
-  allowBackorder: boolean;
-  imageUrl?: string;
-  productId: string;
-  attributes?: { attributeName: string; attributeValue: string }[];
-}
-
-interface CartStore {
-  items: CartItem[];
-  addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  updateQuantity: (variantId: string, quantity: number) => void;
-  removeItem: (variantId: string) => void;
-  clearCart: () => void;
-  itemCount: () => number;
-  subtotal: () => number;
-}
+export type { CartItem, AppliedCoupon };
 
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      appliedCoupon: null,
 
       addItem: (item, quantity = 1) => {
         set((state) => {
@@ -69,7 +50,7 @@ export const useCartStore = create<CartStore>()(
       },
 
       clearCart: () => {
-        set({ items: [] });
+        set({ items: [], appliedCoupon: null });
       },
 
       itemCount: () => {
@@ -78,6 +59,21 @@ export const useCartStore = create<CartStore>()(
 
       subtotal: () => {
         return get().items.reduce((sum, i) => sum + i.priceAtAdd * i.quantity, 0);
+      },
+
+      setCoupon: (coupon) => {
+        set({ appliedCoupon: coupon });
+      },
+
+      removeCoupon: () => {
+        set({ appliedCoupon: null });
+      },
+
+      discountedTotal: () => {
+        const subtotal = get().subtotal();
+        const coupon = get().appliedCoupon;
+        if (!coupon) return subtotal;
+        return Math.max(0, subtotal - coupon.discountAmount);
       },
     }),
     {

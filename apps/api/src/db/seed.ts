@@ -185,6 +185,11 @@ async function seed() {
       { resource: 'product', action: 'manage_inventory', key: 'product.manage_inventory', description: 'Manage product inventory and stock' },
 
       { resource: 'review', action: 'moderate', key: 'review.moderate', description: 'Moderate and approve product reviews' },
+
+      { resource: 'discount', action: 'read', key: 'discount.read', description: 'View coupons and discounts' },
+      { resource: 'discount', action: 'create', key: 'discount.create', description: 'Create new coupons' },
+      { resource: 'discount', action: 'edit', key: 'discount.edit', description: 'Edit existing coupons' },
+      { resource: 'discount', action: 'delete', key: 'discount.delete', description: 'Delete coupons' },
     ];
 
     for (const perm of permissionsData) {
@@ -227,6 +232,7 @@ async function seed() {
         'category.read', 'category.create', 'category.edit', 'category.delete',
         'product.read', 'product.create', 'product.edit', 'product.delete', 'product.manage_inventory',
         'review.moderate',
+        'discount.read', 'discount.create', 'discount.edit', 'discount.delete',
       ]},
       { role: 'editor', permissions: [
         'blog.read', 'blog.create', 'blog.edit', 'blog.delete',

@@ -18,8 +18,12 @@ import {
   Truck,
   RotateCcw,
   Headphones,
+  Tag,
+  X,
+  CheckCircle,
 } from "lucide-react";
-import { createOrderFromCart } from "@/actions/order-action";
+import { useCrud } from "@/hooks/useCRUD";
+import { useForm } from "@/hooks/useForm";
 import { useCartStore } from "@/stores/cart-store";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import { useSession, signIn } from "@/lib/auth-client";
@@ -73,22 +77,36 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
   const subtotal = useCartStore((s) => s.subtotal());
   const itemCount = useCartStore((s) => s.itemCount());
   const clearCart = useCartStore((s) => s.clearCart);
+  const appliedCoupon = useCartStore((s) => s.appliedCoupon);
+  const setCoupon = useCartStore((s) => s.setCoupon);
+  const removeCoupon = useCartStore((s) => s.removeCoupon);
+  const discountedTotal = useCartStore((s) => s.discountedTotal());
 
   const { data: session, isPending } = useSession() as any;
   const isAuthenticated = !!session?.user;
 
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [formData, setFormData] = React.useState({
+  const { create } = useCrud<Record<string, any>>({
+    endpoint: API_ROUTES.ORDERS + "/checkout",
+    queryKey: "orders",
+  });
+
+  const { values: form, setField: setFormField, handleChange: handleFormChange } = useForm({
     customerName: "",
     customerEmail: "",
     customerPhone: "",
     notes: "",
   });
-  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("cod");
 
+  const { values: loginForm, setField: setLoginField, handleChange: handleLoginChange } = useForm({
+    email: "",
+    password: "",
+  });
+
+  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("cod");
+  const [couponCode, setCouponCode] = React.useState("");
+  const [couponLoading, setCouponLoading] = React.useState(false);
+  const [couponError, setCouponError] = React.useState("");
   const [showLogin, setShowLogin] = React.useState(false);
-  const [loginEmail, setLoginEmail] = React.useState("");
-  const [loginPassword, setLoginPassword] = React.useState("");
   const [loginError, setLoginError] = React.useState("");
   const [isLoggingIn, setIsLoggingIn] = React.useState(false);
   const [selectedAddressId, setSelectedAddressId] = React.useState<string | undefined>(undefined);
@@ -99,13 +117,59 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
     setSelectedAddressId(addr.id);
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+    setCouponLoading(true);
+    setCouponError("");
+    try {
+      const response = await fetch(API_ROUTES.DISCOUNT_VALIDATE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode.trim(),
+          subtotal,
+          items: items.map((i) => ({
+            variantId: i.variantId,
+            quantity: i.quantity,
+            priceAtAdd: i.priceAtAdd,
+            productId: i.productId,
+            categoryId: "default",
+          })),
+        }),
+      });
+      const result = await response.json();
+      if (result?.data?.valid) {
+        setCoupon({
+          code: result.data.code,
+          discountAmount: result.data.discountAmount,
+          type: result.data.type,
+          description: result.data.description,
+        });
+        setCouponError("");
+        showSuccess(result.data.message);
+      } else {
+        setCouponError(result?.data?.message || "Invalid coupon code");
+      }
+    } catch {
+      setCouponError("Failed to validate coupon. Please try again.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    removeCoupon();
+    setCouponCode("");
+    setCouponError("");
+  };
+
   React.useEffect(() => {
     if (isAuthenticated && session?.user) {
-      setFormData((prev) => ({
-        ...prev,
-        customerName: prev.customerName || session.user.name || "",
-        customerEmail: prev.customerEmail || session.user.email || "",
-      }));
+      setFormField("customerName", form.customerName || session.user.name || "");
+      setFormField("customerEmail", form.customerEmail || session.user.email || "");
     }
   }, [isAuthenticated, session?.user]);
 
@@ -117,17 +181,12 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
       .then((d) => {
         const phone = d?.data?.phone;
         if (phone) {
-          setFormData((prev) => ({ ...prev, customerPhone: prev.customerPhone || phone }));
+          setFormField("customerPhone", form.customerPhone || phone);
         }
       })
       .catch(() => {});
     return () => controller.abort();
   }, [isAuthenticated]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
 
   const fullAddress = selectedAddress
     ? [selectedAddress.streetAddress, selectedAddress.municipality, selectedAddress.district, `Province ${selectedAddress.provinceId}`, "Nepal"]
@@ -136,38 +195,41 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
     : "";
 
   const placeOrder = async () => {
-    setIsSubmitting(true);
-    try {
-      await createOrderFromCart({
+    create.mutate(
+      {
         items: items.map((i) => ({
           variantId: i.variantId,
           quantity: i.quantity,
           priceAtAdd: i.priceAtAdd,
         })),
         paymentMethod,
-        customerName: formData.customerName,
-        customerEmail: formData.customerEmail,
-        customerPhone: formData.customerPhone,
+        customerName: form.customerName,
+        customerEmail: form.customerEmail,
+        customerPhone: form.customerPhone,
         shippingAddress: fullAddress,
         billingAddress: fullAddress,
         landmark: selectedAddress?.landmark || undefined,
-        notes: formData.notes || undefined,
-      });
-
-      showSuccess("Order placed successfully!");
-      clearCart();
-      if (onClose) onClose();
-      router.push("/profile/user");
-    } catch (error: any) {
-      showError(error?.message || "Failed to place order. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+        notes: form.notes || undefined,
+        couponCode: appliedCoupon?.code || undefined,
+      },
+      {
+        onSuccess: (res: any) => {
+          const order = res?.data;
+          showSuccess("Order placed successfully!");
+          clearCart();
+          if (onClose) onClose();
+          router.push(`/profile/user/orders/${order.id}`);
+        },
+        onError: (error: any) => {
+          showError(error?.message || "Failed to place order. Please try again.");
+        },
+      }
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.customerName || !formData.customerEmail || !formData.customerPhone) {
+    if (!form.customerName || !form.customerEmail || !form.customerPhone) {
       showError("Please fill in all required fields");
       return;
     }
@@ -191,7 +253,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
     setLoginError("");
     setIsLoggingIn(true);
     try {
-      const { error } = await signIn.email({ email: loginEmail, password: loginPassword });
+      const { error } = await signIn.email({ email: loginForm.email, password: loginForm.password });
       if (error) {
         setLoginError(error.message || "Login failed. Please try again.");
         return;
@@ -287,8 +349,8 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                     <input
                       type="text"
                       name="customerName"
-                      value={formData.customerName}
-                      onChange={handleInputChange}
+                      value={form.customerName}
+                      onChange={handleFormChange}
                       required
                       placeholder="John Doe"
                       className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
@@ -301,8 +363,8 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                     <input
                       type="email"
                       name="customerEmail"
-                      value={formData.customerEmail}
-                      onChange={handleInputChange}
+                      value={form.customerEmail}
+                      onChange={handleFormChange}
                       required
                       placeholder="you@example.com"
                       className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
@@ -315,8 +377,8 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                     <input
                       type="tel"
                       name="customerPhone"
-                      value={formData.customerPhone}
-                      onChange={handleInputChange}
+                      value={form.customerPhone}
+                      onChange={handleFormChange}
                       required
                       placeholder="+977 98XXXXXXXX"
                       className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
@@ -365,8 +427,8 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                 />
                 <textarea
                   name="notes"
-                  value={formData.notes}
-                  onChange={handleInputChange}
+                  value={form.notes}
+                  onChange={handleFormChange}
                   rows={3}
                   placeholder="Apartment number, gate code, preferred delivery time..."
                   className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none resize-none"
@@ -470,11 +532,62 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                     ))}
                   </div>
 
+                  {/* Coupon Input */}
+                  <div className="mb-5">
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-emerald-600" />
+                          <span className="text-sm font-semibold text-emerald-700">{appliedCoupon.code}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                          className="flex h-6 w-6 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-100 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
+                          placeholder="Coupon code"
+                          className="flex-1 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading || !couponCode.trim()}
+                          className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-600 transition-all hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {couponLoading ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Tag className="h-3.5 w-3.5" />
+                          )}
+                          Apply
+                        </button>
+                      </div>
+                    )}
+                    {couponError && (
+                      <p className="mt-1.5 text-xs text-red-500">{couponError}</p>
+                    )}
+                  </div>
+
                   <div className="space-y-2.5 border-t border-gray-100 pt-5">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Subtotal</span>
                       <span className="font-semibold text-gray-900">Rs. {subtotal.toLocaleString()}</span>
                     </div>
+                    {appliedCoupon && appliedCoupon.discountAmount > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-emerald-600">Discount ({appliedCoupon.code})</span>
+                        <span className="font-semibold text-emerald-600">- Rs. {appliedCoupon.discountAmount.toLocaleString()}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Shipping</span>
                       <span className="font-semibold text-emerald-600">Free</span>
@@ -482,7 +595,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                     <div className="border-t border-gray-100 pt-3">
                       <div className="flex justify-between items-baseline">
                         <span className="text-base font-bold text-gray-900">Total</span>
-                        <span className="text-2xl font-bold text-gray-900">Rs. {subtotal.toLocaleString()}</span>
+                        <span className="text-2xl font-bold text-gray-900">Rs. {discountedTotal.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -503,17 +616,17 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
 
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={create.isPending}
                     className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white transition-all hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
                   >
-                    {isSubmitting ? (
+                    {create.isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
                         Processing...
                       </>
                     ) : (
                       <>
-                        Place Order — Rs. {subtotal.toLocaleString()}
+                        Place Order — Rs. {discountedTotal.toLocaleString()}
                         <ChevronRight className="h-4 w-4" />
                       </>
                     )}
@@ -582,9 +695,10 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email</label>
                 <input
                   type="email"
+                  name="email"
                   placeholder="you@example.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
+                  value={loginForm.email}
+                  onChange={handleLoginChange}
                   required
                   disabled={isLoggingIn}
                   className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm outline-none transition-all placeholder:text-gray-300 focus:bg-white focus:border-blue-500 disabled:opacity-50"
@@ -595,9 +709,10 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                 <label className="block text-xs font-semibold text-gray-500 mb-1.5">Password</label>
                 <input
                   type="password"
+                  name="password"
                   placeholder="Enter your password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
+                  value={loginForm.password}
+                  onChange={handleLoginChange}
                   required
                   disabled={isLoggingIn}
                   className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm outline-none transition-all placeholder:text-gray-300 focus:bg-white focus:border-blue-500 disabled:opacity-50"

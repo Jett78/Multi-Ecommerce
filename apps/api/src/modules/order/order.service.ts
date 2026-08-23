@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Logger, Inject } fr
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { OrderRepository } from './order.repository';
 import { VariantRepository } from '../product/variant.repository';
+import { DiscountRepository } from '../discount/discount.repository';
 import { DB_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
 import { randomUUID } from 'crypto';
@@ -13,6 +14,7 @@ export class OrderService {
   constructor(
     private readonly orderRepository: OrderRepository,
     private readonly variantRepository: VariantRepository,
+    private readonly discountRepository: DiscountRepository,
     @Inject(DB_CONNECTION)
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
@@ -27,6 +29,7 @@ export class OrderService {
     billingAddress?: string;
     landmark?: string;
     notes?: string;
+    couponCode?: string;
   }) {
     try {
       if (!dto.items || dto.items.length === 0) {
@@ -66,7 +69,67 @@ export class OrderService {
 
         // Calculate totals
         const subtotal = orderItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-        const totalAmount = subtotal;
+
+        // Validate and apply coupon if provided
+        let discountAmount = 0;
+        let couponId: string | undefined;
+        let couponRecord: any = null;
+
+        if (dto.couponCode) {
+          const coupon = await this.discountRepository.findByCode(dto.couponCode);
+          if (!coupon) {
+            throw new BadRequestException('Invalid coupon code');
+          }
+
+          const validation = await this.discountRepository.findByCode(dto.couponCode);
+          if (!validation) {
+            throw new BadRequestException('Invalid coupon code');
+          }
+
+          const now = new Date();
+          if (!coupon.isActive) {
+            throw new BadRequestException('This coupon is no longer active');
+          }
+          if (coupon.startsAt && now < coupon.startsAt) {
+            throw new BadRequestException('This coupon is not yet active');
+          }
+          if (coupon.expiresAt && now > coupon.expiresAt) {
+            throw new BadRequestException('This coupon has expired');
+          }
+          if (coupon.usageLimit !== null && coupon.usageCount >= coupon.usageLimit) {
+            throw new BadRequestException('This coupon has reached its usage limit');
+          }
+          if (userId && coupon.perUserLimit !== null) {
+            const userUsage = await this.discountRepository.countUserCouponUsage(userId, coupon.id);
+            if (userUsage >= coupon.perUserLimit) {
+              throw new BadRequestException('You have already used this coupon the maximum number of times');
+            }
+          }
+          if (coupon.minOrderAmount !== null && subtotal < coupon.minOrderAmount / 100) {
+            throw new BadRequestException(`Minimum order amount is Rs. ${(coupon.minOrderAmount / 100).toLocaleString()}`);
+          }
+
+          // Calculate discount
+          switch (coupon.type) {
+            case 'fixed':
+              discountAmount = Math.min(coupon.value / 100, subtotal);
+              break;
+            case 'percentage':
+              discountAmount = Math.floor((subtotal * coupon.value) / 100);
+              if (coupon.maxDiscountAmount !== null) {
+                discountAmount = Math.min(discountAmount, coupon.maxDiscountAmount / 100);
+              }
+              break;
+            case 'free_shipping':
+              discountAmount = 0;
+              break;
+          }
+
+          couponId = coupon.id;
+          couponRecord = coupon;
+        }
+
+        const totalAmount = subtotal - discountAmount;
 
         // Generate order ID
         const orderId = `ORD-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
@@ -76,6 +139,7 @@ export class OrderService {
           orderId,
           userId,
           subtotal,
+          discountAmount,
           totalAmount,
           paymentMethod: dto.paymentMethod,
           customerName: dto.customerName,
@@ -85,7 +149,19 @@ export class OrderService {
           billingAddress: dto.billingAddress,
           landmark: dto.landmark,
           notes: dto.notes,
+          couponId,
         }, trx);
+
+        // Record coupon usage if a coupon was applied
+        if (couponId && couponRecord) {
+          await this.discountRepository.createOrderCoupon({
+            orderId: order.id,
+            couponId,
+            couponCode: couponRecord.code,
+            discountAmount,
+          }, trx);
+          await this.discountRepository.incrementUsageCount(couponId, trx);
+        }
 
         // Create order items and decrement stock
         for (const item of orderItems) {
@@ -130,9 +206,11 @@ export class OrderService {
     }
 
     const items = await this.orderRepository.findOrderItems(order.id);
+    const orderCoupons = await this.orderRepository.findOrderCoupons(order.id);
     return {
       ...order,
       items,
+      orderCoupons,
     };
   }
 
@@ -143,9 +221,11 @@ export class OrderService {
     }
 
     const items = await this.orderRepository.findOrderItems(order.id);
+    const orderCoupons = await this.orderRepository.findOrderCoupons(order.id);
     return {
       ...order,
       items,
+      orderCoupons,
     };
   }
 

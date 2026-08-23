@@ -30,6 +30,7 @@ export class OrderRepository {
       landmark?: string;
       notes?: string;
       metadata?: string;
+      couponId?: string;
     },
     tx?: NodePgDatabase<typeof schema>,
   ) {
@@ -54,6 +55,7 @@ export class OrderRepository {
         landmark: data.landmark,
         notes: data.notes,
         metadata: data.metadata,
+        couponId: data.couponId ?? null,
       })
       .returning();
 
@@ -108,6 +110,15 @@ export class OrderRepository {
       .where(eq(schema.orders.orderId, orderId));
 
     return order || null;
+  }
+
+  async findOrderCoupons(orderId: string) {
+    const records = await this.db
+      .select()
+      .from(schema.orderCoupons)
+      .where(eq(schema.orderCoupons.orderId, orderId));
+
+    return records;
   }
 
   async findOrderItems(orderId: string, tx?: NodePgDatabase<typeof schema>) {

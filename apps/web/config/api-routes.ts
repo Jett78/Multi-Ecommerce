@@ -31,5 +31,7 @@ export const API_ROUTES = {
   ORDER_STATS: `${API_BASE_URL}/orders/stats`,
   MY_ORDERS: `${API_BASE_URL}/orders/my`,
   SHIPPING_ADDRESS: `${API_BASE_URL}/shipping-addresses`,
+  DISCOUNT: `${API_BASE_URL}/discounts`,
+  DISCOUNT_VALIDATE: `${API_BASE_URL}/discounts/validate`,
   STRIPE: `${API_BASE_URL}/stripe`,
 } as const;

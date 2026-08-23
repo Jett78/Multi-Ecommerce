@@ -1,41 +1,27 @@
 export interface CartItem {
-  id: string;
-  cartId: string;
   variantId: string;
   quantity: number;
   priceAtAdd: number;
-  createdAt?: string;
-  updatedAt?: string;
-  variant: {
-    id: string;
-    sku: string | null;
-    price: number;
-    stockQuantity: number;
-    allowBackorder: boolean;
-  };
-  product: {
-    id: string;
-    name: string;
-    slug: string;
-  };
+  productName: string;
+  productSlug: string;
+  variantSku: string | null;
+  stockQuantity: number;
+  allowBackorder: boolean;
+  imageUrl?: string;
+  productId: string;
+  attributes?: { attributeName: string; attributeValue: string }[];
 }
 
-export interface Cart {
-  id: string;
-  userId: string | null;
-  sessionId: string;
-  expiresAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CartState {
-  cart: Cart;
+export interface CartStore {
   items: CartItem[];
-  subtotal: number;
-  itemCount: number;
-}
-
-export interface CartCountState {
-  itemCount: number;
+  appliedCoupon: AppliedCoupon | null;
+  addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
+  updateQuantity: (variantId: string, quantity: number) => void;
+  removeItem: (variantId: string) => void;
+  clearCart: () => void;
+  itemCount: () => number;
+  subtotal: () => number;
+  setCoupon: (coupon: AppliedCoupon | null) => void;
+  removeCoupon: () => void;
+  discountedTotal: () => number;
 }

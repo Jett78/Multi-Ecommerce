@@ -28,6 +28,7 @@ import { ProductModule } from './modules/product/product.module';
 import { CartModule } from './modules/cart/cart.module';
 import { OrderModule } from './modules/order/order.module';
 import { ShippingAddressModule } from './modules/shipping-address/shipping-address.module';
+import { DiscountModule } from './modules/discount/discount.module';
 import { PermissionGuard } from './guards/permission.guard';
 
 @Module({
@@ -57,6 +58,7 @@ import { PermissionGuard } from './guards/permission.guard';
     CartModule,
     OrderModule,
     ShippingAddressModule,
+    DiscountModule,
   ],
   controllers: [AppController],
   providers: [
