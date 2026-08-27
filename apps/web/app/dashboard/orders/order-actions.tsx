@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Truck, Loader2 } from "lucide-react";
+import { Truck, Loader2, RefreshCw } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
 import { API_ROUTES } from "@/config/api-routes";
@@ -18,17 +18,26 @@ interface OrderActionsProps {
   orderId: string;
   initialStatus: OrderStatus;
   initialPaymentStatus: PaymentStatus;
+  courierProvider?: string | null;
+  courierConsignmentId?: string | null;
+  courierTrackingUrl?: string | null;
+  district?: string | null;
 }
 
 export default function OrderActions({
   orderId,
   initialStatus,
   initialPaymentStatus,
+  courierProvider,
+  courierConsignmentId,
+  courierTrackingUrl,
+  district,
 }: OrderActionsProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
   const canManage = hasPermission("order.manage");
+  const canUpdate = hasPermission("order.update");
 
   const [status, setStatus] = React.useState<OrderStatus>(initialStatus);
   const [paymentStatus, setPaymentStatus] = React.useState<PaymentStatus>(initialPaymentStatus);
@@ -74,13 +83,112 @@ export default function OrderActions({
     },
   });
 
+  const sendToCourierMutation = useMutation({
+    mutationFn: async () => {
+      return apiClient(`${API_ROUTES.ORDERS}/${orderId}/send-to-courier`, {
+        method: "POST",
+        isAuthenticated: true,
+      });
+    },
+    onSuccess: (res: any) => {
+      const consignmentId = res?.data?.consignmentId;
+      showSuccess(
+        res?.data?.alreadySent
+          ? `Order already sent (Consignment: ${consignmentId})`
+          : `Order sent to courier. Consignment: ${consignmentId}`,
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      router.refresh();
+    },
+    onError: (err: { message?: string }) => {
+      showError(err.message || "Failed to send order to courier");
+    },
+  });
+
+  const syncCourierMutation = useMutation({
+    mutationFn: async () => {
+      return apiClient(`${API_ROUTES.ORDERS}/${orderId}/sync-courier`, {
+        method: "POST",
+        isAuthenticated: true,
+      });
+    },
+    onSuccess: () => {
+      showSuccess("Order status synced from courier");
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      router.refresh();
+    },
+    onError: (err: { message?: string }) => {
+      showError(err.message || "Failed to sync order status from courier");
+    },
+  });
+
   if (!canManage) return null;
+
+  const canSendToCourier =
+    canUpdate &&
+    courierProvider &&
+    !courierConsignmentId;
 
   return (
     <div className="space-y-4 rounded-xl border border-slate-200 p-4">
       <div className="flex items-center gap-2 text-slate-700">
         <Truck className="size-4" />
         <span className="text-sm font-semibold">Manage Order</span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {courierConsignmentId ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
+            Consignment: {courierConsignmentId}
+          </span>
+        ) : courierProvider ? (
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            Courier: {courierProvider}
+          </span>
+        ) : null}
+
+        {courierTrackingUrl ? (
+          <a
+            href={courierTrackingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800 hover:bg-blue-200"
+          >
+            Track shipment
+          </a>
+        ) : null}
+
+        {canSendToCourier && (
+          <button
+            type="button"
+            disabled={sendToCourierMutation.isPending}
+            onClick={() => sendToCourierMutation.mutate()}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primarymain px-4 py-2 text-sm font-semibold text-white hover:bg-primarymain/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {sendToCourierMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Truck className="size-4" />
+            )}
+            Send to Courier
+          </button>
+        )}
+
+        {canUpdate && courierConsignmentId && (
+          <button
+            type="button"
+            disabled={syncCourierMutation.isPending}
+            onClick={() => syncCourierMutation.mutate()}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-primarymain px-4 py-2 text-sm font-semibold text-primarymain hover:bg-primarymain/10 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {syncCourierMutation.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <RefreshCw className="size-4" />
+            )}
+            Sync status
+          </button>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

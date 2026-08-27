@@ -54,6 +54,13 @@ export interface Order {
   notes: string | null;
   metadata: string | null;
   couponId: string | null;
+  courierProvider: string | null;
+  courierConsignmentId: string | null;
+  courierTrackingUrl: string | null;
+  courierStatus: string | null;
+  deliveryType: string | null;
+  district: string | null;
+  parcelWeightKg: number | null;
   createdAt: string;
   updatedAt: string;
   items?: OrderItem[];

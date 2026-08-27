@@ -12,6 +12,9 @@ export const useCartStore = create<CartStore>()(
     (set, get) => ({
       items: [],
       appliedCoupon: null,
+      deliveryCharge: 0,
+      deliveryProvider: null,
+      estimatedDeliveryDays: null,
 
       addItem: (item, quantity = 1) => {
         set((state) => {
@@ -50,7 +53,7 @@ export const useCartStore = create<CartStore>()(
       },
 
       clearCart: () => {
-        set({ items: [], appliedCoupon: null });
+        set({ items: [], appliedCoupon: null, deliveryCharge: 0, deliveryProvider: null, estimatedDeliveryDays: null });
       },
 
       itemCount: () => {
@@ -69,11 +72,21 @@ export const useCartStore = create<CartStore>()(
         set({ appliedCoupon: null });
       },
 
+      setDeliveryCharge: (charge, provider = null, days = null) => {
+        set({ deliveryCharge: charge, deliveryProvider: provider, estimatedDeliveryDays: days });
+      },
+
       discountedTotal: () => {
         const subtotal = get().subtotal();
         const coupon = get().appliedCoupon;
         if (!coupon) return subtotal;
         return Math.max(0, subtotal - coupon.discountAmount);
+      },
+
+      totalWithDelivery: () => {
+        const discounted = get().discountedTotal();
+        const delivery = get().deliveryCharge;
+        return discounted + delivery;
       },
     }),
     {

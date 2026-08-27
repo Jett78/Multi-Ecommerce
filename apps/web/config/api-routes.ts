@@ -34,4 +34,12 @@ export const API_ROUTES = {
   DISCOUNT: `${API_BASE_URL}/discounts`,
   DISCOUNT_VALIDATE: `${API_BASE_URL}/discounts/validate`,
   STRIPE: `${API_BASE_URL}/stripe`,
+  COURIER: `${API_BASE_URL}/courier`,
+  COURIER_SETTINGS: `${API_BASE_URL}/courier/settings`,
+  COURIER_CALCULATE: `${API_BASE_URL}/courier/calculate`,
+  COURIER_CALCULATE_BATCH: `${API_BASE_URL}/courier/calculate/batch`,
+  COURIER_MAPPINGS: `${API_BASE_URL}/courier/mappings`,
+  COURIER_SYNC: `${API_BASE_URL}/courier/sync`,
+  COURIER_AUTO_MAP: `${API_BASE_URL}/courier/mappings/auto-map`,
+  COURIER_LOCATIONS: `${API_BASE_URL}/courier/locations`,
 } as const;

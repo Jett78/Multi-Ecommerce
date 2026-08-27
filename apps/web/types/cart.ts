@@ -17,6 +17,9 @@ export interface CartItem {
 export interface CartStore {
   items: CartItem[];
   appliedCoupon: AppliedCoupon | null;
+  deliveryCharge: number;
+  deliveryProvider: string | null;
+  estimatedDeliveryDays: number | null;
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
   updateQuantity: (variantId: string, quantity: number) => void;
   removeItem: (variantId: string) => void;
@@ -25,7 +28,9 @@ export interface CartStore {
   subtotal: () => number;
   setCoupon: (coupon: AppliedCoupon | null) => void;
   removeCoupon: () => void;
+  setDeliveryCharge: (charge: number, provider?: string | null, days?: number | null) => void;
   discountedTotal: () => number;
+  totalWithDelivery: () => number;
 }
 
 export interface CartState {

@@ -25,6 +25,7 @@ import {
 import { useCrud } from "@/hooks/useCRUD";
 import { useForm } from "@/hooks/useForm";
 import { useCartStore } from "@/stores/cart-store";
+import { useDeliveryCharge } from "@/hooks/use-delivery-charge";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import { useSession, signIn } from "@/lib/auth-client";
 import { API_ROUTES } from "@/config/api-routes";
@@ -81,6 +82,10 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
   const setCoupon = useCartStore((s) => s.setCoupon);
   const removeCoupon = useCartStore((s) => s.removeCoupon);
   const discountedTotal = useCartStore((s) => s.discountedTotal());
+  const deliveryCharge = useCartStore((s) => s.deliveryCharge);
+  const setDeliveryCharge = useCartStore((s) => s.setDeliveryCharge);
+  const totalWithDelivery = useCartStore((s) => s.totalWithDelivery());
+  const { rate: deliveryRate, isLoading: deliveryLoading, error: deliveryError, calculateCharge, reset: resetDelivery } = useDeliveryCharge();
 
   const { data: session, isPending } = useSession() as any;
   const isAuthenticated = !!session?.user;
@@ -116,6 +121,33 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
     setSelectedAddress(addr);
     setSelectedAddressId(addr.id);
   };
+
+  React.useEffect(() => {
+    if (!selectedAddress?.district) {
+      resetDelivery();
+      setDeliveryCharge(0);
+      return;
+    }
+
+    const totalWeight = items.reduce((sum, item) => {
+      return sum + (item.quantity * 0.5);
+    }, 0);
+
+    const fetchDeliveryCharge = async () => {
+      const rate = await calculateCharge(
+        selectedAddress.district,
+        Math.max(totalWeight, 0.5),
+        discountedTotal
+      );
+      if (rate) {
+        setDeliveryCharge(rate.finalPrice, rate.providerUsed || rate.provider, rate.estimatedDays);
+      } else {
+        setDeliveryCharge(0);
+      }
+    };
+
+    fetchDeliveryCharge();
+  }, [selectedAddress?.district, items]);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -195,6 +227,8 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
     : "";
 
   const placeOrder = async () => {
+    const totalWeight = items.reduce((sum, item) => sum + item.quantity * 0.5, 0);
+
     create.mutate(
       {
         items: items.map((i) => ({
@@ -211,6 +245,15 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
         landmark: selectedAddress?.landmark || undefined,
         notes: form.notes || undefined,
         couponCode: appliedCoupon?.code || undefined,
+        deliveryCharge: deliveryCharge || undefined,
+        courierProvider: deliveryRate?.providerUsed || undefined,
+        estimatedDeliveryDays: deliveryRate?.estimatedDays || undefined,
+        district:
+          selectedAddress?.district ||
+          fullAddress.split(",").map((s) => s.trim()).filter(Boolean)[2] ||
+          undefined,
+        parcelWeightKg: Math.max(totalWeight, 0.5),
+        deliveryType: "normal",
       },
       {
         onSuccess: (res: any) => {
@@ -590,12 +633,39 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                     )}
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Shipping</span>
-                      <span className="font-semibold text-emerald-600">Free</span>
+                      {deliveryLoading ? (
+                        <span className="font-semibold text-gray-400 flex items-center gap-1">
+                          <Loader2 className="h-3 w-3 animate-spin" /> Calculating...
+                        </span>
+                      ) : deliveryCharge > 0 ? (
+                        <span className="font-semibold text-gray-900">Rs. {deliveryCharge.toLocaleString()}</span>
+                      ) : appliedCoupon?.type === "free_shipping" ? (
+                        <span className="font-semibold text-emerald-600">Free (coupon)</span>
+                      ) : selectedAddress ? (
+                        <span className="font-semibold text-emerald-600">Free</span>
+                      ) : (
+                        <span className="font-semibold text-gray-400">Select address</span>
+                      )}
                     </div>
+                    {selectedAddress?.district && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-400">Delivery Area</span>
+                        <span className="text-gray-500">{selectedAddress.district}{deliveryRate?.providerUsed ? ` (Pathao Courier)` : ''}</span>
+                      </div>
+                    )}
+                    {deliveryRate?.estimatedDays && deliveryCharge > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-400">Estimated Delivery</span>
+                        <span className="text-xs text-gray-500">{deliveryRate.estimatedDays} days</span>
+                      </div>
+                    )}
+                    {deliveryError && (
+                      <p className="text-xs text-amber-600">{deliveryError}</p>
+                    )}
                     <div className="border-t border-gray-100 pt-3">
                       <div className="flex justify-between items-baseline">
                         <span className="text-base font-bold text-gray-900">Total</span>
-                        <span className="text-2xl font-bold text-gray-900">Rs. {discountedTotal.toLocaleString()}</span>
+                        <span className="text-2xl font-bold text-gray-900">Rs. {totalWithDelivery.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -626,7 +696,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                       </>
                     ) : (
                       <>
-                        Place Order — Rs. {discountedTotal.toLocaleString()}
+                        Place Order — Rs. {totalWithDelivery.toLocaleString()}
                         <ChevronRight className="h-4 w-4" />
                       </>
                     )}

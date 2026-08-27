@@ -3,6 +3,8 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { OrderRepository } from './order.repository';
 import { VariantRepository } from '../product/variant.repository';
 import { DiscountRepository } from '../discount/discount.repository';
+import { CourierService } from '../courier/courier.service';
+import { mapPathaoEventToOrderStatus, decidePaymentOnDelivered } from '../courier/courier.service';
 import { DB_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
 import { randomUUID } from 'crypto';
@@ -15,6 +17,7 @@ export class OrderService {
     private readonly orderRepository: OrderRepository,
     private readonly variantRepository: VariantRepository,
     private readonly discountRepository: DiscountRepository,
+    private readonly courierService: CourierService,
     @Inject(DB_CONNECTION)
     private readonly db: NodePgDatabase<typeof schema>,
   ) {}
@@ -30,6 +33,12 @@ export class OrderService {
     landmark?: string;
     notes?: string;
     couponCode?: string;
+    deliveryCharge?: number;
+    courierProvider?: string;
+    estimatedDeliveryDays?: number;
+    district?: string;
+    parcelWeightKg?: number;
+    deliveryType?: string;
   }) {
     try {
       if (!dto.items || dto.items.length === 0) {
@@ -129,7 +138,12 @@ export class OrderService {
           couponRecord = coupon;
         }
 
-        const totalAmount = subtotal - discountAmount;
+        // Calculate delivery charge
+        const deliveryCharge = dto.deliveryCharge || 0;
+        const isFreeShipping = dto.couponCode && couponRecord?.type === 'free_shipping';
+        const finalDeliveryCharge = isFreeShipping ? 0 : deliveryCharge;
+
+        const totalAmount = subtotal - discountAmount + finalDeliveryCharge;
 
         // Generate order ID
         const orderId = `ORD-${Date.now()}-${randomUUID().slice(0, 8).toUpperCase()}`;
@@ -140,6 +154,7 @@ export class OrderService {
           userId,
           subtotal,
           discountAmount,
+          deliveryCharge: finalDeliveryCharge,
           totalAmount,
           paymentMethod: dto.paymentMethod,
           customerName: dto.customerName,
@@ -150,6 +165,11 @@ export class OrderService {
           landmark: dto.landmark,
           notes: dto.notes,
           couponId,
+          courierProvider: dto.courierProvider,
+          estimatedDeliveryDays: dto.estimatedDeliveryDays,
+          district: dto.district,
+          parcelWeightKg: dto.parcelWeightKg,
+          deliveryType: dto.deliveryType,
         }, trx);
 
         // Record coupon usage if a coupon was applied
@@ -271,5 +291,183 @@ export class OrderService {
 
   async getOrderStats() {
     return this.orderRepository.getOrderStats();
+  }
+
+  private resolveDistrict(
+    district: string | null | undefined,
+    shippingAddress: string | null | undefined,
+  ): string | null {
+    if (district && district.trim()) {
+      return district.trim();
+    }
+
+    if (!shippingAddress) return null;
+
+    // Address format: "street, localLevel, district, province, country"
+    const parts = shippingAddress
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    return parts[2] || null;
+  }
+
+  async sendToCourier(orderId: string) {
+    const order = await this.orderRepository.findOrderById(orderId);
+    if (!order) {
+      throw new NotFoundException(`Order with id "${orderId}" not found`);
+    }
+
+    // Idempotent: if a consignment already exists, return it without
+    // creating a duplicate Pathao order.
+    if (order.courierConsignmentId) {
+      return {
+        consignmentId: order.courierConsignmentId,
+        deliveryFee: order.deliveryCharge ?? 0,
+        status: order.status,
+        trackingUrl: order.courierTrackingUrl ?? null,
+        order,
+        alreadySent: true,
+      };
+    }
+
+    if (!order.courierProvider) {
+      throw new BadRequestException('Order has no courier provider configured.');
+    }
+
+    const district = this.resolveDistrict(order.district, order.shippingAddress);
+    if (!district) {
+      throw new BadRequestException('Order has no shipping district to resolve a courier zone.');
+    }
+
+    const items = await this.orderRepository.findOrderItems(order.id);
+    const itemQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+    const itemWeight = order.parcelWeightKg ?? 1;
+    const amountToCollect = order.paymentMethod === 'cod' ? order.totalAmount : 0;
+
+    try {
+      const result = await this.courierService.createShipment({
+        provider: order.courierProvider,
+        district,
+        orderId: order.orderId,
+        recipientName: order.customerName || 'Customer',
+        recipientPhone: order.customerPhone || '',
+        recipientAddress: order.shippingAddress || '',
+        itemWeight,
+        itemQuantity,
+        amountToCollect,
+        deliveryType: order.deliveryType ?? 'normal',
+      });
+
+      const nextStatus =
+        order.status === 'pending' || order.status === 'confirmed'
+          ? 'processing'
+          : order.status;
+
+      const trackingUrl = await this.courierService.buildTrackingUrl(
+        result.consignmentId,
+        order.customerPhone,
+      );
+
+      const updated = await this.orderRepository.updateCourierConsignment(order.id, {
+        courierConsignmentId: result.consignmentId,
+        deliveryType: order.deliveryType ?? 'normal',
+        status: nextStatus,
+        courierTrackingUrl: trackingUrl,
+        courierStatus: result.status,
+      });
+
+      return {
+        consignmentId: result.consignmentId,
+        deliveryFee: result.deliveryFee,
+        status: result.status,
+        trackingUrl,
+        order: updated,
+        alreadySent: false,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to send order ${orderId} to courier: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Apply a Pathao status (event or slug) to an order, rank-aware and with COD
+   * payment completion on delivery. Shared by the webhook receiver and the
+   * manual sync button so both behave identically.
+   */
+  private async applyCourierStatus(
+    orderId: string,
+    pathaoSlug: string | null | undefined,
+    meta?: { collectedAmount?: number },
+  ) {
+    const order = await this.orderRepository.findOrderById(orderId);
+    if (!order) {
+      throw new NotFoundException(`Order with id "${orderId}" not found`);
+    }
+
+    const target = mapPathaoEventToOrderStatus(pathaoSlug, order.status);
+
+    const updateData: {
+      courierConsignmentId: string;
+      courierStatus: string | null;
+      status?: string;
+    } = {
+      courierConsignmentId: order.courierConsignmentId!,
+      courierStatus: pathaoSlug ?? null,
+    };
+    if (target) {
+      updateData.status = target;
+    }
+
+    const updated = await this.orderRepository.updateCourierConsignment(order.id, updateData);
+
+    if (decidePaymentOnDelivered(order, pathaoSlug)) {
+      await this.orderRepository.updatePaymentStatus(order.id, 'completed');
+      updated.paymentStatus = 'completed';
+    }
+
+    this.logger.log(
+      `Applied courier status "${pathaoSlug}" to order ${order.orderId} -> ${target ?? order.status}` +
+        (meta?.collectedAmount != null ? ` (collected ${meta.collectedAmount})` : ''),
+    );
+
+    return updated;
+  }
+
+  /**
+   * Manually sync an order's status from Pathao's order-info endpoint.
+   */
+  async syncCourierStatus(orderId: string) {
+    const order = await this.orderRepository.findOrderById(orderId);
+    if (!order) {
+      throw new NotFoundException(`Order with id "${orderId}" not found`);
+    }
+    if (!order.courierConsignmentId) {
+      throw new BadRequestException('Order has not been sent to courier yet.');
+    }
+
+    const info = await this.courierService.getShipmentStatus(order.courierConsignmentId);
+    const slug = info.orderStatusSlug || info.orderStatus || null;
+    return this.applyCourierStatus(order.id, slug, {
+      collectedAmount: undefined,
+    });
+  }
+
+  /**
+   * Webhook entry-point: apply a Pathao status to an order looked up by its
+   * consignment id.
+   */
+  async applyCourierStatusByConsignment(
+    consignmentId: string,
+    pathaoSlug: string | null | undefined,
+    meta?: { collectedAmount?: number },
+  ) {
+    const order = await this.orderRepository.findOrderByConsignmentId(consignmentId);
+    if (!order) {
+      this.logger.warn(`Courier webhook for unknown consignment ${consignmentId}`);
+      return null;
+    }
+    return this.applyCourierStatus(order.id, pathaoSlug, meta);
   }
 }

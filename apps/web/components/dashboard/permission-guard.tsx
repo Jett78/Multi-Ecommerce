@@ -23,6 +23,8 @@ const routePermissions: Record<string, string[]> = {
   "/dashboard/categories": ["category.read", "category.create", "category.edit", "category.delete"],
   "/dashboard/subcategories": ["category.read", "category.create", "category.edit", "category.delete"],
   "/dashboard/products": ["product.read", "product.create", "product.edit", "product.delete"],
+  "/dashboard/courier-settings": ["delivery.read", "delivery.create", "delivery.edit"],
+  "/dashboard/district-mappings": ["district_mapping.read", "district_mapping.edit"],
 };
 
 function getRequiredPermissions(pathname: string): string[] | null {

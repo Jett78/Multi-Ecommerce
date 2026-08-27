@@ -27,6 +27,8 @@ import {
   Tags,
   Tag,
   Boxes,
+  Truck,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth-client";
@@ -89,6 +91,15 @@ const navigation: NavItem[] = [
       { name: "Reviews", href: "/dashboard/reviews", icon: Star, permission: "review.moderate" },
       { name: "Orders", href: "/dashboard/orders", icon: CreditCard, permission: "order.read" },
       { name: "Coupons", href: "/dashboard/coupons", icon: Tag, permission: "discount.read" },
+    ],
+  },
+  {
+    name: "Couriers",
+    icon: Truck,
+    permissions: ["delivery.read", "district_mapping.read"],
+    children: [
+      { name: "Courier Settings", href: "/dashboard/courier-settings", icon: Truck, permission: "delivery.read" },
+      { name: "District Mappings", href: "/dashboard/district-mappings", icon: MapPin, permission: "district_mapping.read" },
     ],
   },
   { name: "Users", href: "/dashboard/users", icon: Users, permission: "user.read" },

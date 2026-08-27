@@ -50,11 +50,20 @@ export default async function OrderDetailPage({
         orderId={order.id}
         initialStatus={order.status}
         initialPaymentStatus={order.paymentStatus}
+        courierProvider={order.courierProvider}
+        courierConsignmentId={order.courierConsignmentId}
+        courierTrackingUrl={order.courierTrackingUrl}
+        district={order.district}
       />
 
       <div className="flex flex-wrap items-center gap-3">
         <StatusBadge value={order.status} options={ORDER_STATUS_OPTIONS} />
         <StatusBadge value={order.paymentStatus} options={PAYMENT_STATUS_OPTIONS} />
+        {order.courierStatus ? (
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            Courier: {order.courierStatus}
+          </span>
+        ) : null}
         <span className="text-sm text-slate-500">
           Paid via {order.paymentMethod ? order.paymentMethod.toUpperCase() : "N/A"}
         </span>
