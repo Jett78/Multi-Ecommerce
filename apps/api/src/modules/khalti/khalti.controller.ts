@@ -101,7 +101,7 @@ export class KhaltiController {
     };
   }
 
-  @Get('order/:pidx')
+  @Get('order')
   @AllowAnonymous()
   @ApiOperation({ summary: 'Get order details by pidx' })
   @ApiResponse({ status: 200, description: 'Order fetched successfully' })

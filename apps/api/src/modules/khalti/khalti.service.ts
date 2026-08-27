@@ -1,4 +1,4 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { DB_CONNECTION } from '../../db/db.module';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -41,26 +41,54 @@ export class KhaltiService {
       throw new BadRequestException('Khalti payment is not configured. Please set up payment credentials in the admin dashboard.');
     }
 
-    const purchaseOrderId = this.generateOrderId();
+    let order: typeof schema.orders.$inferSelect;
+    let purchaseOrderId: string;
 
-    // Create pending order in database
-    const [order] = await this.db
-      .insert(schema.orders)
-      .values({
-        orderId: purchaseOrderId,
-        userId: userId || null,
-        subtotal: dto.amount,
-        discountAmount: 0,
-        taxAmount: 0,
-        totalAmount: dto.amount,
-        status: 'pending',
-        customerName: dto.customerInfo?.name,
-        customerEmail: dto.customerInfo?.email,
-        customerPhone: dto.customerInfo?.phone,
-      })
-      .returning();
+    if (dto.orderId) {
+      // Link to an existing real checkout order (no duplicate order created).
+      const [existing] = await this.db
+        .select()
+        .from(schema.orders)
+        .where(eq(schema.orders.orderId, dto.orderId))
+        .limit(1);
 
-    this.logger.log(`Order created: ${purchaseOrderId}`);
+      if (!existing) {
+        throw new BadRequestException('Order not found');
+      }
+
+      // Ownership check to guard against tampering.
+      if (userId && existing.userId && existing.userId !== userId) {
+        throw new ForbiddenException('You are not allowed to pay for this order');
+      }
+
+      order = existing;
+      purchaseOrderId = existing.orderId;
+
+      this.logger.log(`Using existing order: ${purchaseOrderId}`);
+    } else {
+      // Legacy/test flow: create a minimal pending order.
+      const generated = this.generateOrderId();
+      const [created] = await this.db
+        .insert(schema.orders)
+        .values({
+          orderId: generated,
+          userId: userId || null,
+          subtotal: dto.amount,
+          discountAmount: 0,
+          taxAmount: 0,
+          totalAmount: dto.amount,
+          status: 'pending',
+          customerName: dto.customerInfo?.name,
+          customerEmail: dto.customerInfo?.email,
+          customerPhone: dto.customerInfo?.phone,
+        })
+        .returning();
+
+      order = created;
+      purchaseOrderId = generated;
+
+      this.logger.log(`Order created: ${purchaseOrderId}`);
+    }
 
     const payload = {
       return_url: dto.returnUrl,
@@ -98,7 +126,7 @@ export class KhaltiService {
       // Store pidx in order for later verification
       await this.db
         .update(schema.orders)
-        .set({ pidx: data.pidx, updatedAt: new Date() })
+        .set({ pidx: data.pidx, paymentMethod: 'khalti', updatedAt: new Date() })
         .where(eq(schema.orders.id, order.id));
 
       this.logger.log(`Khalti payment initiated: pidx=${data.pidx}`);
@@ -111,7 +139,7 @@ export class KhaltiService {
         purchase_order_id: purchaseOrderId,
       };
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
+      if (error instanceof BadRequestException || error instanceof ForbiddenException) throw error;
       this.logger.error('Khalti API error', error);
       // Update order payment status to failed
       await this.db

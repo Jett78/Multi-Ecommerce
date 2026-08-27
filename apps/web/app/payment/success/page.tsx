@@ -1,158 +1,120 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useCrud } from "@/hooks/useCRUD";
+import { apiClient } from "@/lib/api-client";
 import { API_ROUTES } from "@/config/api-routes";
-import { CheckCircle, XCircle, Loader2, ArrowLeft, Receipt } from "lucide-react";
-import type { Order } from "@/types/khalti";
+import { verifyKhaltiPayment } from "@/actions/khalti-action";
+import type { Order, OrderResponse } from "@/types/khalti";
+import { CheckCircle, XCircle, Loader2, ArrowRight, ArrowLeft } from "lucide-react";
 
-interface CallbackData {
-  pidx: string;
-  status: string;
-  transactionId: string;
-  amount: string;
-  purchaseOrderId: string;
-  purchaseOrderName: string;
-  verification: any;
-}
+type Status = "verifying" | "success" | "failed" | "error";
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const pidx = searchParams.get("pidx");
-  const txnStatus = searchParams.get("status");
 
-  const { getAll: getCallback } = useCrud<CallbackData>({
-    endpoint: `${API_ROUTES.KHALTI}/callback`,
-    queryKey: "khalti-callback",
-    isAuthenticated: false,
-  });
+  const [status, setStatus] = useState<Status>("verifying");
+  const [orderId, setOrderId] = useState<string | null>(null);
 
-  const { getAll: getOrder } = useCrud<Order>({
-    endpoint: API_ROUTES.KHALTI_ORDER,
-    queryKey: "khalti-order",
-    isAuthenticated: true,
-  });
+  const ranRef = useRef(false);
 
-  const { data: callbackData, isLoading: isCallbackLoading } = getCallback(
-    pidx && txnStatus === "Completed" ? { pidx, status: txnStatus } : undefined
-  );
+  useEffect(() => {
+    if (ranRef.current) return;
+    ranRef.current = true;
 
-  const { data: orderData, isLoading: isOrderLoading } = getOrder(
-    pidx ? { pidx } : undefined
-  );
+    async function run() {
+      if (!pidx) {
+        setStatus("error");
+        return;
+      }
 
-  const getStatus = () => {
-    if (!pidx || txnStatus !== "Completed") return "failed";
-    if (isCallbackLoading || isOrderLoading) return "loading";
-    if (orderData?.status === "Pending") return "pending";
-    if (orderData?.status === "Completed" || callbackData?.verification?.status === "Completed") return "success";
-    return "failed";
-  };
+      setStatus("verifying");
+      try {
+        const result = await verifyKhaltiPayment(pidx);
+        const data = result?.data;
 
-  const currentStatus = getStatus();
+        if (data && data.status === "Completed") {
+          setStatus("success");
+
+          let resolvedId: string | null = null;
+          try {
+            const orderResult = await apiClient<OrderResponse>(
+              `${API_ROUTES.KHALTI_ORDER}?pidx=${encodeURIComponent(pidx)}`,
+            );
+            const order: Order | null = orderResult?.data ?? null;
+            resolvedId = order?.id ?? null;
+          } catch {
+            resolvedId = null;
+          }
+
+          setOrderId(resolvedId);
+
+          setTimeout(() => {
+            if (resolvedId) {
+              router.push(`/profile/user/orders/${resolvedId}`);
+            } else {
+              router.push("/profile/user/orders");
+            }
+          }, 2000);
+        } else {
+          setStatus("failed");
+        }
+      } catch {
+        setStatus("failed");
+      }
+    }
+
+    run();
+  }, [pidx, router]);
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-        {currentStatus === "loading" && (
+        {status === "verifying" && (
           <div className="p-10 text-center">
             <Loader2 className="h-16 w-16 text-blue-500 mx-auto animate-spin mb-4" />
-            <h1 className="text-xl font-bold text-slate-900 mb-2">Verifying Payment</h1>
-            <p className="text-slate-500">Please wait while we confirm your payment...</p>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">Verifying Payment…</h1>
+            <p className="text-slate-500">Please wait while we confirm your payment.</p>
           </div>
         )}
 
-        {currentStatus === "success" && (
+        {status === "success" && (
           <div className="p-10 text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="h-12 w-12 text-green-500" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900 mb-2">Payment Successful!</h1>
-            <p className="text-slate-500 mb-6">
+            <p className="text-slate-500 mb-2">
               Your payment has been processed successfully.
             </p>
-
-            {orderData && (
-              <div className="bg-slate-50 rounded-xl p-4 mb-6 text-left space-y-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <Receipt className="h-4 w-4 text-slate-500" />
-                  <span className="text-xs font-bold text-slate-700">Order Details</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Order ID</span>
-                  <span className="font-mono font-medium text-slate-900">
-                    {orderData.orderId}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Product</span>
-                  <span className="font-medium text-slate-900">
-                    {orderData.productName}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Amount</span>
-                  <span className="font-medium text-slate-900">
-                    Rs. {orderData.amount.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Status</span>
-                  <span className="font-medium text-green-600 capitalize">
-                    {orderData.status}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {!orderData && callbackData?.verification && (
-              <div className="bg-slate-50 rounded-xl p-4 mb-6 text-left space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Transaction ID</span>
-                  <span className="font-mono font-medium text-slate-900">
-                    {callbackData.transactionId}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Amount</span>
-                  <span className="font-medium text-slate-900">
-                    Rs. {(callbackData.verification.totalAmount / 100).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Link>
-          </div>
-        )}
-
-        {currentStatus === "pending" && (
-          <div className="p-10 text-center">
-            <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Loader2 className="h-12 w-12 text-yellow-500 animate-spin" />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Payment Pending</h1>
-            <p className="text-slate-500 mb-6">
-              Your payment is being processed. Please check back later.
+            <p className="text-xs text-slate-400 mb-6">
+              Redirecting to your order in 2 seconds…
             </p>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Link>
+
+            {orderId ? (
+              <Link
+                href={`/profile/user/orders/${orderId}`}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors"
+              >
+                View Order
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : (
+              <Link
+                href="/profile/user/orders"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors"
+              >
+                View Orders
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
           </div>
         )}
 
-        {currentStatus === "failed" && (
+        {status === "failed" && (
           <div className="p-10 text-center">
             <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <XCircle className="h-12 w-12 text-red-500" />
@@ -161,9 +123,36 @@ export default function PaymentSuccessPage() {
             <p className="text-slate-500 mb-6">
               Something went wrong with your payment. Please try again.
             </p>
+            <div className="flex flex-col gap-3">
+              <Link
+                href="/checkout"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors"
+              >
+                Try Again
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {status === "error" && (
+          <div className="p-10 text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <XCircle className="h-12 w-12 text-red-500" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">Invalid Payment Response</h1>
+            <p className="text-slate-500 mb-6">
+              We couldn't find a valid payment reference for this request.
+            </p>
             <Link
               href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Home

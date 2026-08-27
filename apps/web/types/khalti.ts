@@ -11,6 +11,7 @@ export interface InitiatePaymentRequest {
     email?: string;
     phone?: string;
   };
+  orderId?: string;
 }
 
 export interface InitiatePaymentData {

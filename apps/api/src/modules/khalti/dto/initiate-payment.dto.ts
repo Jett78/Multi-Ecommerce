@@ -26,6 +26,14 @@ export class InitiatePaymentDto {
   websiteUrl: string;
 
   @ApiPropertyOptional({
+    example: 'ORD-123456',
+    description: 'Existing checkout orderId to link the payment to (no new order created)',
+  })
+  @IsOptional()
+  @IsString()
+  orderId?: string;
+
+  @ApiPropertyOptional({
     example: { name: 'Khalti Bahadur', email: 'test@gmail.com', phone: '9800000123' },
   })
   @IsOptional()

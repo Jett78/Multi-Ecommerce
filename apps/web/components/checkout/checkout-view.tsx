@@ -29,6 +29,7 @@ import { useDeliveryCharge } from "@/hooks/use-delivery-charge";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import { useSession, signIn } from "@/lib/auth-client";
 import { API_ROUTES } from "@/config/api-routes";
+import { initiateKhaltiPayment } from "@/actions/khalti-action";
 import { SavedAddressSelector } from "@/components/address/saved-address-selector";
 import type { PaymentMethod } from "@/types/order";
 import type { ShippingAddress } from "@/types/address";
@@ -263,8 +264,43 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
         deliveryType: "normal",
       },
       {
-        onSuccess: (res: any) => {
+        onSuccess: async (res: any) => {
           const order = res?.data;
+
+          if (paymentMethod === "khalti") {
+            try {
+              const initRes = await initiateKhaltiPayment({
+                amount: order.totalAmount,
+                productId: order.orderId,
+                productName: `Order ${order.orderId}`,
+                returnUrl: `${window.location.origin}/payment/success`,
+                websiteUrl: window.location.origin,
+                customerInfo: {
+                  name: form.customerName,
+                  email: form.customerEmail,
+                  phone: form.customerPhone,
+                },
+                orderId: order.orderId,
+              });
+
+              const paymentUrl = initRes?.data?.payment_url;
+              if (!paymentUrl) {
+                throw new Error("Khalti payment URL not received from server");
+              }
+              showSuccess("Order placed successfully!");
+              clearCart();
+              if (onClose) onClose();
+              window.location.href = paymentUrl;
+            } catch (err: any) {
+              console.error("Khalti initiate failed:", err);
+              showError(err?.message || "Failed to initiate Khalti payment.");
+              clearCart();
+              if (onClose) onClose();
+              router.push(`/profile/user/orders/${order.id}`);
+            }
+            return;
+          }
+
           showSuccess("Order placed successfully!");
           clearCart();
           if (onClose) onClose();
