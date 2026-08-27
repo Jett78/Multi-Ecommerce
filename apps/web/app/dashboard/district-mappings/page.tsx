@@ -167,7 +167,7 @@ export default function DistrictMappingsPage() {
   return (
     <div className="space-y-6">
       <DashboardHeading
-        title="District Mappings"
+        title="Delivery Charge"
         description="Map Nepal districts to courier cities/branches and set per-weight delivery charge overrides"
       />
 
