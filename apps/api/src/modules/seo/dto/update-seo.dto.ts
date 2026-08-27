@@ -30,4 +30,10 @@ export class UpdateGlobalSeoDto {
   @IsString()
   @MaxLength(255)
   googleSearchConsoleVerification?: string;
+
+  @ApiPropertyOptional({ example: 'G-XXXXXXX' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  googleAnalyticsId?: string;
 }

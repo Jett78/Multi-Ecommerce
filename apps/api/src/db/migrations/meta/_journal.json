@@ -127,6 +127,13 @@
       "when": 1787742764030,
       "tag": "0030_add_courier_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787800000000,
+      "tag": "0031_add_seo_google_analytics",
+      "breakpoints": true
     }
   ]
 }

@@ -26,6 +26,9 @@ export class GlobalSeoEntity {
   googleSearchConsoleVerification: string | null;
 
   @ApiProperty()
+  googleAnalyticsId: string | null;
+
+  @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat, Geist } from "next/font/google";
 import { GoogleTagManager } from "@next/third-parties/google";
+import Script from "next/script";
 import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { ThemeStyles } from "@/components/theme-styles";
@@ -55,6 +56,16 @@ export default async function RootLayout({
       <body className={`${montserrat.variable} ${montserrat.className} antialiased`}>
         {seo?.gtmContainerId && (
           <GoogleTagManager gtmId={seo.gtmContainerId} />
+        )}
+
+        {seo?.googleAnalyticsId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${seo.googleAnalyticsId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4" strategy="afterInteractive">{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${seo.googleAnalyticsId}');`}</Script>
+          </>
         )}
 
         <QueryProvider>

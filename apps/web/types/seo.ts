@@ -9,6 +9,7 @@ export interface GlobalSeo {
   ogImageKey?: string;
   gtmContainerId?: string;
   googleSearchConsoleVerification?: string;
+  googleAnalyticsId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,6 +22,7 @@ export interface PublicSeo {
   ogImageKey?: string;
   gtmContainerId?: string;
   googleSearchConsoleVerification?: string;
+  googleAnalyticsId?: string;
 }
 
 export type GlobalSeoResponse = CommonResponse<GlobalSeo>;
