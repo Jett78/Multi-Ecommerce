@@ -82,4 +82,36 @@ export class CreateOrderDto {
   @IsString()
   @IsOptional()
   couponCode?: string;
+
+  @ApiPropertyOptional({ description: 'Delivery charge in paisa', example: 30000 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  deliveryCharge?: number;
+
+  @ApiPropertyOptional({ description: 'Courier provider used', example: 'pathao' })
+  @IsString()
+  @IsOptional()
+  courierProvider?: string;
+
+  @ApiPropertyOptional({ description: 'Estimated delivery days', example: 3 })
+  @IsNumber()
+  @IsOptional()
+  estimatedDeliveryDays?: number;
+
+  @ApiPropertyOptional({ description: 'Shipping district (used for courier shipment)', example: 'Kathmandu' })
+  @IsString()
+  @IsOptional()
+  district?: string;
+
+  @ApiPropertyOptional({ description: 'Parcel weight in kilograms (used for courier shipment)', example: 1.5 })
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  parcelWeightKg?: number;
+
+  @ApiPropertyOptional({ description: 'Courier delivery type', example: 'normal' })
+  @IsString()
+  @IsOptional()
+  deliveryType?: string;
 }

@@ -17,6 +17,7 @@ export class OrderRepository {
       userId: string;
       subtotal: number;
       discountAmount?: number;
+      deliveryCharge?: number;
       taxAmount?: number;
       totalAmount: number;
       currency?: string;
@@ -31,6 +32,11 @@ export class OrderRepository {
       notes?: string;
       metadata?: string;
       couponId?: string;
+      courierProvider?: string;
+      estimatedDeliveryDays?: number;
+      district?: string;
+      parcelWeightKg?: number;
+      deliveryType?: string;
     },
     tx?: NodePgDatabase<typeof schema>,
   ) {
@@ -42,6 +48,7 @@ export class OrderRepository {
         userId: data.userId,
         subtotal: data.subtotal,
         discountAmount: data.discountAmount ?? 0,
+        deliveryCharge: data.deliveryCharge ?? 0,
         taxAmount: data.taxAmount ?? 0,
         totalAmount: data.totalAmount,
         currency: data.currency ?? 'NPR',
@@ -56,6 +63,11 @@ export class OrderRepository {
         notes: data.notes,
         metadata: data.metadata,
         couponId: data.couponId ?? null,
+        courierProvider: data.courierProvider ?? null,
+        estimatedDeliveryDays: data.estimatedDeliveryDays ?? null,
+        district: data.district ?? null,
+        parcelWeightKg: data.parcelWeightKg ?? null,
+        deliveryType: data.deliveryType ?? null,
       })
       .returning();
 
@@ -342,6 +354,52 @@ export class OrderRepository {
       .returning();
 
     return updated;
+  }
+
+  async updateCourierConsignment(
+    id: string,
+    data: {
+      courierConsignmentId: string;
+      deliveryType?: string | null;
+      status?: string;
+      courierTrackingUrl?: string | null;
+      courierStatus?: string | null;
+    },
+  ) {
+    const updateData: any = {
+      courierConsignmentId: data.courierConsignmentId,
+      updatedAt: new Date(),
+    };
+    if (data.deliveryType !== undefined) {
+      updateData.deliveryType = data.deliveryType;
+    }
+    if (data.status !== undefined) {
+      updateData.status = data.status as any;
+    }
+    if (data.courierTrackingUrl !== undefined) {
+      updateData.courierTrackingUrl = data.courierTrackingUrl;
+    }
+    if (data.courierStatus !== undefined) {
+      updateData.courierStatus = data.courierStatus;
+    }
+
+    const [updated] = await this.db
+      .update(schema.orders)
+      .set(updateData)
+      .where(eq(schema.orders.id, id))
+      .returning();
+
+    return updated;
+  }
+
+  async findOrderByConsignmentId(consignmentId: string) {
+    const [order] = await this.db
+      .select()
+      .from(schema.orders)
+      .where(eq(schema.orders.courierConsignmentId, consignmentId))
+      .limit(1);
+
+    return order || null;
   }
 
   async getOrderStats() {

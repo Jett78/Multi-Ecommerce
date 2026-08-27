@@ -139,6 +139,7 @@ async function seed() {
       { resource: 'inquiry', action: 'delete', key: 'inquiry.delete', description: 'Delete inquiries' },
 
       { resource: 'order', action: 'read', key: 'order.read', description: 'View orders' },
+      { resource: 'order', action: 'update', key: 'order.update', description: 'Update and send orders to courier' },
       { resource: 'order', action: 'manage', key: 'order.manage', description: 'Manage order status and fulfillment' },
       
       { resource: 'company_profile', action: 'read', key: 'company_profile.read', description: 'View company profile' },
@@ -190,6 +191,12 @@ async function seed() {
       { resource: 'discount', action: 'create', key: 'discount.create', description: 'Create new coupons' },
       { resource: 'discount', action: 'edit', key: 'discount.edit', description: 'Edit existing coupons' },
       { resource: 'discount', action: 'delete', key: 'discount.delete', description: 'Delete coupons' },
+      { resource: 'delivery', action: 'read', key: 'delivery.read', description: 'View courier settings' },
+      { resource: 'delivery', action: 'create', key: 'delivery.create', description: 'Create courier settings' },
+      { resource: 'delivery', action: 'edit', key: 'delivery.edit', description: 'Edit courier settings' },
+      { resource: 'delivery', action: 'delete', key: 'delivery.delete', description: 'Delete courier settings' },
+      { resource: 'district_mapping', action: 'read', key: 'district_mapping.read', description: 'View district mappings' },
+      { resource: 'district_mapping', action: 'edit', key: 'district_mapping.edit', description: 'Edit district mappings' },
     ];
 
     for (const perm of permissionsData) {
@@ -219,7 +226,7 @@ async function seed() {
         'brand.read', 'brand.create', 'brand.edit', 'brand.delete',
         'user.read', 'user.create',
         'inquiry.read', 'inquiry.delete',
-        'order.read', 'order.manage',
+        'order.read', 'order.update', 'order.manage',
         'company_profile.read', 'company_profile.edit',
         'seo.read', 'seo.edit',
         'page_seo.read', 'page_seo.create', 'page_seo.edit', 'page_seo.delete',
@@ -233,6 +240,8 @@ async function seed() {
         'product.read', 'product.create', 'product.edit', 'product.delete', 'product.manage_inventory',
         'review.moderate',
         'discount.read', 'discount.create', 'discount.edit', 'discount.delete',
+        'delivery.read', 'delivery.create', 'delivery.edit', 'delivery.delete',
+        'district_mapping.read', 'district_mapping.edit',
       ]},
       { role: 'editor', permissions: [
         'blog.read', 'blog.create', 'blog.edit', 'blog.delete',
@@ -241,6 +250,7 @@ async function seed() {
         'faq.read', 'faq.create', 'faq.edit', 'faq.delete',
         'brand.read', 'brand.create', 'brand.edit', 'brand.delete',
         'inquiry.read',
+        'order.read', 'order.update',
         'dashboard.view_stats',
         'category.read', 'category.create', 'category.edit',
         'product.read', 'product.create', 'product.edit',

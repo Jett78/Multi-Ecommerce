@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, timestamp, text, boolean, integer, uuid, index, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, timestamp, text, boolean, integer, numeric, doublePrecision, jsonb, uuid, index, pgEnum } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const userRoleEnum = pgEnum('user_role', ['super_admin', 'admin', 'manager', 'customer']);
@@ -236,6 +236,7 @@ export const orders = pgTable('orders', {
   userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
   subtotal: integer('subtotal').notNull(),
   discountAmount: integer('discount_amount').default(0).notNull(),
+  deliveryCharge: integer('delivery_charge').default(0).notNull(),
   taxAmount: integer('tax_amount').default(0).notNull(),
   totalAmount: integer('total_amount').notNull(),
   currency: varchar('currency', { length: 10 }).default('NPR').notNull(),
@@ -253,6 +254,14 @@ export const orders = pgTable('orders', {
   notes: text('notes'),
   metadata: text('metadata'),
   couponId: uuid('coupon_id').references(() => coupons.id, { onDelete: 'set null' }),
+  courierProvider: varchar('courier_provider', { length: 50 }),
+  courierConsignmentId: varchar('courier_consignment_id', { length: 255 }),
+  courierTrackingUrl: varchar('courier_tracking_url', { length: 512 }),
+  courierStatus: varchar('courier_status', { length: 50 }),
+  deliveryType: varchar('delivery_type', { length: 50 }),
+  district: varchar('district', { length: 100 }),
+  parcelWeightKg: doublePrecision('parcel_weight_kg'),
+  estimatedDeliveryDays: integer('estimated_delivery_days'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => ({
@@ -847,4 +856,87 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
     fields: [orderItems.variantId],
     references: [productVariants.id],
   }),
+}));
+
+// ============================================================
+// COURIER / DELIVERY
+// ============================================================
+
+export const courierSettings = pgTable('courier_settings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  provider: varchar('provider', { length: 50 }).notNull().unique(),
+  name: varchar('name', { length: 100 }).notNull(),
+  apiBaseUrl: varchar('api_base_url', { length: 500 }).notNull(),
+  credentials: text('credentials').notNull(),
+  config: text('config'),
+  isEnabled: boolean('is_enabled').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const courierCities = pgTable('courier_cities', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  provider: varchar('provider', { length: 50 }).notNull(),
+  courierId: integer('courier_id').notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  providerIdx: index('courier_cities_provider_idx').on(table.provider),
+}));
+
+export const courierZones = pgTable('courier_zones', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  provider: varchar('provider', { length: 50 }).notNull(),
+  cityId: uuid('city_id').references(() => courierCities.id, { onDelete: 'cascade' }),
+  courierId: integer('courier_id').notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  providerIdx: index('courier_zones_provider_idx').on(table.provider),
+  cityIdIdx: index('courier_zones_city_id_idx').on(table.cityId),
+}));
+
+export const courierAreas = pgTable('courier_areas', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  provider: varchar('provider', { length: 50 }).notNull(),
+  zoneId: uuid('zone_id').references(() => courierZones.id, { onDelete: 'cascade' }),
+  courierId: integer('courier_id').notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  homeDelivery: boolean('home_delivery').default(false).notNull(),
+  pickup: boolean('pickup').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  providerIdx: index('courier_areas_provider_idx').on(table.provider),
+  zoneIdIdx: index('courier_areas_zone_id_idx').on(table.zoneId),
+}));
+
+export const courierBranches = pgTable('courier_branches', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  provider: varchar('provider', { length: 50 }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  district: varchar('district', { length: 100 }),
+  phone: varchar('phone', { length: 50 }),
+  address: text('address'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  providerIdx: index('courier_branches_provider_idx').on(table.provider),
+}));
+
+export const courierDistrictMappings = pgTable('courier_district_mappings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  district: varchar('district', { length: 100 }).notNull(),
+  provinceId: integer('province_id').notNull(),
+  provider: varchar('provider', { length: 50 }).notNull(),
+  courierCityId: integer('courier_city_id'),
+  courierCityName: varchar('courier_city_name', { length: 255 }),
+  courierAreaId: integer('courier_area_id'),
+  courierAreaName: varchar('courier_area_name', { length: 255 }),
+  courierBranch: varchar('courier_branch', { length: 255 }),
+  deliveryChargeOverrides: jsonb('delivery_charge_overrides'),
+  isMapped: boolean('is_mapped').default(false).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  districtProviderIdx: index('mappings_district_provider_idx').on(table.district, table.provider),
+  providerIdx: index('mappings_provider_idx').on(table.provider),
 }));

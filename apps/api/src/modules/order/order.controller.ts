@@ -170,6 +170,36 @@ export class OrderController {
     };
   }
 
+  @Post(':id/send-to-courier')
+  @RequirePermissions('order.update')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send an order to the configured courier (admin)' })
+  async sendToCourier(@Param('id') id: string) {
+    const result = await this.orderService.sendToCourier(id);
+    return {
+      success: true,
+      statusCode: 200,
+      message: result.alreadySent
+        ? 'Order was already sent to courier'
+        : 'Order sent to courier successfully',
+      data: result,
+    };
+  }
+
+  @Post(':id/sync-courier')
+  @RequirePermissions('order.update')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Sync order status from the courier (admin)' })
+  async syncCourier(@Param('id') id: string) {
+    const result = await this.orderService.syncCourierStatus(id);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Order status synced from courier',
+      data: result,
+    };
+  }
+
   @Delete(':id')
   @RequirePermissions('order.manage')
   async remove(@Param('id') id: string) {
