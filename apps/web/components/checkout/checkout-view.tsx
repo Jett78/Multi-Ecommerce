@@ -59,17 +59,6 @@ const paymentMethods = [
       </svg>
     ),
   },
-  {
-    id: "stripe" as PaymentMethod,
-    label: "Credit / Debit Card",
-    desc: "Pay via Stripe (Visa, Mastercard)",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="4" width="22" height="16" rx="3" />
-        <path d="M1 10h22" />
-      </svg>
-    ),
-  },
 ];
 
 export function CheckoutView({ onClose }: { onClose?: () => void }) {
@@ -108,6 +97,24 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
   });
 
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("cod");
+  const [khaltiEnabled, setKhaltiEnabled] = React.useState(false);
+
+  React.useEffect(() => {
+    let active = true;
+    fetch(`${API_ROUTES.PAYMENT_SETTINGS}/khalti/enabled`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((data: any) => {
+        if (active && data?.data?.enabled) setKhaltiEnabled(true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const availablePaymentMethods = paymentMethods.filter(
+    (m) => m.id !== "stripe" && (m.id !== "khalti" || khaltiEnabled),
+  );
   const [couponCode, setCouponCode] = React.useState("");
   const [couponLoading, setCouponLoading] = React.useState(false);
   const [couponError, setCouponError] = React.useState("");
@@ -486,7 +493,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                   icon={<CreditCard className="h-5 w-5" />}
                 />
                 <div className="space-y-3">
-                  {paymentMethods.map((method) => (
+                  {availablePaymentMethods.map((method) => (
                     <label
                       key={method.id}
                       className={`group flex cursor-pointer items-center gap-4 rounded-xl border-2 p-4 transition-all ${
@@ -650,7 +657,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                     {selectedAddress?.district && (
                       <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Delivery Area</span>
-                        <span className="text-gray-500">{selectedAddress.district}{deliveryRate?.providerUsed ? ` (Pathao Courier)` : ''}</span>
+                        <span className="text-gray-500">{selectedAddress.district}{deliveryRate?.providerUsed && deliveryRate.providerUsed !== "default" ? ` (Pathao Courier)` : ''}</span>
                       </div>
                     )}
                     {deliveryRate?.estimatedDays && deliveryCharge > 0 && (
@@ -658,6 +665,9 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                         <span className="text-gray-400">Estimated Delivery</span>
                         <span className="text-xs text-gray-500">{deliveryRate.estimatedDays} days</span>
                       </div>
+                    )}
+                    {deliveryRate?.providerUsed === "default" && (
+                      <p className="text-xs text-amber-600">Estimated delivery charge — finalized at shipping.</p>
                     )}
                     {deliveryError && (
                       <p className="text-xs text-amber-600">{deliveryError}</p>

@@ -80,7 +80,7 @@ export class OrderResponse {
   @ApiProperty({ description: 'Payment status', enum: ['pending', 'completed', 'failed', 'refunded', 'expired', 'cancelled'], example: 'pending' })
   paymentStatus: string;
 
-  @ApiProperty({ description: 'Payment method', enum: ['khalti', 'cod', 'stripe'], example: 'cod' })
+  @ApiProperty({ description: 'Payment method', enum: ['khalti', 'cod'], example: 'cod' })
   paymentMethod: string;
 
   @ApiPropertyOptional({ description: 'Transaction ID', example: null })

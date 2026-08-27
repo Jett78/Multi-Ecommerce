@@ -84,4 +84,17 @@ export class PaymentSettingsController {
       },
     };
   }
+
+  @Get(':provider/enabled')
+  @AllowAnonymous()
+  @ApiOperation({ summary: 'Public check if a payment provider is enabled' })
+  @ApiResponse({ status: 200, description: 'Enabled status returned' })
+  async isEnabled(@Param('provider') provider: string) {
+    const settings = await this.paymentSettingsService.findByProvider(provider);
+    return {
+      success: true,
+      statusCode: 200,
+      data: { enabled: !!settings?.isEnabled },
+    };
+  }
 }

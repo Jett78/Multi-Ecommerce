@@ -19,6 +19,8 @@ export interface SyncStatus {
 
 export const WEIGHT_BRACKETS = [1, 2, 3, 5, 10];
 
+const DEFAULT_DELIVERY_CHARGE = Number(process.env.DEFAULT_DELIVERY_CHARGE ?? 0);
+
 function bandUpper(weightKg: number): number | null {
   if (weightKg <= 0) return WEIGHT_BRACKETS[0];
   const upper = WEIGHT_BRACKETS.find((b) => b >= weightKg);
@@ -122,7 +124,7 @@ export function decidePaymentOnDelivered(
 @Injectable()
 export class CourierService {
   private readonly logger = new Logger(CourierService.name);
-  private adapters = new Map<string, CourierAdapter>();
+  private adapters = new Map<string, { adapter: CourierAdapter; signature: string }>();
   private syncStatuses = new Map<string, SyncStatus>();
 
   constructor(
@@ -130,14 +132,32 @@ export class CourierService {
     private readonly repository: CourierRepository,
   ) {}
 
-  private async getAdapter(provider: string): Promise<CourierAdapter> {
-    if (this.adapters.has(provider)) {
-      return this.adapters.get(provider)!;
-    }
+  /**
+   * Builds a signature for the current settings so a cached adapter is only
+   * reused when nothing that it depends on has changed. If the stored
+   * `apiBaseUrl`, `config`, or `credentials` change (e.g. via
+   * `PUT /courier/settings/:provider`), the cached adapter is rebuilt on the
+   * next call — no API restart required.
+   */
+  private static settingsSignature(apiBaseUrl: string, config: any, credentials: any): string {
+    return `${apiBaseUrl}|${JSON.stringify(config)}|${JSON.stringify(credentials)}`;
+  }
 
+  async getAdapter(provider: string): Promise<CourierAdapter> {
     const settings = await this.settingsService.getCredentials(provider);
     if (!settings) {
       throw new BadRequestException(`Courier provider "${provider}" is not configured or disabled`);
+    }
+
+    const signature = CourierService.settingsSignature(
+      settings.apiBaseUrl,
+      settings.config,
+      settings.credentials,
+    );
+
+    const cached = this.adapters.get(provider);
+    if (cached && cached.signature === signature) {
+      return cached.adapter;
     }
 
     let adapter: CourierAdapter;
@@ -154,11 +174,16 @@ export class CourierService {
         throw new BadRequestException(`Unknown courier provider: ${provider}`);
     }
 
-    this.adapters.set(provider, adapter);
+    this.adapters.set(provider, { adapter, signature });
     return adapter;
   }
 
-  private clearAdapterCache(provider?: string) {
+  /**
+   * Invalidates the cached adapter(s). Public so callers (e.g. settings
+   * updates, sync) can force a rebuild. The cache also self-heals via the
+   * settings signature in `getAdapter`.
+   */
+  clearAdapterCache(provider?: string) {
     if (provider) {
       this.adapters.delete(provider);
     } else {
@@ -171,16 +196,27 @@ export class CourierService {
     const mappedProviders = mappings.filter((m) => m.isMapped);
 
     if (mappedProviders.length === 0) {
-      throw new BadRequestException(`No courier mapping found for district "${district}". Please configure district mappings in the admin panel.`);
+      this.logger.warn(`No courier mapping found for district "${district}"; using default ${DEFAULT_DELIVERY_CHARGE}`);
+      return {
+        provider: 'default',
+        basePrice: DEFAULT_DELIVERY_CHARGE,
+        discount: 0,
+        finalPrice: DEFAULT_DELIVERY_CHARGE,
+        codEnabled: false,
+        codPercentage: 0,
+        estimatedDays: 2,
+        providerUsed: 'default',
+      };
     }
 
     let lastError: Error | null = null;
 
     for (const mapping of mappedProviders) {
+      const tiers = Array.isArray(mapping.deliveryChargeOverrides)
+        ? mapping.deliveryChargeOverrides
+        : [];
+
       try {
-        const tiers = Array.isArray(mapping.deliveryChargeOverrides)
-          ? mapping.deliveryChargeOverrides
-          : [];
         if (tiers.length > 0) {
           const upper = bandUpper(weightKg);
           const tier = upper != null ? tiers.find((t) => t.weightKg === upper) : undefined;
@@ -247,14 +283,41 @@ export class CourierService {
         }
       } catch (error) {
         this.logger.error(`Failed to calculate rate via ${mapping.provider}: ${error.message}`);
+        // Fallback to a manual delivery-charge override (closest weight band) when live pricing is unavailable
+        if (tiers.length > 0) {
+          const fallback = [...tiers].sort(
+            (a, b) => Math.abs(a.weightKg - weightKg) - Math.abs(b.weightKg - weightKg),
+          )[0];
+          if (fallback && Number.isFinite(fallback.price)) {
+            this.logger.warn(`Using manual delivery-charge override for ${district} (live pricing failed)`);
+            return {
+              provider: mapping.provider,
+              basePrice: fallback.price,
+              discount: 0,
+              finalPrice: fallback.price,
+              codEnabled: false,
+              codPercentage: 0,
+              estimatedDays: 2,
+              providerUsed: mapping.provider,
+            };
+          }
+        }
         lastError = error as Error;
         continue;
       }
     }
 
-    throw new BadRequestException(
-      lastError?.message || `Failed to calculate delivery rate for "${district}". No available courier could process this request.`,
-    );
+    this.logger.warn(`No delivery rate available for "${district}"; using default ${DEFAULT_DELIVERY_CHARGE}`);
+    return {
+      provider: 'default',
+      basePrice: DEFAULT_DELIVERY_CHARGE,
+      discount: 0,
+      finalPrice: DEFAULT_DELIVERY_CHARGE,
+      codEnabled: false,
+      codPercentage: 0,
+      estimatedDays: 2,
+      providerUsed: 'default',
+    };
   }
 
   async calculateRatesBatch(

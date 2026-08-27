@@ -16,7 +16,7 @@ export class GetOrdersQueryDto {
 
   @IsString()
   @IsOptional()
-  @IsIn(['khalti', 'cod', 'stripe'])
+  @IsIn(['khalti', 'cod'])
   paymentMethod?: string;
 
   @IsString()

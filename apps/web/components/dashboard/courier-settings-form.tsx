@@ -18,6 +18,13 @@ interface CourierSettingsFormProps {
   defaultApiUrl: string;
   credentialFields: { name: string; label: string; placeholder: string }[];
   configFields?: { name: string; label: string; placeholder: string }[];
+  showSyncLocations?: boolean;
+  logoSrc?: string;
+  hideName?: boolean;
+  hideApiUrl?: boolean;
+  configInMain?: boolean;
+  credentialHelp?: React.ReactNode;
+  onSaved?: () => void;
 }
 
 export function CourierSettingsForm({
@@ -26,6 +33,13 @@ export function CourierSettingsForm({
   defaultApiUrl,
   credentialFields,
   configFields = [],
+  showSyncLocations = true,
+  logoSrc,
+  hideName = false,
+  hideApiUrl = false,
+  configInMain = false,
+  credentialHelp,
+  onSaved,
 }: CourierSettingsFormProps) {
   const router = useRouter();
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
@@ -90,8 +104,8 @@ export function CourierSettingsForm({
     configFields.forEach((f) => { config[f.name] = values[f.name] || ""; });
 
     const payload = {
-      name: values.name,
-      apiBaseUrl: values.apiBaseUrl,
+      name: hideName ? title : values.name,
+      apiBaseUrl: hideApiUrl ? defaultApiUrl : values.apiBaseUrl,
       credentials: JSON.stringify(credentials),
       config: configFields.length > 0 ? JSON.stringify(config) : undefined,
       isEnabled: values.isEnabled === "true",
@@ -101,6 +115,7 @@ export function CourierSettingsForm({
       if (res.success) {
         showSuccess(`${title} updated successfully`);
         router.refresh();
+        onSaved?.();
       }
     };
 
@@ -174,84 +189,96 @@ export function CourierSettingsForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       {isPending && <SubmittingLoader status={`Saving ${title}`} />}
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50/80 to-transparent">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-500/10 rounded-xl">
-                  <Truck className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">{title} Configuration</h3>
-                  <p className="text-xs text-slate-500">API credentials and connection settings</p>
-                </div>
-              </div>
+      {/* Configuration */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50/80 to-transparent">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-500/10 rounded-xl">
+              {logoSrc ? (
+                <img src={logoSrc} alt={title} className="h-5 w-auto" />
+              ) : (
+                <Truck className="h-5 w-5 text-blue-600" />
+              )}
             </div>
-            <div className="p-6 space-y-5">
-              <FormField label="Provider Name" name="name" value={values.name} onChange={handleChange} placeholder="Pathao Courier" />
-              <FormField label="API Base URL" name="apiBaseUrl" value={values.apiBaseUrl} onChange={handleChange} placeholder={defaultApiUrl} />
-
-              {credentialFields.map((field) => (
-                <div key={field.name} className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 flex items-center gap-2">
-                    <Key className="h-3.5 w-3.5" />
-                    {field.label}
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showSecrets[field.name] ? "text" : "password"}
-                      name={field.name}
-                      value={values[field.name] || ""}
-                      onChange={handleChange}
-                      placeholder={field.placeholder}
-                      className="flex h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 pr-10 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/50 transition-all font-mono"
-                    />
-                    <button type="button" onClick={() => toggleSecret(field.name)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                      {showSecrets[field.name] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">{title} Configuration</h3>
+              <p className="text-xs text-slate-500">API credentials and connection settings</p>
             </div>
           </div>
         </div>
+        <div className="p-6 space-y-5">
+          {!hideName && (
+            <FormField label="Provider Name" name="name" value={values.name} onChange={handleChange} placeholder="Pathao Courier" />
+          )}
+          {!hideApiUrl && (
+            <FormField label="API Base URL" name="apiBaseUrl" value={values.apiBaseUrl} onChange={handleChange} placeholder={defaultApiUrl} />
+          )}
 
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50/80 to-transparent">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-500/10 rounded-xl">
-                  <Shield className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">Status & Config</h3>
-                  <p className="text-xs text-slate-500">Enable provider and additional settings</p>
-                </div>
+          {credentialFields.map((field) => (
+            <div key={field.name} className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-2">
+                <Key className="h-3.5 w-3.5" />
+                {field.label}
+              </label>
+              <div className="relative">
+                <input
+                  type={showSecrets[field.name] ? "text" : "password"}
+                  name={field.name}
+                  value={values[field.name] || ""}
+                  onChange={handleChange}
+                  placeholder={field.placeholder}
+                  className="flex h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 pr-10 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:border-blue-500/50 transition-all font-mono"
+                />
+                <button type="button" onClick={() => toggleSecret(field.name)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showSecrets[field.name] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
-            <div className="p-6 space-y-5">
-              <label className="flex items-center gap-3 cursor-pointer group">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    name="isEnabled"
-                    checked={values.isEnabled === "true"}
-                    onChange={(e) => handleChange({ target: { name: "isEnabled", value: e.target.checked ? "true" : "false" } } as any)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                </div>
-                <div>
-                  <span className="text-sm font-semibold text-slate-900">Enable {title}</span>
-                  <p className="text-xs text-slate-500">Allow this courier for deliveries</p>
-                </div>
-              </label>
+          ))}
 
-              {configFields.map((field) => (
-                <FormField key={field.name} label={field.label} name={field.name} value={values[field.name] || ""} onChange={handleChange} placeholder={field.placeholder} />
-              ))}
+          {configInMain && configFields.map((field) => (
+            <FormField key={field.name} label={field.label} name={field.name} value={values[field.name] || ""} onChange={handleChange} placeholder={field.placeholder} />
+          ))}
+        </div>
+      </div>
 
+      {/* Status & Config */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50/80 to-transparent">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-500/10 rounded-xl">
+              <Shield className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Status & Config</h3>
+              <p className="text-xs text-slate-500">Enable provider and additional settings</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6 space-y-5">
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <div className="relative">
+              <input
+                type="checkbox"
+                name="isEnabled"
+                checked={values.isEnabled === "true"}
+                onChange={(e) => handleChange({ target: { name: "isEnabled", value: e.target.checked ? "true" : "false" } } as any)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+            </div>
+            <div>
+              <span className="text-sm font-semibold text-slate-900">Enable {title}</span>
+              <p className="text-xs text-slate-500">Allow this courier for deliveries</p>
+            </div>
+          </label>
+
+          {!configInMain && configFields.map((field) => (
+            <FormField key={field.name} label={field.label} name={field.name} value={values[field.name] || ""} onChange={handleChange} placeholder={field.placeholder} />
+          ))}
+
+          {showSyncLocations && (
+            <>
               <button
                 type="button"
                 onClick={handleSyncLocations}
@@ -282,8 +309,8 @@ export function CourierSettingsForm({
                   {syncStatus.errors > 0 && <span className="text-amber-600"> ({syncStatus.errors} errors)</span>}
                 </div>
               )}
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
 

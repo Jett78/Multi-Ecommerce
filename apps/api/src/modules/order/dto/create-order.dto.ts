@@ -34,10 +34,10 @@ export class CreateOrderDto {
   @Type(() => CreateOrderItemDto)
   items: CreateOrderItemDto[];
 
-  @ApiProperty({ description: 'Payment method', example: 'cod', enum: ['cod', 'khalti', 'stripe'] })
+  @ApiProperty({ description: 'Payment method', example: 'cod', enum: ['cod', 'khalti'] })
   @IsString()
   @IsNotEmpty()
-  @IsIn(['cod', 'khalti', 'stripe'])
+  @IsIn(['cod', 'khalti'])
   paymentMethod: string;
 
   @ApiProperty({ description: "Customer's full name", example: 'Ram Sharma' })

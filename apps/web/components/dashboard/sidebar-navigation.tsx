@@ -29,6 +29,7 @@ import {
   Boxes,
   Truck,
   MapPin,
+  Plug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth-client";
@@ -65,7 +66,7 @@ interface NavItem {
 
 const navigation: NavItem[] = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard, permission: "dashboard.view_stats" },
-  { name: "Domains", href: "/dashboard/domains", icon: Globe, permission: "domain.read" },
+  // { name: "Domains", href: "/dashboard/domains", icon: Globe, permission: "domain.read" },
   {
     name: "Content",
     icon: FileText,
@@ -93,16 +94,8 @@ const navigation: NavItem[] = [
       { name: "Coupons", href: "/dashboard/coupons", icon: Tag, permission: "discount.read" },
     ],
   },
-  {
-    name: "Couriers",
-    icon: Truck,
-    permissions: ["delivery.read", "district_mapping.read"],
-    children: [
-      { name: "Courier Settings", href: "/dashboard/courier-settings", icon: Truck, permission: "delivery.read" },
-      { name: "District Mappings", href: "/dashboard/district-mappings", icon: MapPin, permission: "district_mapping.read" },
-    ],
-  },
   { name: "Users", href: "/dashboard/users", icon: Users, permission: "user.read" },
+  { name: "Plugins", href: "/dashboard/plugins", icon: Plug },
   { name: "Role Permissions", href: "/dashboard/role-permissions", icon: Shield },
   {
     name: "SEO",
@@ -129,17 +122,22 @@ const navigation: NavItem[] = [
       },
     ],
   },
-  { name: "Payment Settings", href: "/dashboard/payment-settings", icon: CreditCard, permission: "payment_settings.read" },
   {
     name: "Settings",
     icon: Building2,
-    permissions: ["company_profile.read"],
+    permissions: ["company_profile.read", "district_mapping.read"],
     children: [
       {
         name: "Company Profile",
         href: "/dashboard/company-profile",
         icon: Building2,
         permission: "company_profile.read",
+      },
+      {
+        name: "Delivery Charge",
+        href: "/dashboard/district-mappings",
+        icon: MapPin,
+        permission: "district_mapping.read",
       },
     ],
   },
@@ -193,7 +191,7 @@ export function Sidebar() {
 
     return navigation
       .map((item) => {
-        if (item.name === "Role Permissions") {
+        if (item.name === "Role Permissions" || item.name === "Plugins") {
           return role === "super_admin" ? item : null;
         }
 

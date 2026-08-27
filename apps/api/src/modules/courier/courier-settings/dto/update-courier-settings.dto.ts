@@ -7,7 +7,7 @@ export class UpdateCourierSettingsDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'https://courier-api-sandbox.pathao.com' })
+  @ApiProperty({ example: 'https://api-hermes.pathao.com' })
   @IsString()
   @IsNotEmpty()
   apiBaseUrl: string;

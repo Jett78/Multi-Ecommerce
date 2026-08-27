@@ -17,13 +17,12 @@ const routePermissions: Record<string, string[]> = {
   "/dashboard/seo": ["seo.read", "seo.edit"],
   "/dashboard/page-seo": ["page_seo.read", "page_seo.create", "page_seo.edit", "page_seo.delete"],
   "/dashboard/redirects": ["redirect.read", "redirect.create", "redirect.edit", "redirect.delete"],
-  "/dashboard/payment-settings": ["payment_settings.read", "payment_settings.edit"],
+  "/dashboard/plugins": ["__super_admin_only__"],
   "/dashboard/company-profile": ["company_profile.read", "company_profile.edit"],
   "/dashboard/domains": ["domain.read", "domain.create", "domain.edit", "domain.delete"],
   "/dashboard/categories": ["category.read", "category.create", "category.edit", "category.delete"],
   "/dashboard/subcategories": ["category.read", "category.create", "category.edit", "category.delete"],
   "/dashboard/products": ["product.read", "product.create", "product.edit", "product.delete"],
-  "/dashboard/courier-settings": ["delivery.read", "delivery.create", "delivery.edit"],
   "/dashboard/district-mappings": ["district_mapping.read", "district_mapping.edit"],
 };
 
