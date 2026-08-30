@@ -16,7 +16,6 @@ const nextConfig = {
   },
    images: {
     remotePatterns: [
-      
       {
         protocol: "https",
         hostname: "lawsagar.s3.ap-south-1.amazonaws.com",
@@ -24,14 +23,9 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "images.unsplash.com",
+        hostname: "**",
         port: "",
       },
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-        port: "",
-      }
     ],
   }
 };
