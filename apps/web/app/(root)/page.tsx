@@ -4,6 +4,7 @@ import { Testimonials } from "@/components/sections/testimonials";
 import { FaqSection } from "@/components/sections/faq-section";
 import StorySection from "@/components/sections/about/story-section";
 import BlogSection from "@/components/sections/blog-section";
+import { MidBanner } from "@/components/sections/mid-banner";
 import { getBlogs } from "@/actions/blog-action";
 
 export default async function Home() {
@@ -14,6 +15,7 @@ export default async function Home() {
       <Hero />
       <StorySection />
       <Features />
+      <MidBanner />
       <BlogSection posts={posts} />
       <Testimonials />
       <FaqSection />

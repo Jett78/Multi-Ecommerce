@@ -69,3 +69,7 @@ export async function revalidateProduct(slug: string) {
 export async function revalidateCoupons() {
   revalidateTag("coupons", "max");
 }
+
+export async function revalidateBanners() {
+  revalidateTag("banners", "max");
+}

@@ -942,3 +942,18 @@ export const courierDistrictMappings = pgTable('courier_district_mappings', {
   districtProviderIdx: index('mappings_district_provider_idx').on(table.district, table.provider),
   providerIdx: index('mappings_provider_idx').on(table.provider),
 }));
+
+export const banners = pgTable('banners', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  imageUrl: varchar('image_url', { length: 500 }).notNull(),
+  type: varchar('type', { length: 50 }).notNull(),
+  link: varchar('link', { length: 500 }),
+  sortOrder: integer('sort_order').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  sortOrderIdx: index('banners_sort_order_idx').on(table.sortOrder),
+  typeIdx: index('banners_type_idx').on(table.type),
+}));

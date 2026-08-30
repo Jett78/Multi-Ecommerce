@@ -69,4 +69,7 @@ export interface ProductFormProps {
   product?: import("./product").Product;
 }
 
+export interface BannerFormProps {
+  banner?: import("./banner").Banner;
+}
 

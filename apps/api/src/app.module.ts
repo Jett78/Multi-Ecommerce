@@ -30,6 +30,7 @@ import { OrderModule } from './modules/order/order.module';
 import { ShippingAddressModule } from './modules/shipping-address/shipping-address.module';
 import { DiscountModule } from './modules/discount/discount.module';
 import { CourierModule } from './modules/courier/courier.module';
+import { BannerModule } from './modules/banner/banner.module';
 import { PermissionGuard } from './guards/permission.guard';
 
 @Module({
@@ -61,6 +62,7 @@ import { PermissionGuard } from './guards/permission.guard';
     ShippingAddressModule,
     DiscountModule,
     CourierModule,
+    BannerModule,
   ],
   controllers: [AppController],
   providers: [

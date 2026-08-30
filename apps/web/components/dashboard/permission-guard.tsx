@@ -25,6 +25,7 @@ const routePermissions: Record<string, string[]> = {
   "/dashboard/subcategories": ["category.read", "category.create", "category.edit", "category.delete"],
   "/dashboard/products": ["product.read", "product.create", "product.edit", "product.delete"],
   "/dashboard/district-mappings": ["district_mapping.read", "district_mapping.edit"],
+  "/dashboard/banners": ["banner.read", "banner.create", "banner.edit", "banner.delete"],
 };
 
 function getRequiredPermissions(pathname: string): string[] | null {
