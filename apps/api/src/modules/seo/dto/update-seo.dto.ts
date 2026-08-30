@@ -36,4 +36,10 @@ export class UpdateGlobalSeoDto {
   @IsString()
   @MaxLength(100)
   googleAnalyticsId?: string;
+
+  @ApiPropertyOptional({ example: 'kx0xxxxxxx' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  microsoftClarityId?: string;
 }

@@ -1,0 +1,1 @@
+ALTER TABLE "global_seo" ADD COLUMN "microsoft_clarity_id" varchar(100);

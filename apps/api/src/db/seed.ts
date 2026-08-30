@@ -74,7 +74,7 @@ async function seed() {
           logoKey: '',
           footerLogoKey: '',
           faviconKey: '',
-          whatsappNumber: '+977-9800000000',
+          whatsappNumber: null,
           googleMap: '<iframe>...</iframe>',
           primaryColor: '221.2 83.2% 53.3%',
           secondaryColor: '210 40% 96.1%',

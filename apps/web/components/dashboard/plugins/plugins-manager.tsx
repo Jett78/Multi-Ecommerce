@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plug, CheckCircle2, Circle } from "lucide-react";
 import { API_ROUTES } from "@/config/api-routes";
 import { apiClient } from "@/lib/api-client";
 import { useCrud } from "@/hooks/useCRUD";
@@ -12,8 +11,9 @@ import { PaymentSettingsForm } from "@/components/dashboard/payment-settings-for
 import { CourierSettingsForm } from "@/components/dashboard/courier-settings-form";
 import { GoogleAnalyticsForm } from "@/components/dashboard/plugins/google-analytics-form";
 import { GoogleSearchConsoleForm } from "@/components/dashboard/plugins/google-search-console-form";
+import { MicrosoftClarityForm } from "@/components/dashboard/plugins/microsoft-clarity-form";
 
-type PluginKey = "khalti" | "pathao" | "ga" | "gsc" | null;
+type PluginKey = "khalti" | "pathao" | "ga" | "gsc" | "clarity" | null;
 
 interface PluginCard {
   key: Exclude<PluginKey, null>;
@@ -59,6 +59,7 @@ export function PluginsManager() {
   const khaltiConfigured = !!khaltiData?.secretKey && !!khaltiData?.publicKey && khaltiData?.isEnabled === true;
   const gaConfigured = !!seoData?.googleAnalyticsId;
   const gscConfigured = !!seoData?.googleSearchConsoleVerification;
+  const clarityConfigured = !!seoData?.microsoftClarityId;
 
   const plugins: PluginCard[] = [
       {
@@ -92,6 +93,14 @@ export function PluginsManager() {
         logo: "/icons/search-console.png",
         category: "SEO",
         configured: gscConfigured,
+      },
+      {
+        key: "clarity",
+        name: "Microsoft Clarity",
+        description: "Session recordings and heatmaps for UX insights",
+        logo: "/icons/clarity.png",
+        category: "Analytics",
+        configured: clarityConfigured,
       },
   ];
 
@@ -209,6 +218,15 @@ export function PluginsManager() {
         icon={<img src="/icons/search-console.png" alt="Google Search Console" className="h-6 w-6 object-contain" />}
       >
         <GoogleSearchConsoleForm onSaved={handleClose} currentSeo={seoData} />
+      </PluginModal>
+
+      <PluginModal
+        open={activePlugin === "clarity"}
+        onClose={handleClose}
+        title="Microsoft Clarity"
+        icon={<img src="/icons/analytics.png" alt="Microsoft Clarity" className="h-6 w-6 object-contain" />}
+      >
+        <MicrosoftClarityForm onSaved={handleClose} currentSeo={seoData} />
       </PluginModal>
     </div>
   );

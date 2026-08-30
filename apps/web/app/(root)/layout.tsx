@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/sections/navbar";
 import { Footer } from "@/components/sections/footer";
+import { WhatsAppFloat } from "@/components/whatsapp-float";
 
 export default function RootLayout({
   children,
@@ -11,6 +12,7 @@ export default function RootLayout({
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
+      <WhatsAppFloat />
     </div>
   );
 }

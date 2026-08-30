@@ -114,6 +114,7 @@ export const globalSeo = pgTable('global_seo', {
   gtmContainerId: varchar('gtm_container_id', { length: 100 }),
   googleSearchConsoleVerification: varchar('google_search_console_verification', { length: 255 }),
   googleAnalyticsId: varchar('google_analytics_id', { length: 100 }),
+  microsoftClarityId: varchar('microsoft_clarity_id', { length: 100 }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });

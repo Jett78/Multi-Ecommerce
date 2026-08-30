@@ -10,6 +10,7 @@ export interface GlobalSeo {
   gtmContainerId?: string;
   googleSearchConsoleVerification?: string;
   googleAnalyticsId?: string;
+  microsoftClarityId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +24,7 @@ export interface PublicSeo {
   gtmContainerId?: string;
   googleSearchConsoleVerification?: string;
   googleAnalyticsId?: string;
+  microsoftClarityId?: string;
 }
 
 export type GlobalSeoResponse = CommonResponse<GlobalSeo>;
