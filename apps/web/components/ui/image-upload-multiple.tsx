@@ -4,9 +4,18 @@ import React, { useEffect, useRef, useState } from "react";
 import { uploadMultipleImages } from "@/actions/upload-action";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import Image from "next/image";
-import { X, Upload, Loader2 } from "lucide-react";
+import { X, Upload, Loader2, Link } from "lucide-react";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+function extractKeyFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return decodeURIComponent(parsed.pathname.slice(1));
+  } catch {
+    return url;
+  }
+}
 
 interface ImageUploadMultipleProps {
   onSuccess?: (images: Array<{ url: string; key: string }>) => void;
@@ -25,6 +34,7 @@ export default function ImageUploadMultiple({
 }: ImageUploadMultipleProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [images, setImages] = useState<Array<{ url: string; key: string }>>([]);
+  const [urlInput, setUrlInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -32,6 +42,24 @@ export default function ImageUploadMultiple({
       setImages(defaultImages);
     }
   }, [defaultImages]);
+
+  const handleAddUrl = () => {
+    const trimmed = urlInput.trim();
+    if (!trimmed) return;
+
+    if (images.length >= maxImages) {
+      showError(`Maximum ${maxImages} images allowed`);
+      return;
+    }
+
+    const key = extractKeyFromUrl(trimmed);
+    const newImage = { url: trimmed, key };
+    const updatedImages = [...images, newImage];
+    setImages(updatedImages);
+    onSuccess?.(updatedImages);
+    setUrlInput("");
+    showSuccess("Image added from URL");
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -136,6 +164,39 @@ export default function ImageUploadMultiple({
 
   return (
     <div className="space-y-4">
+      {/* URL Input - Top */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            type="url"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddUrl())}
+            placeholder="Paste image URL and press Enter"
+            className="w-full h-10 rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={handleAddUrl}
+          disabled={!urlInput.trim()}
+          className="h-10 px-4 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Add URL
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-200" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-white px-3 text-slate-400">or upload file</span>
+        </div>
+      </div>
+
       {/* Upload Area */}
       <div
         onClick={() => !isUploading && inputRef.current?.click()}
