@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 export type Column<T> = {
   key: keyof T | string;
-  label: string;
+  label: React.ReactNode;
   render?: (row: T, index: number) => React.ReactNode;
   className?: string;
 };

@@ -28,6 +28,7 @@ export const API_ROUTES = {
   CART: `${API_BASE_URL}/cart`,
   CART_COUNT: `${API_BASE_URL}/cart/count`,
   ORDERS: `${API_BASE_URL}/orders`,
+  ORDER_BULK_SEND_TO_COURIER: `${API_BASE_URL}/orders/bulk/send-to-courier`,
   ORDER_STATS: `${API_BASE_URL}/orders/stats`,
   MY_ORDERS: `${API_BASE_URL}/orders/my`,
   SHIPPING_ADDRESS: `${API_BASE_URL}/shipping-addresses`,

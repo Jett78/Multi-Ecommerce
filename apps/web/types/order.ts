@@ -103,6 +103,22 @@ export interface OrderListResponse {
   totalPages: number;
 }
 
+export interface BulkSendToCourierResult {
+  id: string;
+  orderId: string | null;
+  success: boolean;
+  alreadySent?: boolean;
+  consignmentId?: string | null;
+  trackingUrl?: string | null;
+  status?: string | null;
+  error?: string | null;
+}
+
+export interface BulkSendToCourierResponse {
+  results: BulkSendToCourierResult[];
+  summary: { total: number; sent: number; failed: number; skipped: number };
+}
+
 export interface OrderStats {
   totalOrders: number;
   totalRevenue: number;

@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Package, Clock, CheckCircle, Truck, XCircle, Search } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Package, Clock, CheckCircle, Truck, XCircle, Search, Loader2 } from "lucide-react";
 import { useCrud } from "@/hooks/useCRUD";
+import { apiClient } from "@/lib/api-client";
 import { API_ROUTES } from "@/config/api-routes";
 import { Input } from "@/components/ui/input";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
@@ -10,7 +12,10 @@ import DashboardPagination from "@/components/dashboard/dashboard-pagination";
 import DataTable, { Column } from "@/components/dashboard/data-table";
 import { EditButton } from "@/components/dashboard/edit-button";
 import { DeleteButton } from "@/components/dashboard/delete-button";
-import type { Order, OrderStats } from "@/types/order";
+import { showSuccess, showError } from "@/lib/toast-helper";
+import type { Order, OrderStats, BulkSendToCourierResponse } from "@/types/order";
+
+const isEligible = (o: Order) => !!o.courierProvider && !o.courierConsignmentId;
 
 const PAGE_SIZE = 10;
 
@@ -36,6 +41,7 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = React.useState("");
   const [sort, setSort] = React.useState<"asc" | "desc">("desc");
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
 
   const resetFilters = () => {
     setStatusFilter("");
@@ -78,7 +84,92 @@ export default function AdminOrdersPage() {
     );
   }, [data, searchQuery]);
 
+  const eligibleOnPage = React.useMemo(
+    () => filteredOrders.filter(isEligible).map((o) => o.id),
+    [filteredOrders]
+  );
+
+  const allEligibleSelected =
+    eligibleOnPage.length > 0 && eligibleOnPage.every((id) => selectedIds.has(id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allEligibleSelected) {
+        eligibleOnPage.forEach((id) => next.delete(id));
+      } else {
+        eligibleOnPage.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const queryClient = useQueryClient();
+
+  const bulkSendMutation = useMutation({
+    mutationFn: async () => {
+      return apiClient<{ data: BulkSendToCourierResponse }>(
+        API_ROUTES.ORDER_BULK_SEND_TO_COURIER,
+        {
+          method: "POST",
+          isAuthenticated: true,
+          body: JSON.stringify({ orderIds: [...selectedIds] }),
+        }
+      );
+    },
+    onSuccess: (res) => {
+      const { summary, results } = res.data;
+      showSuccess(
+        `${summary.sent} sent, ${summary.skipped} skipped, ${summary.failed} failed`
+      );
+      if (summary.failed > 0) {
+        const errors = results
+          .filter((r) => !r.success)
+          .map((r) => `• ${r.orderId ?? r.id}: ${r.error ?? "Failed"}`)
+          .join("\n");
+        showError(`Some orders failed:\n${errors}`);
+      }
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      setSelectedIds(new Set());
+    },
+    onError: (err: { message?: string }) => {
+      showError(err.message || "Failed to dispatch orders to courier");
+    },
+  });
+
   const columns: Column<Order>[] = [
+    {
+      key: "select",
+      label: (
+        <input
+          type="checkbox"
+          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary focus:ring-primary/20"
+          checked={allEligibleSelected}
+          disabled={eligibleOnPage.length === 0}
+          onChange={toggleSelectAll}
+          aria-label="Select all eligible orders"
+        />
+      ),
+      render: (order) => (
+        <input
+          type="checkbox"
+          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={!isEligible(order)}
+          checked={selectedIds.has(order.id)}
+          onChange={() => toggleSelectOne(order.id)}
+          aria-label={`Select order ${order.orderId}`}
+        />
+      ),
+    },
     {
       key: "sn",
       label: "SN",
@@ -208,6 +299,40 @@ export default function AdminOrdersPage() {
           <div className="rounded-xl border border-gray-200 bg-white p-4">
             <p className="text-sm font-medium text-gray-500">Shipped Orders</p>
             <p className="mt-1 text-2xl font-bold text-indigo-600">{stats.shippedOrders}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+          <div className="flex items-center gap-3 text-sm text-slate-700">
+            <span className="font-semibold text-primary">{selectedIds.size} selected</span>
+            {selectedIds.size > 50 && (
+              <span className="text-xs text-amber-600">
+                Large selection may take a while (~1.5s per order)
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-xs text-slate-500 hover:underline"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => bulkSendMutation.mutate()}
+              disabled={bulkSendMutation.isPending}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {bulkSendMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Truck className="h-4 w-4" />
+              )}
+              {bulkSendMutation.isPending ? "Sending..." : "Send to Courier"}
+            </button>
           </div>
         </div>
       )}

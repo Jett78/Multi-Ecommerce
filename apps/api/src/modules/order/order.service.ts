@@ -392,6 +392,76 @@ export class OrderService {
   }
 
   /**
+   * Sequentially dispatch many eligible orders to the configured courier by
+   * reusing the per-order `sendToCourier` flow. This keeps the adapter's
+   * built-in request queue in control of Pathao rate limits and writes back
+   * per-order consignment data exactly like the single-order endpoint.
+   *
+   * Only orders that still have no consignment are actually sent; already-sent
+   * orders are reported as `skipped`, and any per-order failure is captured
+   * without aborting the rest.
+   */
+  async bulkSendToCourier(orderIds: string[]) {
+    const results: Array<{
+      id: string;
+      orderId: string | null;
+      success: boolean;
+      alreadySent?: boolean;
+      consignmentId?: string | null;
+      trackingUrl?: string | null;
+      status?: string | null;
+      error?: string | null;
+    }> = [];
+
+    let sent = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    for (const id of orderIds) {
+      try {
+        const result = await this.sendToCourier(id);
+        const alreadySent = result.alreadySent === true;
+
+        results.push({
+          id,
+          orderId: result.order?.orderId ?? null,
+          success: true,
+          alreadySent,
+          consignmentId: result.consignmentId,
+          trackingUrl: result.trackingUrl,
+          status: result.status,
+        });
+
+        if (alreadySent) {
+          skipped += 1;
+        } else {
+          sent += 1;
+        }
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : 'Failed to send order to courier';
+        results.push({
+          id,
+          orderId: null,
+          success: false,
+          error: message,
+        });
+        failed += 1;
+      }
+    }
+
+    return {
+      results,
+      summary: {
+        total: orderIds.length,
+        sent,
+        skipped,
+        failed,
+      },
+    };
+  }
+
+  /**
    * Apply a Pathao status (event or slug) to an order, rank-aware and with COD
    * payment completion on delivery. Shared by the webhook receiver and the
    * manual sync button so both behave identically.

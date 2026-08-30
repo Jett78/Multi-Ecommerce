@@ -18,6 +18,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { UpdatePaymentStatusDto } from './dto/update-payment-status.dto';
 import { GetOrdersQueryDto } from './dto/get-orders-query.dto';
+import { BulkSendToCourierDto } from './dto/bulk-send-to-courier.dto';
 import { OrderResponse, OrderListResponse, OrderStatsResponse, OrderCreatedResponse } from './dto/order-response.dto';
 
 @ApiTags('Orders')
@@ -182,6 +183,20 @@ export class OrderController {
       message: result.alreadySent
         ? 'Order was already sent to courier'
         : 'Order sent to courier successfully',
+      data: result,
+    };
+  }
+
+  @Post('bulk/send-to-courier')
+  @RequirePermissions('order.update')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send multiple eligible orders to the configured courier (admin)' })
+  async bulkSendToCourier(@Body() dto: BulkSendToCourierDto) {
+    const result = await this.orderService.bulkSendToCourier(dto.orderIds);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Bulk courier dispatch complete',
       data: result,
     };
   }
