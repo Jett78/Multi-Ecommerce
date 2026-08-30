@@ -31,6 +31,51 @@ import { UploadService } from './upload.service';
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
+  @Get('list')
+  @Roles(['super_admin'])
+  @ApiOperation({ summary: 'List files in S3 bucket' })
+  @ApiQuery({ name: 'prefix', required: false, description: 'Folder prefix filter' })
+  @ApiQuery({ name: 'maxKeys', required: false, description: 'Max items per page' })
+  @ApiQuery({ name: 'continuationToken', required: false, description: 'Pagination token' })
+  @ApiQuery({ name: 'search', required: false, description: 'Search by key name' })
+  @ApiResponse({ status: 200, description: 'Files listed successfully' })
+  async listFiles(
+    @Query('prefix') prefix?: string,
+    @Query('maxKeys') maxKeys?: string,
+    @Query('continuationToken') continuationToken?: string,
+    @Query('search') search?: string,
+  ) {
+    const result = await this.uploadService.listFiles({
+      prefix,
+      maxKeys: maxKeys ? parseInt(maxKeys, 10) : 50,
+      continuationToken,
+      search,
+    });
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Files listed successfully',
+      data: result.items,
+      nextContinuationToken: result.nextContinuationToken,
+      isTruncated: result.isTruncated,
+      totalCount: result.totalCount,
+    };
+  }
+
+  @Get('folders')
+  @Roles(['super_admin'])
+  @ApiOperation({ summary: 'List folders in S3 bucket' })
+  @ApiResponse({ status: 200, description: 'Folders listed successfully' })
+  async listFolders() {
+    const folders = await this.uploadService.listFolders();
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Folders listed successfully',
+      data: folders,
+    };
+  }
+
   @Post()
   @UseInterceptors(
     FileInterceptor('file', {

@@ -6,6 +6,8 @@ import { showSuccess, showError } from "@/lib/toast-helper";
 import Image from "next/image";
 import { X, Upload, Loader2 } from "lucide-react";
 
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
 interface ImageUploadMultipleProps {
   onSuccess?: (images: Array<{ url: string; key: string }>) => void;
   defaultImages?: Array<{ url: string; key: string }>;
@@ -36,6 +38,13 @@ export default function ImageUploadMultiple({
     if (!files || files.length === 0) return;
 
     const fileArray = Array.from(files);
+
+    const oversized = fileArray.find((f) => f.size > MAX_FILE_SIZE);
+    if (oversized) {
+      showError(`"${oversized.name}" exceeds 2MB limit`);
+      e.target.value = "";
+      return;
+    }
 
     if (images.length + fileArray.length > maxImages) {
       showError(`Maximum ${maxImages} images allowed`);
@@ -88,6 +97,12 @@ export default function ImageUploadMultiple({
 
     if (files.length === 0) {
       showError("Please drop image files only");
+      return;
+    }
+
+    const oversized = files.find((f) => f.size > MAX_FILE_SIZE);
+    if (oversized) {
+      showError(`"${oversized.name}" exceeds 2MB limit`);
       return;
     }
 
@@ -145,7 +160,7 @@ export default function ImageUploadMultiple({
                 Click to upload or drag and drop
               </p>
               <p className="mt-1 text-xs text-slate-500">
-                PNG, JPG, WEBP up to 10MB each (max {maxImages} images)
+                PNG, JPG, WEBP, GIF up to 2MB each (max {maxImages} images)
               </p>
             </div>
           </div>

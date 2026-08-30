@@ -30,6 +30,7 @@ import {
   Truck,
   MapPin,
   Plug,
+  Image,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth-client";
@@ -81,6 +82,7 @@ const navigation: NavItem[] = [
   },
   { name: "Inquiries", href: "/dashboard/inquiries", icon: MessageSquare, permission: "inquiry.read" },
   { name: "Navigation", href: "/dashboard/navigation", icon: Menu, permission: "navigation.read" },
+  { name: "Media", href: "/dashboard/media", icon: Image, permission: "__super_admin_only__" },
   {
     name: "Ecommerce",
     icon: Package,

@@ -43,4 +43,5 @@ export const API_ROUTES = {
   COURIER_SYNC: `${API_BASE_URL}/courier/sync`,
   COURIER_AUTO_MAP: `${API_BASE_URL}/courier/mappings/auto-map`,
   COURIER_LOCATIONS: `${API_BASE_URL}/courier/locations`,
+  UPLOAD: `${API_BASE_URL}/upload`,
 } as const;

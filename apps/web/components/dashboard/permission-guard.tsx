@@ -18,6 +18,7 @@ const routePermissions: Record<string, string[]> = {
   "/dashboard/page-seo": ["page_seo.read", "page_seo.create", "page_seo.edit", "page_seo.delete"],
   "/dashboard/redirects": ["redirect.read", "redirect.create", "redirect.edit", "redirect.delete"],
   "/dashboard/plugins": ["__super_admin_only__"],
+  "/dashboard/media": ["__super_admin_only__"],
   "/dashboard/company-profile": ["company_profile.read", "company_profile.edit"],
   "/dashboard/domains": ["domain.read", "domain.create", "domain.edit", "domain.delete"],
   "/dashboard/categories": ["category.read", "category.create", "category.edit", "category.delete"],

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { API_ROUTES } from "@/config/api-routes";
 import Rating from "@/components/rating";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
+import DashboardPagination from "@/components/dashboard/dashboard-pagination";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import {
   AlertDialog,
@@ -571,27 +572,8 @@ export default function ReviewsPage() {
       )}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="font-space text-sm text-zinc-500">
-            Showing {((page - 1) * take) + 1} - {Math.min(page * take, total)} of {total}
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-3 py-1 font-space text-xs border-2 border-zinc-200 hover:border-black disabled:opacity-50"
-            >
-              PREV
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="px-3 py-1 font-space text-xs border-2 border-zinc-200 hover:border-black disabled:opacity-50"
-            >
-              NEXT
-            </button>
-          </div>
-        </div>
+        <DashboardPagination page={page} setPage={setPage} totalPages={totalPages} />
+      )}
       )}
 
       <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
@@ -85,5 +85,87 @@ export class UploadService {
     });
 
     return getSignedUrl(this.s3Client, command, { expiresIn });
+  }
+
+  private buildUrl(key: string): string {
+    return this.cloudfrontUrl
+      ? `https://${this.cloudfrontUrl}/${key}`
+      : `https://${this.bucketName}.s3.${this.configService.get<string>('AWS_REGION', 'ap-south-1')}.amazonaws.com/${key}`;
+  }
+
+  async listFiles(params: {
+    prefix?: string;
+    maxKeys?: number;
+    continuationToken?: string;
+    search?: string;
+  }): Promise<{
+    items: Array<{ key: string; url: string; size: number; lastModified: Date }>;
+    nextContinuationToken?: string;
+    isTruncated: boolean;
+    totalCount: number;
+  }> {
+    const { prefix, maxKeys = 50, continuationToken, search } = params;
+
+    const command = new ListObjectsV2Command({
+      Bucket: this.bucketName,
+      Prefix: prefix || undefined,
+      MaxKeys: maxKeys + 1,
+      ContinuationToken: continuationToken,
+    });
+
+    const response = await this.s3Client.send(command);
+    let items = (response.Contents || [])
+      .filter((item) => item.Key && item.Key !== prefix)
+      .map((item) => ({
+        key: item.Key!,
+        url: this.buildUrl(item.Key!),
+        size: item.Size || 0,
+        lastModified: item.LastModified || new Date(),
+      }));
+
+    if (search) {
+      const searchLower = search.toLowerCase();
+      items = items.filter((item) => item.key.toLowerCase().includes(searchLower));
+    }
+
+    const hasMore = items.length > maxKeys;
+    const paginatedItems = hasMore ? items.slice(0, maxKeys) : items;
+
+    return {
+      items: paginatedItems,
+      nextContinuationToken: response.NextContinuationToken,
+      isTruncated: hasMore || (response.IsTruncated || false),
+      totalCount: paginatedItems.length,
+    };
+  }
+
+  async listFolders(): Promise<Array<{ name: string; count: number }>> {
+    const folderMap = new Map<string, number>();
+    let token: string | undefined;
+
+    do {
+      const command = new ListObjectsV2Command({
+        Bucket: this.bucketName,
+        MaxKeys: 1000,
+        ContinuationToken: token,
+      });
+
+      const response = await this.s3Client.send(command);
+
+      for (const item of response.Contents || []) {
+        if (!item.Key) continue;
+        const parts = item.Key.split('/');
+        if (parts.length > 1) {
+          const folder = parts[0];
+          folderMap.set(folder, (folderMap.get(folder) || 0) + 1);
+        }
+      }
+
+      token = response.NextContinuationToken;
+    } while (token);
+
+    return Array.from(folderMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
   }
 }

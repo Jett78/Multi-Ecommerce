@@ -3,7 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { uploadSingleImage } from "@/actions/upload-action";
+import { showError } from "@/lib/toast-helper";
 import type { FileUploadProps } from "@/types/components";
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
 export default function FileUpload({
   onSuccess,
@@ -30,6 +33,12 @@ export default function FileUpload({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_FILE_SIZE) {
+      showError("File size must be under 2MB");
+      e.target.value = "";
+      return;
+    }
 
     const localPreview = URL.createObjectURL(file);
     setPreviewUrl(localPreview);
@@ -87,7 +96,7 @@ export default function FileUpload({
               />
             </svg>
             <p className="font-medium">Click to upload</p>
-            <p className="text-xs text-zinc-400">PNG, JPG, WEBP</p>
+            <p className="text-xs text-zinc-400">PNG, JPG, WEBP, GIF | Max 2MB</p>
           </div>
         )}
 
