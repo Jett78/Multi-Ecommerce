@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 import DataTable, { Column } from "@/components/dashboard/data-table";
 import DashboardPagination from "@/components/dashboard/dashboard-pagination";
-import { Search } from "lucide-react";
+import { Search, Download, Upload, Trash2, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
 import { DeleteButton } from "@/components/dashboard/delete-button";
@@ -13,6 +15,10 @@ import { EditButton } from "@/components/dashboard/edit-button";
 import { revalidateProducts } from "@/actions/revalidate-action";
 import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
+import { productsToCsvRows, downloadCsv } from "@/lib/csv-helpers";
+import { showSuccess, showError } from "@/lib/toast-helper";
+import { apiClient } from "@/lib/api-client";
+import CsvImportDialog from "@/components/dashboard/csv-import-dialog";
 import type { Product } from "@/types/product";
 
 const PAGE_SIZE = 10;
@@ -27,7 +33,10 @@ export default function ProductsPage() {
   const [brandId, setBrandId] = useState("");
   const [isFeatured, setIsFeatured] = useState("");
   const [status, setStatus] = useState("");
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const debouncedSearch = useDebounce(search);
+  const queryClient = useQueryClient();
 
   const { getAllPaginated } = useCrud<Product>({
     endpoint: API_ROUTES.PRODUCT,
@@ -95,7 +104,103 @@ export default function ProductsPage() {
 
   const hasActiveFilters = categoryId || subcategoryId || brandId || isFeatured || status;
 
+  const allSelected = products.length > 0 && products.every((p) => selectedIds.has(p.id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        products.forEach((p) => next.delete(p.id));
+      } else {
+        products.forEach((p) => next.add(p.id));
+      }
+      return next;
+    });
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async () => {
+      const ids = [...selectedIds];
+      for (const id of ids) {
+        await apiClient(`${API_ROUTES.PRODUCT}/${id}`, {
+          method: "DELETE",
+          isAuthenticated: true,
+        });
+      }
+    },
+    onSuccess: () => {
+      showSuccess(`Deleted ${selectedIds.size} product(s)`);
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      revalidateProducts();
+    },
+    onError: () => {
+      showError("Failed to delete some products");
+    },
+  });
+
+  const handleExportCsv = async () => {
+    try {
+      const allProducts: Product[] = [];
+      let skip = 0;
+      const take = 100;
+      let hasMore = true;
+
+      while (hasMore) {
+        const response = await apiClient<{ data: Product[]; total: number }>(
+          `${API_ROUTES.PRODUCT}?take=${take}&skip=${skip}`
+        );
+        const items: Product[] = response?.data || [];
+        allProducts.push(...items);
+        skip += take;
+        hasMore = items.length === take && skip < (response?.total || 0);
+      }
+
+      if (allProducts.length === 0) {
+        showError("No products to export");
+        return;
+      }
+      const rows = productsToCsvRows(allProducts);
+      const date = new Date().toISOString().split("T")[0];
+      downloadCsv(rows, `products-export-${date}.csv`);
+      showSuccess(`Exported ${allProducts.length} product(s) to CSV`);
+    } catch {
+      showError("Failed to export products");
+    }
+  };
+
   const columns: Column<Product>[] = [
+    {
+      key: "select",
+      label: (
+        <input
+          type="checkbox"
+          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary focus:ring-primary/20"
+          checked={allSelected}
+          disabled={products.length === 0}
+          onChange={toggleSelectAll}
+          aria-label="Select all products"
+        />
+      ),
+      render: (row) => (
+        <input
+          type="checkbox"
+          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary focus:ring-primary/20"
+          checked={selectedIds.has(row.id)}
+          onChange={() => toggleSelectOne(row.id)}
+          aria-label={`Select ${row.name}`}
+        />
+      ),
+    },
     {
       key: "name",
       label: "SN",
@@ -139,6 +244,18 @@ export default function ProductsPage() {
           {row.category?.name || "—"}
         </span>
       ),
+    },
+    {
+      key: "price",
+      label: "Price",
+      render: (row) => {
+        const price = row.variants?.[0]?.price;
+        return (
+          <span className="text-sm font-semibold text-slate-900">
+            {price != null ? `Rs. ${price.toLocaleString()}` : "—"}
+          </span>
+        );
+      },
     },
     {
       key: "status",
@@ -225,6 +342,28 @@ export default function ProductsPage() {
         title="Products"
         description="Manage your product catalog."
         path="products"
+        action={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+              className="gap-1.5"
+            >
+              <Download className="size-3.5" />
+              Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setImportDialogOpen(true)}
+              className="gap-1.5"
+            >
+              <Upload className="size-3.5" />
+              Import CSV
+            </Button>
+          </div>
+        }
       />
 
       {/* Search */}
@@ -312,6 +451,37 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+          <span className="text-sm font-semibold text-red-700">{selectedIds.size} selected</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-xs text-slate-500 hover:underline"
+            >
+              Clear
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm(`Delete ${selectedIds.size} product(s)? This cannot be undone.`)) {
+                  bulkDeleteMutation.mutate();
+                }
+              }}
+              disabled={bulkDeleteMutation.isPending}
+              className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {bulkDeleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              {bulkDeleteMutation.isPending ? "Deleting..." : "Delete Selected"}
+            </button>
+          </div>
+        </div>
+      )}
+
       <DataTable
         columns={columns}
         data={products}
@@ -326,6 +496,18 @@ export default function ProductsPage() {
           totalPages={totalPages}
         />
       )}
+
+      <CsvImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onSuccess={() => {
+          setPage(1);
+          setSearch("");
+        }}
+        categories={categories}
+        subcategories={allSubcategories}
+        brands={brands}
+      />
     </div>
   );
 }
