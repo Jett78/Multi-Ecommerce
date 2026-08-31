@@ -8,8 +8,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { DeleteButton } from "@/components/dashboard/delete-button";
-import { EditButton } from "@/components/dashboard/edit-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { revalidateBrands } from "@/actions/revalidate-action";
 import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
@@ -92,16 +91,14 @@ export default function BrandsPage() {
       label: "Actions",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/brands/${row.id}/edit`} />
-          <DeleteButton
-            id={row.id}
-            endpoint={API_ROUTES.BRAND}
-            queryKey="brands"
-            entityName="brand"
-            onSuccess={revalidateBrands}
-          />
-        </div>
+        <DataTableActions
+          editHref={`/dashboard/brands/${row.id}/edit`}
+          deleteId={row.id}
+          deleteEndpoint={API_ROUTES.BRAND}
+          deleteQueryKey="brands"
+          deleteEntityName="brand"
+          onDeleteSuccess={revalidateBrands}
+        />
       ),
     },
   ];

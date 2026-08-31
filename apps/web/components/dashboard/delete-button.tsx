@@ -25,6 +25,7 @@ interface DeleteButtonProps {
   confirmMessage?: string;
   entityName?: string;
   onSuccess?: () => Promise<void> | void;
+  iconOnly?: boolean;
 }
 
 export function DeleteButton({
@@ -34,6 +35,7 @@ export function DeleteButton({
   confirmMessage,
   entityName = "item",
   onSuccess,
+  iconOnly = false,
 }: DeleteButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -67,15 +69,20 @@ export function DeleteButton({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger render={<span className="inline-flex" />}>
-        <Button
-          variant="destructive"
-          size="sm"
-          className="hover:bg-red-500 hover:text-white"
-
-        >
-          <Trash2 className="size-3 mr-1" />
-          Delete
-        </Button>
+        {iconOnly ? (
+          <span className="inline-flex items-center justify-center size-8 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
+            <Trash2 className="size-4" />
+          </span>
+        ) : (
+          <Button
+            variant="destructive"
+            size="sm"
+            className="hover:bg-red-500 hover:text-white"
+          >
+            <Trash2 className="size-3 mr-1" />
+            Delete
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>

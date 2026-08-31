@@ -4,12 +4,11 @@ import { useState } from "react";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 import DataTable, { Column } from "@/components/dashboard/data-table";
 import DashboardPagination from "@/components/dashboard/dashboard-pagination";
-import { Search, Mail, Phone, Eye } from "lucide-react";
+import { Search, Mail, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { DeleteButton } from "@/components/dashboard/delete-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { useDebounce } from "@/hooks/useDebounce";
 import InquiryModal from "./inquiry-modal";
 import type { Inquiry } from "@/types/inquiry";
@@ -97,23 +96,13 @@ export default function InquiriesPage() {
       label: "Actions",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSelectedInquiry(row)}
-            className="h-8 px-3"
-          >
-            <Eye className="size-3.5 mr-1" />
-            View
-          </Button>
-          <DeleteButton
-            id={row.id}
-            endpoint={API_ROUTES.INQUIRY}
-            queryKey="inquiries"
-            entityName="inquiry"
-          />
-        </div>
+        <DataTableActions
+          onViewClick={() => setSelectedInquiry(row)}
+          deleteId={row.id}
+          deleteEndpoint={API_ROUTES.INQUIRY}
+          deleteQueryKey="inquiries"
+          deleteEntityName="inquiry"
+        />
       ),
     },
   ];

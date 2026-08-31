@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
 import Image from "next/image";
-import { DeleteButton } from "@/components/dashboard/delete-button";
-import { EditButton } from "@/components/dashboard/edit-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { revalidateTeamMembers } from "@/actions/revalidate-action";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { TeamMember } from "@/types/team";
@@ -109,16 +108,14 @@ export default function TeamPage() {
       label: "Actions",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/team/${row.id}/edit`} />
-          <DeleteButton
-            id={row.id}
-            endpoint={API_ROUTES.TEAM}
-            queryKey="team-members"
-            entityName="team member"
-            onSuccess={revalidateTeamMembers}
-          />
-        </div>
+        <DataTableActions
+          editHref={`/dashboard/team/${row.id}/edit`}
+          deleteId={row.id}
+          deleteEndpoint={API_ROUTES.TEAM}
+          deleteQueryKey="team-members"
+          deleteEntityName="team member"
+          onDeleteSuccess={revalidateTeamMembers}
+        />
       ),
     },
   ];

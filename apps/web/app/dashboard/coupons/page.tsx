@@ -8,8 +8,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { DeleteButton } from "@/components/dashboard/delete-button";
-import { EditButton } from "@/components/dashboard/edit-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { revalidateCoupons } from "@/actions/revalidate-action";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { Coupon } from "@/types/coupon";
@@ -125,16 +124,14 @@ export default function AdminCouponsPage() {
       label: "Actions",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/coupons/${row.id}/edit`} />
-          <DeleteButton
-            id={row.id}
-            endpoint={API_ROUTES.DISCOUNT}
-            queryKey="coupons"
-            entityName="coupon"
-            onSuccess={revalidateCoupons}
-          />
-        </div>
+        <DataTableActions
+          editHref={`/dashboard/coupons/${row.id}/edit`}
+          deleteId={row.id}
+          deleteEndpoint={API_ROUTES.DISCOUNT}
+          deleteQueryKey="coupons"
+          deleteEntityName="coupon"
+          onDeleteSuccess={revalidateCoupons}
+        />
       ),
     },
   ];

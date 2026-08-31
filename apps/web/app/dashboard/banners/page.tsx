@@ -9,8 +9,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { DeleteButton } from "@/components/dashboard/delete-button";
-import { EditButton } from "@/components/dashboard/edit-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { revalidateBanners } from "@/actions/revalidate-action";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { Banner } from "@/types/banner";
@@ -115,16 +114,14 @@ export default function BannersPage() {
       label: "Actions",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/banners/${row.id}/edit`} />
-          <DeleteButton
-            id={row.id}
-            endpoint={API_ROUTES.BANNER}
-            queryKey="banners"
-            entityName="Banner"
-            onSuccess={revalidateBanners}
-          />
-        </div>
+        <DataTableActions
+          editHref={`/dashboard/banners/${row.id}/edit`}
+          deleteId={row.id}
+          deleteEndpoint={API_ROUTES.BANNER}
+          deleteQueryKey="banners"
+          deleteEntityName="Banner"
+          onDeleteSuccess={revalidateBanners}
+        />
       ),
     },
   ];

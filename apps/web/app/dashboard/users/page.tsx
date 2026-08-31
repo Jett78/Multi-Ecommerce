@@ -4,12 +4,11 @@ import { useState } from "react";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 import DataTable, { Column } from "@/components/dashboard/data-table";
 import DashboardPagination from "@/components/dashboard/dashboard-pagination";
-import { Search, UserCheck, UserX, Calendar, Users, Eye } from "lucide-react";
+import { Search, UserCheck, UserX, Calendar, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { DeleteButton } from "@/components/dashboard/delete-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { useDebounce } from "@/hooks/useDebounce";
 import UserModal from "./user-modal";
 import type { User } from "@/types/user";
@@ -154,25 +153,13 @@ export default function UsersPage() {
       label: "Actions",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSelectedUser(row)}
-            className="h-8 px-3"
-          >
-            <Eye className="size-3.5 mr-1" />
-            View
-          </Button>
-          {currentUser?.id !== row.id && (
-            <DeleteButton
-              id={row.id}
-              endpoint={API_ROUTES.USER}
-              queryKey="users"
-              entityName="user"
-            />
-          )}
-        </div>
+        <DataTableActions
+          onViewClick={() => setSelectedUser(row)}
+          deleteId={currentUser?.id !== row.id ? row.id : undefined}
+          deleteEndpoint={currentUser?.id !== row.id ? API_ROUTES.USER : undefined}
+          deleteQueryKey="users"
+          deleteEntityName="user"
+        />
       ),
     },
   ];

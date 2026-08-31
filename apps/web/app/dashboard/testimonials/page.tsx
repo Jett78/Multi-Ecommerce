@@ -8,8 +8,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { DeleteButton } from "@/components/dashboard/delete-button";
-import { EditButton } from "@/components/dashboard/edit-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { revalidateTestimonials } from "@/actions/revalidate-action";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { Testimonial } from "@/types/testimonial";
@@ -84,16 +83,14 @@ export default function TestimonialsPage() {
       label: "Actions",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/testimonials/${row.id}/edit`} />
-          <DeleteButton
-            id={row.id}
-            endpoint={API_ROUTES.TESTIMONIAL}
-            queryKey="testimonials"
-            entityName="testimonial"
-            onSuccess={revalidateTestimonials}
-          />
-        </div>
+        <DataTableActions
+          editHref={`/dashboard/testimonials/${row.id}/edit`}
+          deleteId={row.id}
+          deleteEndpoint={API_ROUTES.TESTIMONIAL}
+          deleteQueryKey="testimonials"
+          deleteEntityName="testimonial"
+          onDeleteSuccess={revalidateTestimonials}
+        />
       ),
     },
   ];

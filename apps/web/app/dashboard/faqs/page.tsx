@@ -8,8 +8,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { DeleteButton } from "@/components/dashboard/delete-button";
-import { EditButton } from "@/components/dashboard/edit-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { revalidateFaqs } from "@/actions/revalidate-action";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { Faq } from "@/types/faq";
@@ -85,16 +84,14 @@ export default function FaqsPage() {
       label: "Actions",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/faqs/${row.id}/edit`} />
-          <DeleteButton
-            id={row.id}
-            endpoint={API_ROUTES.FAQ}
-            queryKey="faqs"
-            entityName="FAQ"
-            onSuccess={revalidateFaqs}
-          />
-        </div>
+        <DataTableActions
+          editHref={`/dashboard/faqs/${row.id}/edit`}
+          deleteId={row.id}
+          deleteEndpoint={API_ROUTES.FAQ}
+          deleteQueryKey="faqs"
+          deleteEntityName="FAQ"
+          onDeleteSuccess={revalidateFaqs}
+        />
       ),
     },
   ];

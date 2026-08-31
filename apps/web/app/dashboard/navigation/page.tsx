@@ -7,7 +7,7 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { EditButton } from "@/components/dashboard/edit-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import type { NavigationItem } from "@/types/navigation";
 
 export default function NavigationPage() {
@@ -88,9 +88,10 @@ export default function NavigationPage() {
       label: "Actions",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/navigation/${row.id}/edit`} />
-        </div>
+        <DataTableActions
+          editHref={`/dashboard/navigation/${row.id}/edit`}
+          hideDelete
+        />
       ),
     },
   ];

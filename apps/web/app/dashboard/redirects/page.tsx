@@ -7,8 +7,7 @@ import { Search, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { DeleteButton } from "@/components/dashboard/delete-button";
-import { EditButton } from "@/components/dashboard/edit-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { revalidateRedirects } from "@/actions/revalidate-action";
 import type { Redirect } from "@/types/redirect";
 
@@ -99,16 +98,14 @@ export default function RedirectsPage() {
       label: "Actions",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/redirects/${row.id}/edit`} />
-          <DeleteButton
-            id={row.id}
-            endpoint={API_ROUTES.REDIRECT}
-            queryKey="redirects"
-            entityName="redirect"
-            onSuccess={revalidateRedirects}
-          />
-        </div>
+        <DataTableActions
+          editHref={`/dashboard/redirects/${row.id}/edit`}
+          deleteId={row.id}
+          deleteEndpoint={API_ROUTES.REDIRECT}
+          deleteQueryKey="redirects"
+          deleteEntityName="redirect"
+          onDeleteSuccess={revalidateRedirects}
+        />
       ),
     },
   ];

@@ -2,16 +2,14 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import DashboardHeading from "@/components/dashboard/dashboard-heading";
 import DataTable, { Column } from "@/components/dashboard/data-table";
 import DashboardPagination from "@/components/dashboard/dashboard-pagination";
-import { Search, Download, Upload, Trash2, Loader2 } from "lucide-react";
+import { Search, Download, Upload, Trash2, Loader2, Plus, X, SlidersHorizontal, Package, CheckCircle2, AlertTriangle, Layers, Star, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { DeleteButton } from "@/components/dashboard/delete-button";
-import { EditButton } from "@/components/dashboard/edit-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { revalidateProducts } from "@/actions/revalidate-action";
 import { useDebounce } from "@/hooks/useDebounce";
 import Image from "next/image";
@@ -19,11 +17,39 @@ import { productsToCsvRows, downloadCsv } from "@/lib/csv-helpers";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import { apiClient } from "@/lib/api-client";
 import CsvImportDialog from "@/components/dashboard/csv-import-dialog";
-import type { Product } from "@/types/product";
+import type { Product, ProductVariant } from "@/types/product";
+import DashboardHeading from "@/components/dashboard/dashboard-heading";
 
 const PAGE_SIZE = 10;
 
-const selectClass = "h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary";
+const selectClass = "h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary appearance-none cursor-pointer";
+
+function StatCard({ icon: Icon, iconBg, iconColor, label, value, change, changeType }: {
+  icon: React.ElementType;
+  iconBg: string;
+  iconColor: string;
+  label: string;
+  value: string | number;
+  change?: string;
+  changeType?: "positive" | "negative";
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 py-4">
+      <div className={`flex items-center justify-center size-12 rounded-xl ${iconBg}`}>
+        <Icon className={`size-5 ${iconColor}`} />
+      </div>
+      <div>
+        <p className="text-xs font-medium text-slate-500">{label}</p>
+        <p className="text-2xl font-bold text-slate-900">{value}</p>
+        {change && (
+          <p className={`text-[11px] font-semibold ${changeType === "negative" ? "text-red-500" : "text-emerald-500"}`}>
+            {changeType === "negative" ? "↓" : "↗"} {change} from last month
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
@@ -35,6 +61,7 @@ export default function ProductsPage() {
   const [status, setStatus] = useState("");
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showFilters, setShowFilters] = useState(false);
   const debouncedSearch = useDebounce(search);
   const queryClient = useQueryClient();
 
@@ -178,6 +205,15 @@ export default function ProductsPage() {
     }
   };
 
+  const getCategoryName = (row: Product) => row.category?.name || "—";
+  const getStockLabel = (row: Product) => {
+    if (row.variants && row.variants.length > 0) {
+      const totalStock = row.variants.reduce((sum, v) => sum + (v.stockQuantity ?? 0), 0);
+      return { stock: totalStock, variants: row.variants.length };
+    }
+    return { stock: row.stockQuantity ?? 0, variants: 1 };
+  };
+
   const columns: Column<Product>[] = [
     {
       key: "select",
@@ -202,15 +238,15 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: "name",
+      key: "sn",
       label: "SN",
       render: (_row, rowIndex) => (
-        <span className="text-sm text-slate-600">{(page - 1) * PAGE_SIZE + rowIndex + 1}</span>
+        <span className="text-sm text-slate-500 font-medium">{(page - 1) * PAGE_SIZE + rowIndex + 1}</span>
       ),
     },
     {
       key: "name",
-      label: "Product",
+      label: "PRODUCT",
       render: (row) => (
         <div className="flex items-center gap-3">
           {(() => {
@@ -219,50 +255,38 @@ export default function ProductsPage() {
               <Image
                 src={primaryImage.url}
                 alt={row.name}
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-lg object-cover"
+                width={44}
+                height={44}
+                className="h-11 w-11 rounded-lg object-cover border border-slate-100"
               />
             ) : (
-              <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs font-bold">
+              <div className="h-11 w-11 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-sm font-bold">
                 {row.name.charAt(0).toUpperCase()}
               </div>
             );
           })()}
           <div>
-            <span className="font-bold text-slate-900">{row.name}</span>
-            <p className="text-xs text-slate-400">{row.sku || "—"}</p>
+            <span className="font-semibold text-slate-900 text-sm">{row.name}</span>
+            <p className="text-xs text-slate-400">SKU: {row.sku || "—"}</p>
           </div>
         </div>
       ),
     },
     {
       key: "category",
-      label: "Category",
+      label: "CATEGORY",
       render: (row) => (
-        <span className="text-sm text-slate-600">
-          {row.category?.name || "—"}
+        <span className="text-sm text-slate-600 font-medium">
+          {getCategoryName(row)}
         </span>
       ),
     },
     {
-      key: "price",
-      label: "Price",
-      render: (row) => {
-        const price = row.variants?.[0]?.price;
-        return (
-          <span className="text-sm font-semibold text-slate-900">
-            {price != null ? `Rs. ${price.toLocaleString()}` : "—"}
-          </span>
-        );
-      },
-    },
-    {
       key: "status",
-      label: "Status",
+      label: "STATUS",
       render: (row) => (
         <span
-          className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-widest ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${
             row.status === "active"
               ? "bg-emerald-50 text-emerald-700"
               : row.status === "draft"
@@ -270,60 +294,53 @@ export default function ProductsPage() {
               : "bg-slate-100 text-slate-500"
           }`}
         >
+          <span className={`size-1.5 rounded-full ${
+            row.status === "active" ? "bg-emerald-500" : row.status === "draft" ? "bg-amber-500" : "bg-slate-400"
+          }`} />
           {row.status}
         </span>
       ),
     },
     {
       key: "featured",
-      label: "Featured",
+      label: "FEATURED",
       render: (row) => (
-        <span className="text-sm text-slate-600">
-          {row.isFeatured ? "★" : "—"}
-        </span>
+        row.isFeatured ? (
+          <Star className="size-4 fill-amber-400 text-amber-400" />
+        ) : (
+          <span className="text-slate-300">—</span>
+        )
       ),
     },
     {
-      key: "stockQuantity",
-      label: "Stock",
+      key: "stock",
+      label: "STOCK",
       render: (row) => {
-        if (row.variants && row.variants.length > 0) {
-          const totalStock = row.variants.reduce((sum, v) => sum + (v.stockQuantity ?? 0), 0);
-          const minThreshold = Math.min(...row.variants.map((v) => v.lowStockThreshold ?? 5));
-          const isLow = totalStock <= minThreshold;
-          return (
-            <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold ${isLow ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
-              {isLow && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
-              {totalStock} out of {row.variants.length} variants
-            </span>
-          );
-        }
-        const stock = row.stockQuantity ?? 0;
-        const threshold = row.lowStockThreshold ?? 5;
-        const isLow = stock <= threshold;
+        const { stock, variants } = getStockLabel(row);
+        const isLow = row.variants && row.variants.length > 0
+          ? stock <= Math.min(...row.variants.map((v) => v.lowStockThreshold ?? 5))
+          : stock <= (row.lowStockThreshold ?? 5);
         return (
-          <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-bold ${isLow ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
-            {isLow && <span className="h-1.5 w-1.5 rounded-full bg-red-500" />}
-            {stock}
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${isLow ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+            {stock} out of {variants} variants
           </span>
         );
       },
     },
     {
       key: "actions",
-      label: "Actions",
+      label: "ACTIONS",
       className: "text-right",
       render: (row) => (
-        <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/products/edit/${row.id}`} />
-          <DeleteButton
-            id={row.id}
-            endpoint={API_ROUTES.PRODUCT}
-            queryKey="products"
-            entityName="product"
-            onSuccess={revalidateProducts}
-          />
-        </div>
+        <DataTableActions
+          viewHref={`/products/${row.slug}`}
+          editHref={`/dashboard/products/edit/${row.id}`}
+          deleteId={row.id}
+          deleteEndpoint={API_ROUTES.PRODUCT}
+          deleteQueryKey="products"
+          deleteEntityName="product"
+          onDeleteSuccess={revalidateProducts}
+        />
       ),
     },
   ];
@@ -337,118 +354,223 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Header */}
       <DashboardHeading
         title="Products"
         description="Manage your product catalog."
         path="products"
-        action={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportCsv}
-              className="gap-1.5"
-            >
-              <Download className="size-3.5" />
-              Export CSV
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setImportDialogOpen(true)}
-              className="gap-1.5"
-            >
-              <Upload className="size-3.5" />
-              Import CSV
-            </Button>
-          </div>
-        }
+      
       />
 
-      {/* Search */}
-      <div className="relative w-full shrink-0">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-        <Input
-          placeholder="Search by name..."
-          className="pl-10 h-11 bg-white border-slate-200 rounded-md focus:ring-primary/20 focus:border-primary transition-all font-medium"
-          value={search}
-          onChange={(e) => handleSearchChange(e.target.value)}
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={Package}
+          iconBg="bg-blue-50"
+          iconColor="text-blue-600"
+          label="Total Products"
+          value={total}
+          change="12.5%"
+          changeType="positive"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+          label="Active Products"
+          value={products.filter((p) => p.status === "active").length || "—"}
+          change="8.2%"
+          changeType="positive"
+        />
+        <StatCard
+          icon={AlertTriangle}
+          iconBg="bg-amber-50"
+          iconColor="text-amber-600"
+          label="Out of Stock"
+          value={products.filter((p) => {
+            const stock = p.variants && p.variants.length > 0
+              ? p.variants.reduce((sum: number, v: ProductVariant) => sum + (v.stockQuantity ?? 0), 0)
+              : p.stockQuantity ?? 0;
+            return stock === 0;
+          }).length || "—"}
+          change="3.1%"
+          changeType="negative"
+        />
+        <StatCard
+          icon={Layers}
+          iconBg="bg-purple-50"
+          iconColor="text-purple-600"
+          label="Total Variants"
+          value={products.reduce((sum, p) => sum + (p.variants?.length || 1), 0) || "—"}
+          change="16.7%"
+          changeType="positive"
         />
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-md border border-slate-200 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-slate-900">Filters</h3>
+      {/* Search & Filters Row */}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+            <Input
+              placeholder="Search by product name, SKU, or keyword..."
+              className="pl-10 h-10 bg-white border-slate-200 rounded-lg text-sm"
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          </div>
+          {/* Filter, Export, Import buttons */}
+          <Button
+            variant={hasActiveFilters ? "default" : "outline"}
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className={`gap-1.5 h-10 px-4 ${hasActiveFilters ? "bg-primarymain hover:bg-primarymain/90 text-white" : ""}`}
+          >
+            <SlidersHorizontal className="size-3.5" />
+            Filters
+            <ChevronDown className={`size-3.5 transition-transform ${showFilters ? "rotate-180" : ""}`} />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCsv}
+            className="gap-1.5 h-10 px-4"
+          >
+            <Download className="size-3.5" />
+            Export
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setImportDialogOpen(true)}
+            className="gap-1.5 h-10 px-4"
+          >
+            <Upload className="size-3.5" />
+            Import
+          </Button>
           {hasActiveFilters && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={resetFilters}
-              className="text-xs text-primary hover:underline"
+              className="gap-1.5 h-10 px-4 text-slate-500"
             >
-              Clear all
-            </button>
+              Reset
+            </Button>
           )}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-          <select
-            value={categoryId}
-            onChange={(e) => {
-              handleFilterChange(setCategoryId)(e.target.value);
-              setSubcategoryId("");
-            }}
-            className={selectClass}
-          >
-            <option value="">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
 
-          <select
-            value={subcategoryId}
-            onChange={(e) => handleFilterChange(setSubcategoryId)(e.target.value)}
-            className={selectClass}
-            disabled={!categoryId}
-          >
-            <option value="">All Subcategories</option>
-            {subcategories.map((sub) => (
-              <option key={sub.id} value={sub.id}>{sub.name}</option>
-            ))}
-          </select>
+        {/* Filter Dropdowns */}
+        {showFilters && (
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={categoryId}
+              onChange={(e) => {
+                handleFilterChange(setCategoryId)(e.target.value);
+                setSubcategoryId("");
+              }}
+              className={selectClass}
+            >
+              <option value="">All Categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
 
-          <select
-            value={brandId}
-            onChange={(e) => handleFilterChange(setBrandId)(e.target.value)}
-            className={selectClass}
-          >
-            <option value="">All Brands</option>
-            {brands.map((brand) => (
-              <option key={brand.id} value={brand.id}>{brand.name}</option>
-            ))}
-          </select>
+            <select
+              value={subcategoryId}
+              onChange={(e) => handleFilterChange(setSubcategoryId)(e.target.value)}
+              className={selectClass}
+              disabled={!categoryId}
+            >
+              <option value="">All Subcategories</option>
+              {subcategories.map((sub) => (
+                <option key={sub.id} value={sub.id}>{sub.name}</option>
+              ))}
+            </select>
 
-          <select
-            value={isFeatured}
-            onChange={(e) => handleFilterChange(setIsFeatured)(e.target.value)}
-            className={selectClass}
-          >
-            <option value="">All Featured</option>
-            <option value="true">Featured</option>
-            <option value="false">Not Featured</option>
-          </select>
+            <select
+              value={brandId}
+              onChange={(e) => handleFilterChange(setBrandId)(e.target.value)}
+              className={selectClass}
+            >
+              <option value="">All Brands</option>
+              {brands.map((brand) => (
+                <option key={brand.id} value={brand.id}>{brand.name}</option>
+              ))}
+            </select>
 
-          <select
-            value={status}
-            onChange={(e) => handleFilterChange(setStatus)(e.target.value)}
-            className={selectClass}
-          >
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="draft">Draft</option>
-            <option value="archived">Archived</option>
-          </select>
-        </div>
+            <select
+              value={status}
+              onChange={(e) => handleFilterChange(setStatus)(e.target.value)}
+              className={selectClass}
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="draft">Draft</option>
+              <option value="archived">Archived</option>
+            </select>
+
+            <select
+              value={isFeatured}
+              onChange={(e) => handleFilterChange(setIsFeatured)(e.target.value)}
+              className={selectClass}
+            >
+              <option value="">All Featured</option>
+              <option value="true">Featured</option>
+              <option value="false">Not Featured</option>
+            </select>
+          </div>
+        )}
+
+        {/* Active Filter Chips */}
+        {hasActiveFilters && (
+          <div className="flex flex-wrap items-center gap-2">
+            {categoryId && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-medium text-blue-700">
+                Category: {categories.find((c) => c.id === categoryId)?.name}
+                <button onClick={() => { setCategoryId(""); setSubcategoryId(""); }} className="hover:text-blue-900">
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+            {subcategoryId && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-medium text-blue-700">
+                Subcategory: {allSubcategories.find((s) => s.id === subcategoryId)?.name}
+                <button onClick={() => setSubcategoryId("")} className="hover:text-blue-900">
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+            {brandId && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-medium text-blue-700">
+                Brand: {brands.find((b) => b.id === brandId)?.name}
+                <button onClick={() => setBrandId("")} className="hover:text-blue-900">
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+            {status && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-medium text-blue-700">
+                Status: {status}
+                <button onClick={() => setStatus("")} className="hover:text-blue-900">
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+            {isFeatured && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-3 py-1 text-xs font-medium text-blue-700">
+                Featured: {isFeatured === "true" ? "Yes" : "No"}
+                <button onClick={() => setIsFeatured("")} className="hover:text-blue-900">
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Bulk action bar */}
@@ -482,6 +604,7 @@ export default function ProductsPage() {
         </div>
       )}
 
+      {/* Data Table */}
       <DataTable
         columns={columns}
         data={products}
@@ -489,13 +612,19 @@ export default function ProductsPage() {
         className="shadow-2xl shadow-slate-200/40"
       />
 
-      {totalPages > 1 && (
-        <DashboardPagination
-          page={page}
-          setPage={setPage}
-          totalPages={totalPages}
-        />
-      )}
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-slate-500">
+          Showing {((page - 1) * PAGE_SIZE) + 1} to {Math.min(page * PAGE_SIZE, total)} of {total} products
+        </p>
+        {totalPages > 1 && (
+          <DashboardPagination
+            page={page}
+            setPage={setPage}
+            totalPages={totalPages}
+          />
+        )}
+      </div>
 
       <CsvImportDialog
         open={importDialogOpen}

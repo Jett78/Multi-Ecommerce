@@ -10,8 +10,7 @@ import { Input } from "@/components/ui/input";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 import DashboardPagination from "@/components/dashboard/dashboard-pagination";
 import DataTable, { Column } from "@/components/dashboard/data-table";
-import { EditButton } from "@/components/dashboard/edit-button";
-import { DeleteButton } from "@/components/dashboard/delete-button";
+import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import type { Order, OrderStats, BulkSendToCourierResponse } from "@/types/order";
 
@@ -251,15 +250,13 @@ export default function AdminOrdersPage() {
       label: "Actions",
       className: "text-right",
       render: (order) => (
-        <div className="flex items-center justify-end gap-2">
-          <EditButton href={`/dashboard/orders/${order.id}`} />
-          <DeleteButton
-            id={order.id}
-            endpoint={API_ROUTES.ORDERS}
-            queryKey="admin-orders"
-            entityName="order"
-          />
-        </div>
+        <DataTableActions
+          editHref={`/dashboard/orders/${order.id}`}
+          deleteId={order.id}
+          deleteEndpoint={API_ROUTES.ORDERS}
+          deleteQueryKey="admin-orders"
+          deleteEntityName="order"
+        />
       ),
     },
   ];
