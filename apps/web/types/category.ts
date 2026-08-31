@@ -4,6 +4,7 @@ export interface Category extends BaseEntity {
   name: string;
   slug: string;
   imageKey?: string;
+  imageUrl?: string;
   sortOrder: number;
   isActive: boolean;
 }

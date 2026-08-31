@@ -178,6 +178,20 @@ export class ProductController {
   }
 
   @AllowAnonymous()
+  @Get('best-sellers')
+  @ApiOperation({ summary: 'Get best selling products' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of products to return' })
+  async findBestSellers(@Query('limit') limit?: number) {
+    const products = await this.productService.findBestSellers(limit || 10);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Best sellers fetched successfully',
+      data: products.map((p) => new ProductEntity(p)),
+    };
+  }
+
+  @AllowAnonymous()
   @Get(':id')
   @ApiOperation({ summary: 'Get a product by ID' })
   @ApiParam({ name: 'id', description: 'Product UUID' })

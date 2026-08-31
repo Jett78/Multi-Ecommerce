@@ -771,4 +771,14 @@ export class ProductService {
       throw error;
     }
   }
+
+  async findBestSellers(limit: number = 10) {
+    try {
+      const products = await this.productRepository.findBestSellers(limit);
+      return products.map((p) => this.cleanProduct(p));
+    } catch (error) {
+      this.logger.error(`Failed to fetch best sellers: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
 }

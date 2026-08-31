@@ -38,3 +38,21 @@ export function generateSlug(text: string): string {
     .replace(/[\s_-]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
+
+export function getImageUrl(imageKey: string | undefined | null): string {
+  if (!imageKey) return "";
+  if (imageKey.startsWith("http://") || imageKey.startsWith("https://")) {
+    return imageKey;
+  }
+  const bucketName = process.env.S3_BUCKET_NAME || process.env.NEXT_PUBLIC_S3_BUCKET || "";
+  const region = process.env.AWS_REGION || process.env.NEXT_PUBLIC_S3_REGION || "ap-south-1";
+  const cloudfrontUrl = process.env.AWS_CLOUDFRONT_URL || process.env.NEXT_PUBLIC_CLOUDFRONT_URL || "";
+
+  if (cloudfrontUrl) {
+    return `https://${cloudfrontUrl}/${imageKey}`;
+  }
+  if (bucketName) {
+    return `https://${bucketName}.s3.${region}.amazonaws.com/${imageKey}`;
+  }
+  return "";
+}

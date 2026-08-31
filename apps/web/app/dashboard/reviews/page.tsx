@@ -574,7 +574,6 @@ export default function ReviewsPage() {
       {totalPages > 1 && (
         <DashboardPagination page={page} setPage={setPage} totalPages={totalPages} />
       )}
-      )}
 
       <AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
         <AlertDialogContent>

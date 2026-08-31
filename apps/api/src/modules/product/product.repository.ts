@@ -406,4 +406,106 @@ export class ProductRepository {
 
     return product;
   }
+
+  async findBestSellers(limit: number = 10) {
+    const bestSellersRaw = await this.db
+      .select({
+        productId: schema.productVariants.productId,
+        totalSold: sql<number>`coalesce(sum(${schema.orderItems.quantity}), 0)`,
+      })
+      .from(schema.orderItems)
+      .innerJoin(schema.productVariants, eq(schema.orderItems.variantId, schema.productVariants.id))
+      .innerJoin(schema.orders, eq(schema.orderItems.orderId, schema.orders.id))
+      .where(eq(schema.orders.paymentStatus, 'completed'))
+      .groupBy(schema.productVariants.productId)
+      .orderBy(desc(sql`coalesce(sum(${schema.orderItems.quantity}), 0)`))
+      .limit(limit);
+
+    if (bestSellersRaw.length === 0) return [];
+
+    const productIds = bestSellersRaw.map((r) => r.productId).filter((id): id is string => id !== null);
+
+    const products = await this.db
+      .select()
+      .from(schema.products)
+      .leftJoin(schema.categories, eq(schema.products.categoryId, schema.categories.id))
+      .leftJoin(schema.subcategories, eq(schema.products.subcategoryId, schema.subcategories.id))
+      .leftJoin(schema.brands, eq(schema.products.brandId, schema.brands.id))
+      .where(
+        and(
+          inArray(schema.products.id, productIds),
+          eq(schema.products.status, 'active'),
+          eq(schema.products.isActive, true),
+        ),
+      );
+
+    const [allVariants, allImages] = await Promise.all([
+      this.db
+        .select()
+        .from(schema.productVariants)
+        .where(inArray(schema.productVariants.productId, productIds))
+        .orderBy(schema.productVariants.sortOrder),
+      this.db
+        .select()
+        .from(schema.productImages)
+        .where(inArray(schema.productImages.productId, productIds))
+        .orderBy(schema.productImages.sortOrder),
+    ]);
+
+    const variantIds = allVariants.map((v) => v.id);
+    const allAttributes =
+      variantIds.length > 0
+        ? await this.db
+            .select()
+            .from(schema.variantAttributes)
+            .where(inArray(schema.variantAttributes.variantId, variantIds))
+            .orderBy(schema.variantAttributes.sortOrder)
+        : [];
+
+    const variantsByProduct = new Map<string, typeof allVariants>();
+    const imagesByProduct = new Map<string, typeof allImages>();
+    const attributesByVariant = new Map<string, typeof allAttributes>();
+
+    for (const variant of allVariants) {
+      const list = variantsByProduct.get(variant.productId) || [];
+      list.push(variant);
+      variantsByProduct.set(variant.productId, list);
+    }
+
+    for (const image of allImages) {
+      if (!image.productId) continue;
+      const list = imagesByProduct.get(image.productId) || [];
+      list.push(image);
+      imagesByProduct.set(image.productId, list);
+    }
+
+    for (const attr of allAttributes) {
+      const list = attributesByVariant.get(attr.variantId) || [];
+      list.push(attr);
+      attributesByVariant.set(attr.variantId, list);
+    }
+
+    const soldMap = new Map(bestSellersRaw.map((r) => [r.productId, r.totalSold]));
+
+    return products
+      .map((row) => {
+        const productId = row.products.id;
+        if (!productId) return null;
+        const variants = (variantsByProduct.get(productId) || []).map((v) => ({
+          ...v,
+          attributes: attributesByVariant.get(v.id) || [],
+        }));
+
+        return {
+          ...row.products,
+          category: row.categories,
+          subcategory: row.subcategories,
+          brand: row.brands,
+          variants,
+          images: imagesByProduct.get(productId) || [],
+          totalSold: soldMap.get(productId) || 0,
+        };
+      })
+      .filter(Boolean);
+  }
 }
