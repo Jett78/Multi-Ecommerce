@@ -193,6 +193,160 @@ npm run db:reset && npm run db:seed
 - `shadcn/ui` - UI components
 - `lucide-react` - Icons
 
+## Ecommerce Features Status
+
+| Category | Feature | Status |
+|----------|---------|--------|
+| **Product Management** | Product CRUD (Create, Read, Update, Delete) | ✅ |
+| | Product Variants (SKU, Price, Stock) | ✅ |
+| | Product Images (Multiple, Gallery) | ✅ |
+| | Product Filtering & Search | ✅ |
+| | Featured Products | ✅ |
+| | Best Sellers | ✅ |
+| | New Arrivals | ✅ |
+| | Related Products ("You May Also Like") | ✅ |
+| | Product Soft Delete / Archive | ✅ |
+| | Product Tags | ✅ |
+| **Categories & Brands** | Category CRUD | ✅ |
+| | Subcategory CRUD | ✅ |
+| | Brand CRUD | ✅ |
+| | Category Images | ✅ |
+| **Shopping Cart** | Client-side Cart (Zustand + localStorage) | ✅ |
+| | Server-side Cart API | ✅ |
+| | Cart Item Selection | ✅ |
+| **Checkout** | Multi-step Checkout Flow | ✅ |
+| | Contact Information Form | ✅ |
+| | Saved Address Selection | ✅ |
+| | Order Notes | ✅ |
+| | Coupon Code Application | ✅ |
+| | Delivery Charge Calculation | ✅ |
+| **Payment** | Khalti Payment Gateway | ✅ |
+| | Cash on Delivery (COD) | ✅ |
+| | Payment Settings Dashboard | ✅ |
+| | Stripe Integration | ❌ |
+| | eSewa Integration | ❌ |
+| **Orders** | Order Creation from Cart | ✅ |
+| | Order Status Management (6 statuses) | ✅ |
+| | Customer Order History | ✅ |
+| | Admin Order Management | ✅ |
+| | Order Statistics | ✅ |
+| | Order Search & Filters | ✅ |
+| | Bulk Order Actions | ❌ |
+| | Order Invoices / Receipts | ❌ |
+| | Return / Refund Management | ❌ |
+| **Coupons & Discounts** | Coupon CRUD (Fixed, %, Free Shipping) | ✅ |
+| | Coupon Validation | ✅ |
+| | Min Order Amount Rule | ✅ |
+| | Usage Limit & Per-User Limit | ✅ |
+| | Product/Category Specific Coupons | ❌ |
+| | Bulk Coupon Generation | ❌ |
+| **Reviews & Ratings** | Product Reviews with Ratings | ✅ |
+| | Rating Breakdown / Summary | ✅ |
+| | Review Moderation (Admin) | ✅ |
+| | Threaded Review Replies | ✅ |
+| | Mark Review as Helpful | ✅ |
+| | Verified Purchase Badge | ✅ |
+| | Review Images | ✅ |
+| **Inventory** | Stock Quantity Tracking | ✅ |
+| | Stock Adjustment API | ✅ |
+| | Inventory Transaction Log | ❌ |
+| | Low Stock Threshold Alerts | ✅ |
+| | Allow Backorder | ✅ |
+| | Auto Stock Decrement on Order | ✅ |
+| | Bulk Stock Import | ❌ |
+| **Shipping & Delivery** | Saved Shipping Addresses | ✅ |
+| | Province/District Address Model | ✅ |
+| | Pathao Courier Integration | ✅ |
+| | Delivery Charge by District/Weight | ✅ |
+| | Courier District Mappings | ✅ |
+| | Send to Courier (Single & Bulk) | ✅ |
+| | Sync Courier Status | ✅ |
+| | Customer-facing Order Tracking | ❌ |
+| | Multiple Shipping Methods | ❌ |
+| | Shipping Label Printing | ❌ |
+| **User & Auth** | Email/Password Authentication | ✅ |
+| | Google OAuth | ✅ |
+| | OTP Email Verification | ✅ |
+| | Forgot / Reset Password | ✅ |
+| | Set Password (OAuth Users) | ✅ |
+| | User Profile Management | ✅ |
+| | Admin User CRUD | ✅ |
+| | Phone/SMS Authentication | ❌ |
+| | Facebook OAuth | ❌ |
+| | Two-Factor Authentication (2FA) | ❌ |
+| **Roles & Permissions** | Role-Based Access Control (RBAC) | ✅ |
+| | Permission Matrix UI | ✅ |
+| | Dynamic Permission Assignment | ✅ |
+| | 4 Roles (Super Admin, Admin, Manager, Customer) | ✅ |
+| **Content Management** | Blog CRUD with Rich Text Editor | ✅ |
+| | Testimonials Management | ✅ |
+| | Team Members Management | ✅ |
+| | FAQ Management | ✅ |
+| | Contact Form / Inquiries | ✅ |
+| | Banner Management (Hero, Mid-page) | ✅ |
+| | Company Profile / Branding | ✅ |
+| | Navigation Menu Management | ✅ |
+| | Newsletter Subscription | ❌ |
+| **SEO** | Global SEO Settings | ✅ |
+| | Per-Page SEO | ✅ |
+| | Entity-Level SEO (Product/Blog) | ✅ |
+| | URL Redirects (301, 302, 307, 308) | ✅ |
+| | Canonical URLs | ✅ |
+| | Meta Robots Tags | ✅ |
+| | Open Graph / Social Meta | ✅ |
+| | Auto Sitemap Generation | ❌ |
+| **Analytics & Tracking** | Google Analytics | ✅ |
+| | Google Tag Manager | ✅ |
+| | Google Search Console | ✅ |
+| | Microsoft Clarity | ✅ |
+| | Dashboard Analytics Chart | ✅ |
+| **File Upload / Media** | S3 File Upload | ✅ |
+| | Multiple File Upload | ✅ |
+| | Media Library Dashboard | ✅ |
+| | Signed URLs for Private Files | ✅ |
+| | Folders / Organization | ✅ |
+| **Dashboard** | Admin Dashboard Overview | ✅ |
+| | Stats Cards & Charts | ✅ |
+| | Quick Actions | ✅ |
+| | CSV Import | ✅ |
+| | Data Tables with Pagination | ✅ |
+| **Storefront** | Responsive Homepage | ✅ |
+| | Product Listing Page | ✅ |
+| | Product Detail Page | ✅ |
+| | About Page | ✅ |
+| | Contact Page | ✅ |
+| | Blog Listing & Detail Pages | ✅ |
+| | Hero Banner Slider | ✅ |
+| | WhatsApp Float Button | ✅ |
+| | Social Share Buttons | ✅ |
+|
+| **Not Yet Implemented** | Wishlist / Save for Later | ❌ |
+| | Product Comparison | ❌ |
+| | Recently Viewed Products | ❌ |
+| | Product Bundles / Kits | ❌ |
+| | Flash Sales / Limited Offers | ❌ |
+| | Loyalty / Rewards Program | ❌ |
+| | Abandoned Cart Recovery | ❌ |
+| | Multi-Currency Support | ❌ |
+| | Tax Calculation (VAT/GST) | ❌ |
+| | Email Notifications (Order, Shipping) | ❌ |
+| | Invoice / PDF Generation | ❌ |
+| | Bulk Product Export | ❌ |
+| | Product Recommendations Engine | ❌ |
+| | Multi-Language Support | ❌ |
+| | API Documentation (Swagger) | ❌ |
+| | PWA Support | ❌ |
+| | Mobile App (React Native) | ❌ |
+| | Wholesale / B2B Pricing | ❌ |
+
+### Summary
+
+| Metric | Count |
+|--------|-------|
+| Features Completed | ~65 |
+| Features Remaining | ~25+ |
+| Completion | ~70% |
+
 ## Available Scripts
 
 ### Root
