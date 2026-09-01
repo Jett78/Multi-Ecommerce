@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MoreHorizontal, Pencil, Trash2, Eye } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -90,13 +89,7 @@ export function DataTableActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="text-slate-400 hover:text-slate-600"
-            />
-          }
+          className="inline-flex items-center justify-center gap-2 h-8 w-8 rounded-md text-sm font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
         >
           <MoreHorizontal className="size-4" />
         </DropdownMenuTrigger>

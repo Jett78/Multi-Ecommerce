@@ -41,6 +41,9 @@ export class ProductImageEntity {
   }
 
   private buildUrl(key: string): string {
+    if (key.startsWith('http://') || key.startsWith('https://')) {
+      return key;
+    }
     const cloudfrontUrl = process.env.AWS_CLOUDFRONT_URL || '';
     const bucketName = process.env.S3_BUCKET_NAME || '';
     const region = process.env.AWS_REGION || 'ap-south-1';

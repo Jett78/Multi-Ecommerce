@@ -78,6 +78,14 @@ export class ProductRepository {
     };
   }
 
+  async findProductBySku(sku: string) {
+    const [result] = await this.db
+      .select()
+      .from(schema.products)
+      .where(eq(schema.products.sku, sku));
+    return result || null;
+  }
+
   async findProductBySlug(slug: string) {
     const [result] = await this.db
       .select()

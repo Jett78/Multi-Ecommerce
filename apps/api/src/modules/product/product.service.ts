@@ -43,7 +43,7 @@ export class ProductService {
       }
 
       if (dto.sku) {
-        const skuExists = await this.productRepository.findProductById(dto.sku);
+        const skuExists = await this.productRepository.findProductBySku(dto.sku);
         if (skuExists) {
           throw new ConflictException(`Product with SKU "${dto.sku}" already exists`);
         }

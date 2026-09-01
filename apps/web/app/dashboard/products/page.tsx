@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import DataTable, { Column } from "@/components/dashboard/data-table";
 import DashboardPagination from "@/components/dashboard/dashboard-pagination";
-import { Search, Download, Upload, Trash2, Loader2, Plus, X, SlidersHorizontal, Package, CheckCircle2, AlertTriangle, Layers, Star, ChevronDown } from "lucide-react";
+import { Search, Download, Upload, Trash2, Loader2, Plus, X, SlidersHorizontal, Package, CheckCircle2, AlertTriangle, Star, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCrud } from "@/hooks/useCRUD";
@@ -22,16 +22,14 @@ import DashboardHeading from "@/components/dashboard/dashboard-heading";
 
 const PAGE_SIZE = 10;
 
-const selectClass = "h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary appearance-none cursor-pointer";
+const selectClass = "h-10 rounded-md border border-slate-200 bg-white pl-3 pr-8 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary appearance-none cursor-pointer bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')] bg-[length:16px] bg-[right_8px_center] bg-no-repeat";
 
-function StatCard({ icon: Icon, iconBg, iconColor, label, value, change, changeType }: {
+function StatCard({ icon: Icon, iconBg, iconColor, label, value }: {
   icon: React.ElementType;
   iconBg: string;
   iconColor: string;
   label: string;
   value: string | number;
-  change?: string;
-  changeType?: "positive" | "negative";
 }) {
   return (
     <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 py-4">
@@ -41,11 +39,6 @@ function StatCard({ icon: Icon, iconBg, iconColor, label, value, change, changeT
       <div>
         <p className="text-xs font-medium text-slate-500">{label}</p>
         <p className="text-2xl font-bold text-slate-900">{value}</p>
-        {change && (
-          <p className={`text-[11px] font-semibold ${changeType === "negative" ? "text-red-500" : "text-emerald-500"}`}>
-            {changeType === "negative" ? "↓" : "↗"} {change} from last month
-          </p>
-        )}
       </div>
     </div>
   );
@@ -109,6 +102,12 @@ export default function ProductsPage() {
   const products = data?.items || [];
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const { data: activeData } = getAllPaginated({ take: 1, skip: 0, status: "active" });
+  const activeCount = activeData?.total || 0;
+
+  const { data: featuredData } = getAllPaginated({ take: 1, skip: 0, isFeatured: true });
+  const featuredCount = featuredData?.total || 0;
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -372,17 +371,13 @@ export default function ProductsPage() {
           iconColor="text-blue-600"
           label="Total Products"
           value={total}
-          change="12.5%"
-          changeType="positive"
         />
         <StatCard
           icon={CheckCircle2}
           iconBg="bg-emerald-50"
           iconColor="text-emerald-600"
           label="Active Products"
-          value={products.filter((p) => p.status === "active").length || "—"}
-          change="8.2%"
-          changeType="positive"
+          value={activeCount}
         />
         <StatCard
           icon={AlertTriangle}
@@ -395,17 +390,13 @@ export default function ProductsPage() {
               : p.stockQuantity ?? 0;
             return stock === 0;
           }).length || "—"}
-          change="3.1%"
-          changeType="negative"
         />
         <StatCard
-          icon={Layers}
+          icon={Star}
           iconBg="bg-purple-50"
           iconColor="text-purple-600"
-          label="Total Variants"
-          value={products.reduce((sum, p) => sum + (p.variants?.length || 1), 0) || "—"}
-          change="16.7%"
-          changeType="positive"
+          label="Featured Products"
+          value={featuredCount}
         />
       </div>
 
@@ -451,16 +442,6 @@ export default function ProductsPage() {
             <Upload className="size-3.5" />
             Import
           </Button>
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={resetFilters}
-              className="gap-1.5 h-10 px-4 text-slate-500"
-            >
-              Reset
-            </Button>
-          )}
         </div>
 
         {/* Filter Dropdowns */}
@@ -523,6 +504,17 @@ export default function ProductsPage() {
               <option value="true">Featured</option>
               <option value="false">Not Featured</option>
             </select>
+            {hasActiveFilters && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={resetFilters}
+                className="gap-1.5 h-10 px-4 bg-red-500 hover:bg-red-600 text-white"
+              >
+                <X className="size-3.5" />
+                Reset
+              </Button>
+            )}
           </div>
         )}
 

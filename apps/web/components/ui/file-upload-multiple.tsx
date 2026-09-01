@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { uploadSingleImage } from "@/actions/upload-action";
+import { showSuccess, showError } from "@/lib/toast-helper";
 import type { FileUploadMultipleProps } from "@/types/components";
 
 export default function FileUploadMultiple({
@@ -15,10 +16,26 @@ export default function FileUploadMultiple({
   showPreview = true,
 }: FileUploadMultipleProps) {
   const [isUploading, setUploading] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const openFilePicker = () => {
     inputRef.current?.click();
+  };
+
+  const handleAddUrl = () => {
+    const trimmed = urlInput.trim();
+    if (!trimmed) return;
+
+    if (defaultImages.length >= maxFiles) {
+      showError(`Maximum ${maxFiles} images allowed`);
+      return;
+    }
+
+    const newImage = { key: trimmed, url: trimmed };
+    onSuccess?.([...defaultImages, newImage]);
+    setUrlInput("");
+    showSuccess("Image added from URL");
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,6 +79,37 @@ export default function FileUploadMultiple({
 
   return (
     <div className="space-y-3">
+      {/* URL Input */}
+      <div className="flex gap-2">
+        <input
+          type="url"
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddUrl())}
+          placeholder="Paste image URL and press Enter"
+          className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+        />
+        <button
+          type="button"
+          onClick={handleAddUrl}
+          disabled={!urlInput.trim()}
+          className="h-10 px-4 rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Add URL
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-200" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-white px-3 text-slate-400">or upload file</span>
+        </div>
+      </div>
+
+      {/* Upload Area */}
       <div
         onClick={openFilePicker}
         className="relative flex h-32 w-full cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-zinc-300 bg-zinc-50 hover:bg-zinc-100"
