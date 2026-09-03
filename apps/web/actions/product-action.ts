@@ -46,3 +46,21 @@ export async function getAllActiveProductSlugs(): Promise<string[]> {
     return [];
   }
 }
+
+export async function getRelatedProducts(
+  productId: string,
+  limit: number = 8
+): Promise<Product[]> {
+  try {
+    const response = await apiClient<{ data: Product[] }>(
+      `${API_ROUTES.PRODUCT}/${productId}/related?limit=${limit}`,
+      { next: { revalidate: 60 } }
+    );
+
+    if (!response || !response.data) return [];
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching related products:", error);
+    return [];
+  }
+}

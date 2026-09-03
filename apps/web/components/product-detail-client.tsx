@@ -9,12 +9,14 @@ import ProductInfo from "@/components/product-info";
 import RatingSummary from "@/components/rating-summary";
 import ReviewList from "@/components/review-list";
 import ReviewForm from "@/components/review-form";
+import RelatedProducts from "@/components/product/related-products";
 
 interface ProductDetailClientProps {
   product: Product;
+  relatedProducts?: Product[];
 }
 
-export default function ProductDetailClient({ product }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, relatedProducts = [] }: ProductDetailClientProps) {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
     product.variants?.[0] ?? null
   );
@@ -75,6 +77,8 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
             </div>
           </div>
         </div>
+
+        <RelatedProducts products={relatedProducts} />
       </div>
     </div>
   );

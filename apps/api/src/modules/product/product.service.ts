@@ -772,6 +772,21 @@ export class ProductService {
     }
   }
 
+  async findRelatedProducts(productId: string, limit: number = 8) {
+    try {
+      const product = await this.productRepository.findProductById(productId);
+      if (!product) {
+        throw new NotFoundException(`Product with id "${productId}" not found`);
+      }
+
+      const related = await this.productRepository.findRelatedProducts(productId, limit);
+      return related.map((p) => this.cleanProduct(p));
+    } catch (error) {
+      this.logger.error(`Failed to fetch related products: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
   async findBestSellers(limit: number = 10) {
     try {
       const products = await this.productRepository.findBestSellers(limit);

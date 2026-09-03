@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DB_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
-import { eq, ilike, or, and, sql, desc, gte, lte, inArray } from 'drizzle-orm';
+import { eq, ilike, or, and, sql, desc, gte, lte, inArray, not } from 'drizzle-orm';
 
 @Injectable()
 export class ProductRepository {
@@ -413,6 +413,147 @@ export class ProductRepository {
       .returning();
 
     return product;
+  }
+
+  async findRelatedProducts(productId: string, limit: number = 8) {
+    const [source] = await this.db
+      .select()
+      .from(schema.products)
+      .where(eq(schema.products.id, productId));
+
+    if (!source) return [];
+
+    const orConditions: any[] = [];
+
+    if (source.categoryId) {
+      orConditions.push(eq(schema.products.categoryId, source.categoryId));
+    }
+    if (source.subcategoryId) {
+      orConditions.push(eq(schema.products.subcategoryId, source.subcategoryId));
+    }
+    if (source.brandId) {
+      orConditions.push(eq(schema.products.brandId, source.brandId));
+    }
+
+    if (orConditions.length === 0) return [];
+
+    const candidates = await this.db
+      .select()
+      .from(schema.products)
+      .leftJoin(schema.categories, eq(schema.products.categoryId, schema.categories.id))
+      .leftJoin(schema.subcategories, eq(schema.products.subcategoryId, schema.subcategories.id))
+      .leftJoin(schema.brands, eq(schema.products.brandId, schema.brands.id))
+      .where(
+        and(
+          not(eq(schema.products.id, productId)),
+          eq(schema.products.status, 'active'),
+          eq(schema.products.isActive, true),
+          or(...orConditions),
+        ),
+      );
+
+    if (candidates.length === 0) return [];
+
+    const sourceTags = source.tags || [];
+    const sourcePrice = source.price || 0;
+
+    const scored = candidates
+      .map((row) => {
+        const product = row.products;
+        let score = 0;
+
+        if (product.subcategoryId && product.subcategoryId === source.subcategoryId) score += 10;
+        if (product.categoryId && product.categoryId === source.categoryId) score += 5;
+        if (product.brandId && product.brandId === source.brandId) score += 3;
+
+        if (sourceTags.length > 0 && product.tags) {
+          const overlap = product.tags.filter((t) => sourceTags.includes(t)).length;
+          score += overlap;
+        }
+
+        if (sourcePrice > 0 && product.price) {
+          const diff = Math.abs(product.price - sourcePrice) / sourcePrice;
+          if (diff <= 0.2) score += 2;
+        }
+
+        return {
+          ...row,
+          score,
+        };
+      })
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+
+    const productIds = scored.map((r) => r.products.id).filter((id): id is string => id !== null);
+
+    if (productIds.length === 0) return [];
+
+    const [allVariants, allImages] = await Promise.all([
+      this.db
+        .select()
+        .from(schema.productVariants)
+        .where(inArray(schema.productVariants.productId, productIds))
+        .orderBy(schema.productVariants.sortOrder),
+      this.db
+        .select()
+        .from(schema.productImages)
+        .where(inArray(schema.productImages.productId, productIds))
+        .orderBy(schema.productImages.sortOrder),
+    ]);
+
+    const variantIds = allVariants.map((v) => v.id);
+    const allAttributes =
+      variantIds.length > 0
+        ? await this.db
+            .select()
+            .from(schema.variantAttributes)
+            .where(inArray(schema.variantAttributes.variantId, variantIds))
+            .orderBy(schema.variantAttributes.sortOrder)
+        : [];
+
+    const variantsByProduct = new Map<string, typeof allVariants>();
+    const imagesByProduct = new Map<string, typeof allImages>();
+    const attributesByVariant = new Map<string, typeof allAttributes>();
+
+    for (const variant of allVariants) {
+      const list = variantsByProduct.get(variant.productId) || [];
+      list.push(variant);
+      variantsByProduct.set(variant.productId, list);
+    }
+
+    for (const image of allImages) {
+      if (!image.productId) continue;
+      const list = imagesByProduct.get(image.productId) || [];
+      list.push(image);
+      imagesByProduct.set(image.productId, list);
+    }
+
+    for (const attr of allAttributes) {
+      const list = attributesByVariant.get(attr.variantId) || [];
+      list.push(attr);
+      attributesByVariant.set(attr.variantId, list);
+    }
+
+    return scored
+      .map((row) => {
+        const pid = row.products.id;
+        if (!pid) return null;
+        const variants = (variantsByProduct.get(pid) || []).map((v) => ({
+          ...v,
+          attributes: attributesByVariant.get(v.id) || [],
+        }));
+
+        return {
+          ...row.products,
+          category: row.categories,
+          subcategory: row.subcategories,
+          brand: row.brands,
+          variants,
+          images: imagesByProduct.get(pid) || [],
+        };
+      })
+      .filter(Boolean);
   }
 
   async findBestSellers(limit: number = 10) {

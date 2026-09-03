@@ -192,6 +192,24 @@ export class ProductController {
   }
 
   @AllowAnonymous()
+  @Get(':id/related')
+  @ApiOperation({ summary: 'Get related products by hybrid similarity scoring' })
+  @ApiParam({ name: 'id', description: 'Product UUID' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of related products to return' })
+  async findRelated(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('limit') limit?: number,
+  ) {
+    const products = await this.productService.findRelatedProducts(id, limit || 8);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Related products fetched successfully',
+      data: products.map((p) => new ProductEntity(p)),
+    };
+  }
+
+  @AllowAnonymous()
   @Get(':id')
   @ApiOperation({ summary: 'Get a product by ID' })
   @ApiParam({ name: 'id', description: 'Product UUID' })

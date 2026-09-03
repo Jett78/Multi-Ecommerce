@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductDetailClient from "@/components/product-detail-client";
-import { getProductBySlug, getAllActiveProductSlugs } from "@/actions/product-action";
+import { getProductBySlug, getAllActiveProductSlugs, getRelatedProducts } from "@/actions/product-action";
 
 export async function generateStaticParams() {
   const slugs = await getAllActiveProductSlugs();
@@ -29,5 +29,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   if (!product) notFound();
 
-  return <ProductDetailClient product={product} />;
+  const relatedProducts = await getRelatedProducts(product.id, 8);
+
+  return <ProductDetailClient product={product} relatedProducts={relatedProducts} />;
 }
