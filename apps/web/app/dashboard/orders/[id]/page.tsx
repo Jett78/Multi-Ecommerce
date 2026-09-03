@@ -3,6 +3,7 @@ import BreadCrumbs from "@/components/ui/bread-crumbs";
 import NoData from "@/components/no-data";
 import { getOrderByIdServer } from "@/actions/order-action";
 import OrderActions from "../order-actions";
+import DownloadInvoiceButton from "@/components/invoices/download-invoice-button";
 import {
   ORDER_STATUS_OPTIONS,
   PAYMENT_STATUS_OPTIONS,
@@ -67,6 +68,9 @@ export default async function OrderDetailPage({
         <span className="text-sm text-slate-500">
           Paid via {order.paymentMethod ? order.paymentMethod.toUpperCase() : "N/A"}
         </span>
+        <div className="ml-auto">
+          <DownloadInvoiceButton order={order} />
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -107,6 +111,12 @@ export default async function OrderDetailPage({
                 <span>{formatCurrency(order.taxAmount)}</span>
               </div>
             )}
+            <div className="flex justify-between text-slate-600">
+              <span>Delivery</span>
+              <span className={order.deliveryCharge > 0 ? "" : "text-emerald-600 font-medium"}>
+                {order.deliveryCharge > 0 ? formatCurrency(order.deliveryCharge) : "Free"}
+              </span>
+            </div>
             <div className="flex justify-between border-t border-slate-200 pt-2 font-bold text-slate-900">
               <span>Total</span>
               <span>{formatCurrency(order.totalAmount)}</span>

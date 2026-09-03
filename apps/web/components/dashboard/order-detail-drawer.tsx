@@ -284,6 +284,12 @@ export default function OrderDetailDrawer({ order, onClose, onStatusUpdated }: O
                     <span className="text-gray-900">Rs. {order.taxAmount.toLocaleString()}</span>
                   </div>
                 )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Delivery</span>
+                  <span className={order.deliveryCharge > 0 ? "text-gray-900 font-medium" : "text-emerald-600 font-medium"}>
+                    {order.deliveryCharge > 0 ? `Rs. ${order.deliveryCharge.toLocaleString()}` : "Free"}
+                  </span>
+                </div>
                 <div className="flex justify-between border-t border-gray-200 pt-2">
                   <span className="text-sm font-semibold text-gray-900">Total</span>
                   <span className="text-sm font-bold text-gray-900">Rs. {order.totalAmount.toLocaleString()}</span>

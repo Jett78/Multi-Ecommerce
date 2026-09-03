@@ -38,6 +38,7 @@ export interface Order {
   subtotal: number;
   discountAmount: number;
   taxAmount: number;
+  deliveryCharge: number;
   totalAmount: number;
   currency: string;
   status: OrderStatus;

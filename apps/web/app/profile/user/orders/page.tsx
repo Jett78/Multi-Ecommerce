@@ -99,16 +99,29 @@ export default function ProfileOrdersPage() {
       ),
     },
     {
+      key: "discountAmount",
+      label: "Discount",
+      render: (row) => (
+        <span className={`text-xs ${row.discountAmount > 0 ? "text-emerald-600 font-medium" : "text-slate-400"}`}>
+          {row.discountAmount > 0 ? `- Rs. ${row.discountAmount.toLocaleString()}` : "\u2014"}
+        </span>
+      ),
+    },
+    {
+      key: "deliveryCharge",
+      label: "Delivery",
+      render: (row) => (
+        <span className={`text-xs ${row.deliveryCharge > 0 ? "text-slate-700 font-medium" : "text-emerald-600 font-medium"}`}>
+          {row.deliveryCharge > 0 ? `Rs. ${row.deliveryCharge.toLocaleString()}` : "Free"}
+        </span>
+      ),
+    },
+    {
       key: "totalAmount",
       label: "Total",
       className: "text-right",
       render: (row) => (
-        <div className="text-right">
-          <span className="font-bold text-slate-900">Rs. {row.totalAmount.toLocaleString()}</span>
-          {row.discountAmount > 0 && (
-            <p className="text-[10px] text-emerald-600 font-medium">- Rs. {row.discountAmount.toLocaleString()} off</p>
-          )}
-        </div>
+        <span className="font-bold text-slate-900">Rs. {row.totalAmount.toLocaleString()}</span>
       ),
     },
     {

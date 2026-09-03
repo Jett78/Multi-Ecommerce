@@ -239,17 +239,30 @@ export default function AdminOrdersPage() {
     },
    
     {
+      key: "discountAmount",
+      label: "Discount",
+      render: (order) => (
+        <span className={`text-sm ${order.discountAmount > 0 ? "text-emerald-600 font-medium" : "text-gray-400"}`}>
+          {order.discountAmount > 0 ? `- Rs. ${order.discountAmount.toLocaleString()}` : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "deliveryCharge",
+      label: "Delivery",
+      render: (order) => (
+        <span className={`text-sm ${order.deliveryCharge > 0 ? "text-gray-700 font-medium" : "text-emerald-600 font-medium"}`}>
+          {order.deliveryCharge > 0 ? `Rs. ${order.deliveryCharge.toLocaleString()}` : "Free"}
+        </span>
+      ),
+    },
+    {
       key: "total",
       label: "Total",
       render: (order) => (
-        <div className="text-right">
-          <span className="text-sm font-semibold text-gray-900">
-            Rs. {order.totalAmount.toLocaleString()}
-          </span>
-          {order.discountAmount > 0 && (
-            <p className="text-[10px] text-emerald-600 font-medium">- Rs. {order.discountAmount.toLocaleString()} off</p>
-          )}
-        </div>
+        <span className="text-sm font-semibold text-gray-900">
+          Rs. {order.totalAmount.toLocaleString()}
+        </span>
       ),
     },
     {

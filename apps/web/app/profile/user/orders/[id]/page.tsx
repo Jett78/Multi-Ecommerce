@@ -19,8 +19,10 @@ import {
   Copy,
   Box,
   Receipt,
+  ExternalLink,
 } from "lucide-react";
 import { showSuccess } from "@/lib/toast-helper";
+import DownloadInvoiceButton from "@/components/invoices/download-invoice-button";
 
 const statusSteps = ["pending", "confirmed", "processing", "shipped", "delivered"];
 
@@ -138,6 +140,26 @@ export default function ProfileOrderDetailPage() {
               {status.icon}
               {status.label}
             </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <DownloadInvoiceButton
+              order={{
+                ...order,
+                items: order.items || [],
+              }}
+            />
+            {order.courierTrackingUrl && (
+              <a
+                href={order.courierTrackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+              >
+                <Truck className="h-4 w-4" />
+                Track Shipment
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
           </div>
         </div>
 
@@ -278,8 +300,10 @@ export default function ProfileOrderDetailPage() {
               </div>
             )}
             <div className="flex justify-between text-sm text-gray-600">
-              <span>Shipping</span>
-              <span className="font-medium text-emerald-600">Free</span>
+              <span>Delivery</span>
+              <span className={order.deliveryCharge > 0 ? "font-medium text-gray-900" : "font-medium text-emerald-600"}>
+                {order.deliveryCharge > 0 ? `Rs. ${order.deliveryCharge.toLocaleString()}` : "Free"}
+              </span>
             </div>
             <div className="my-2 border-t border-gray-100" />
             <div className="flex justify-between">
@@ -345,6 +369,51 @@ export default function ProfileOrderDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Shipment Tracking */}
+          {(order.courierProvider || order.courierConsignmentId || order.courierTrackingUrl) && (
+            <div className="mt-6">
+              <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                <Truck className="h-4 w-4 text-gray-400" />
+                Shipment Tracking
+              </h3>
+              <div className="mt-2 rounded-xl bg-gray-50 p-3 space-y-2">
+                {order.courierProvider && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Courier</span>
+                    <span className="font-medium text-gray-900">{order.courierProvider}</span>
+                  </div>
+                )}
+                {order.courierConsignmentId && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Consignment ID</span>
+                    <span className="font-mono text-xs font-medium text-gray-900">{order.courierConsignmentId}</span>
+                  </div>
+                )}
+                {order.courierStatus && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Status</span>
+                    <span className="inline-flex rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                      {order.courierStatus}
+                    </span>
+                  </div>
+                )}
+                {order.courierTrackingUrl && (
+                  <div className="pt-1">
+                    <a
+                      href={order.courierTrackingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:underline"
+                    >
+                      Track on courier website
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Contact Info */}
