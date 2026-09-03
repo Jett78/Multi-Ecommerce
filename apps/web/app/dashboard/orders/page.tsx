@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Package, Clock, CheckCircle, Truck, XCircle, Search, Loader2 } from "lucide-react";
+import { Package, Clock, CheckCircle, Truck, XCircle, Search, Loader2, Trash2 } from "lucide-react";
 import { useCrud } from "@/hooks/useCRUD";
 import { apiClient } from "@/lib/api-client";
 import { API_ROUTES } from "@/config/api-routes";
@@ -12,9 +13,18 @@ import DashboardPagination from "@/components/dashboard/dashboard-pagination";
 import DataTable, { Column } from "@/components/dashboard/data-table";
 import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { showSuccess, showError } from "@/lib/toast-helper";
-import type { Order, OrderStats, BulkSendToCourierResponse } from "@/types/order";
-
-const isEligible = (o: Order) => !!o.courierProvider && !o.courierConsignmentId;
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import type { Order, OrderStats } from "@/types/order";
+import BulkSendProgressModal, { type OrderSendItem } from "@/components/orders/bulk-send-progress-modal";
 
 const PAGE_SIZE = 10;
 
@@ -36,11 +46,15 @@ function getStatus(status: string | undefined) {
 }
 
 export default function AdminOrdersPage() {
+  const router = useRouter();
   const [page, setPage] = React.useState(1);
   const [statusFilter, setStatusFilter] = React.useState("");
   const [sort, setSort] = React.useState<"asc" | "desc">("desc");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const [sendModalOpen, setSendModalOpen] = React.useState(false);
+  const [sendItems, setSendItems] = React.useState<OrderSendItem[]>([]);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
 
   const resetFilters = () => {
     setStatusFilter("");
@@ -83,21 +97,21 @@ export default function AdminOrdersPage() {
     );
   }, [data, searchQuery]);
 
-  const eligibleOnPage = React.useMemo(
-    () => filteredOrders.filter(isEligible).map((o) => o.id),
+  const idsOnPage = React.useMemo(
+    () => filteredOrders.map((o) => o.id),
     [filteredOrders]
   );
 
-  const allEligibleSelected =
-    eligibleOnPage.length > 0 && eligibleOnPage.every((id) => selectedIds.has(id));
+  const allSelected =
+    idsOnPage.length > 0 && idsOnPage.every((id) => selectedIds.has(id));
 
   const toggleSelectAll = () => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (allEligibleSelected) {
-        eligibleOnPage.forEach((id) => next.delete(id));
+      if (allSelected) {
+        idsOnPage.forEach((id) => next.delete(id));
       } else {
-        eligibleOnPage.forEach((id) => next.add(id));
+        idsOnPage.forEach((id) => next.add(id));
       }
       return next;
     });
@@ -114,34 +128,65 @@ export default function AdminOrdersPage() {
 
   const queryClient = useQueryClient();
 
-  const bulkSendMutation = useMutation({
-    mutationFn: async () => {
-      return apiClient<{ data: BulkSendToCourierResponse }>(
-        API_ROUTES.ORDER_BULK_SEND_TO_COURIER,
-        {
-          method: "POST",
-          isAuthenticated: true,
-          body: JSON.stringify({ orderIds: [...selectedIds] }),
-        }
+  const sendOrdersToCourier = async (orderIds: string[], orders: Order[]) => {
+    const items: OrderSendItem[] = orderIds.map((id) => {
+      const order = orders.find((o) => o.id === id);
+      return { id, orderId: order?.orderId?.slice(-8) ?? id.slice(0, 8), status: "pending" as const };
+    });
+    setSendItems(items);
+    setSendModalOpen(true);
+
+    for (let i = 0; i < orderIds.length; i++) {
+      const id = orderIds[i];
+      setSendItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status: "sending" as const } : item))
       );
-    },
-    onSuccess: (res) => {
-      const { summary, results } = res.data;
-      showSuccess(
-        `${summary.sent} sent, ${summary.skipped} skipped, ${summary.failed} failed`
-      );
-      if (summary.failed > 0) {
-        const errors = results
-          .filter((r) => !r.success)
-          .map((r) => `• ${r.orderId ?? r.id}: ${r.error ?? "Failed"}`)
-          .join("\n");
-        showError(`Some orders failed:\n${errors}`);
+
+      try {
+        const res = await apiClient<{ data: { alreadySent?: boolean; consignmentId?: string } }>(
+          `${API_ROUTES.ORDERS}/${id}/send-to-courier`,
+          { method: "POST", isAuthenticated: true }
+        );
+        const alreadySent = res.data?.alreadySent;
+        setSendItems((prev) =>
+          prev.map((item) =>
+            item.id === id
+              ? { ...item, status: "success" as const, error: alreadySent ? "Already sent" : undefined }
+              : item
+          )
+        );
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to send to courier";
+        setSendItems((prev) =>
+          prev.map((item) => (item.id === id ? { ...item, status: "failed" as const, error: message } : item))
+        );
       }
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
-      setSelectedIds(new Set());
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+    setSelectedIds(new Set());
+  };
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async () => {
+      const ids = [...selectedIds];
+      for (const id of ids) {
+        await apiClient(`${API_ROUTES.ORDERS}/${id}`, {
+          method: "DELETE",
+          isAuthenticated: true,
+        });
+      }
     },
-    onError: (err: { message?: string }) => {
-      showError(err.message || "Failed to dispatch orders to courier");
+    onSuccess: () => {
+      showSuccess(`Deleted ${selectedIds.size} order(s)`);
+      setSelectedIds(new Set());
+      setDeleteConfirmOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      router.refresh();
+    },
+    onError: () => {
+      showError("Failed to delete some orders");
+      setDeleteConfirmOpen(false);
     },
   });
 
@@ -152,17 +197,16 @@ export default function AdminOrdersPage() {
         <input
           type="checkbox"
           className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary focus:ring-primary/20"
-          checked={allEligibleSelected}
-          disabled={eligibleOnPage.length === 0}
+          checked={allSelected}
+          disabled={filteredOrders.length === 0}
           onChange={toggleSelectAll}
-          aria-label="Select all eligible orders"
+          aria-label="Select all orders"
         />
       ),
       render: (order) => (
         <input
           type="checkbox"
-          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-40"
-          disabled={!isEligible(order)}
+          className="h-4 w-4 cursor-pointer rounded border-slate-300 text-primary focus:ring-primary/20"
           checked={selectedIds.has(order.id)}
           onChange={() => toggleSelectOne(order.id)}
           aria-label={`Select order ${order.orderId}`}
@@ -319,16 +363,28 @@ export default function AdminOrdersPage() {
               Clear
             </button>
             <button
-              onClick={() => bulkSendMutation.mutate()}
-              disabled={bulkSendMutation.isPending}
+              onClick={() => sendOrdersToCourier([...selectedIds], filteredOrders)}
+              disabled={sendModalOpen}
               className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {bulkSendMutation.isPending ? (
+              {sendModalOpen ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Truck className="h-4 w-4" />
               )}
-              {bulkSendMutation.isPending ? "Sending..." : "Send to Courier"}
+              {sendModalOpen ? "Sending..." : "Send to Courier"}
+            </button>
+            <button
+              onClick={() => setDeleteConfirmOpen(true)}
+              disabled={bulkDeleteMutation.isPending}
+              className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {bulkDeleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              {bulkDeleteMutation.isPending ? "Deleting..." : "Delete Selected"}
             </button>
           </div>
         </div>
@@ -405,6 +461,33 @@ export default function AdminOrdersPage() {
           <DashboardPagination page={page} setPage={setPage} totalPages={totalPages} />
         </div>
       )}
+
+      <BulkSendProgressModal
+        open={sendModalOpen}
+        onClose={() => setSendModalOpen(false)}
+        items={sendItems}
+      />
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Orders</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedIds.size} order(s)? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate()}
+              disabled={bulkDeleteMutation.isPending}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {bulkDeleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

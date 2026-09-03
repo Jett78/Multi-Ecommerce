@@ -171,6 +171,20 @@ export class OrderController {
     };
   }
 
+  @Post('bulk/send-to-courier')
+  @RequirePermissions('order.update')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Send multiple eligible orders to the configured courier (admin)' })
+  async bulkSendToCourier(@Body() dto: BulkSendToCourierDto) {
+    const result = await this.orderService.bulkSendToCourier(dto.orderIds);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Bulk courier dispatch complete',
+      data: result,
+    };
+  }
+
   @Post(':id/send-to-courier')
   @RequirePermissions('order.update')
   @HttpCode(HttpStatus.OK)
@@ -183,20 +197,6 @@ export class OrderController {
       message: result.alreadySent
         ? 'Order was already sent to courier'
         : 'Order sent to courier successfully',
-      data: result,
-    };
-  }
-
-  @Post('bulk/send-to-courier')
-  @RequirePermissions('order.update')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Send multiple eligible orders to the configured courier (admin)' })
-  async bulkSendToCourier(@Body() dto: BulkSendToCourierDto) {
-    const result = await this.orderService.bulkSendToCourier(dto.orderIds);
-    return {
-      success: true,
-      statusCode: 200,
-      message: 'Bulk courier dispatch complete',
       data: result,
     };
   }
