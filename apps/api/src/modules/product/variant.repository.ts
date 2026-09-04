@@ -51,6 +51,8 @@ export class VariantRepository {
         id: schema.products.id,
         name: schema.products.name,
         slug: schema.products.slug,
+        categoryId: schema.products.categoryId,
+        brandId: schema.products.brandId,
       })
       .from(schema.productVariants)
       .innerJoin(schema.products, eq(schema.productVariants.productId, schema.products.id))

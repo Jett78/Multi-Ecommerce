@@ -53,6 +53,17 @@ export class UpdateCouponDto {
   @IsOptional()
   categoryIds?: string[];
 
+  @ApiPropertyOptional({ description: 'Applicable brand IDs', type: [String] })
+  @IsArray()
+  @IsOptional()
+  brandIds?: string[];
+
+  @ApiPropertyOptional({ description: 'Filter logic: "and" or "or"', example: 'and', enum: ['and', 'or'] })
+  @IsString()
+  @IsIn(['and', 'or'])
+  @IsOptional()
+  filterLogic?: string;
+
   @ApiPropertyOptional({ description: 'Start date (ISO string)' })
   @IsDateString()
   @IsOptional()

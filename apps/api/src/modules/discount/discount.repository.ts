@@ -93,6 +93,8 @@ export class DiscountRepository {
     perUserLimit?: number;
     productIds?: string[];
     categoryIds?: string[];
+    brandIds?: string[];
+    filterLogic?: string;
     startsAt?: Date;
     expiresAt?: Date;
     isActive?: boolean;
@@ -111,6 +113,8 @@ export class DiscountRepository {
         perUserLimit: data.perUserLimit ?? null,
         productIds: data.productIds ?? null,
         categoryIds: data.categoryIds ?? null,
+        brandIds: data.brandIds ?? null,
+        filterLogic: data.filterLogic ?? 'and',
         startsAt: data.startsAt ?? null,
         expiresAt: data.expiresAt ?? null,
         isActive: data.isActive ?? true,
@@ -131,6 +135,8 @@ export class DiscountRepository {
     perUserLimit: number | null;
     productIds: string[] | null;
     categoryIds: string[] | null;
+    brandIds: string[] | null;
+    filterLogic: string;
     startsAt: Date | null;
     expiresAt: Date | null;
     isActive: boolean;
@@ -146,6 +152,8 @@ export class DiscountRepository {
     if (data.perUserLimit !== undefined) updateData.perUserLimit = data.perUserLimit;
     if (data.productIds !== undefined) updateData.productIds = data.productIds;
     if (data.categoryIds !== undefined) updateData.categoryIds = data.categoryIds;
+    if (data.brandIds !== undefined) updateData.brandIds = data.brandIds;
+    if (data.filterLogic !== undefined) updateData.filterLogic = data.filterLogic;
     if (data.startsAt !== undefined) updateData.startsAt = data.startsAt;
     if (data.expiresAt !== undefined) updateData.expiresAt = data.expiresAt;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;

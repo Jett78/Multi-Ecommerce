@@ -12,6 +12,8 @@ export class CouponEntity {
   @ApiProperty() perUserLimit: number | null;
   @ApiProperty() productIds: string[] | null;
   @ApiProperty() categoryIds: string[] | null;
+  @ApiProperty() brandIds: string[] | null;
+  @ApiProperty() filterLogic: string;
   @ApiProperty() startsAt: Date | null;
   @ApiProperty() expiresAt: Date | null;
   @ApiProperty() isActive: boolean;

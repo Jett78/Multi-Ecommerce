@@ -176,7 +176,8 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
             quantity: i.quantity,
             priceAtAdd: i.priceAtAdd,
             productId: i.productId,
-            categoryId: "default",
+            categoryId: i.categoryId || "",
+            brandId: i.brandId,
           })),
         }),
       });

@@ -8,6 +8,9 @@ export interface Coupon {
   usageLimit: number | null;
   usageCount: number;
   perUserLimit: number | null;
+  categoryIds: string[] | null;
+  brandIds: string[] | null;
+  filterLogic: string;
   isActive: boolean;
   description: string | null;
   startsAt: string | null;
@@ -24,6 +27,9 @@ export interface CouponData {
   maxDiscountAmount?: number | null;
   usageLimit?: number | null;
   perUserLimit?: number | null;
+  categoryIds?: string[] | null;
+  brandIds?: string[] | null;
+  filterLogic?: string;
   isActive?: boolean;
   description?: string | null;
   startsAt?: string | null;

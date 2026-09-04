@@ -53,7 +53,7 @@ export class OrderService {
         const trx = tx as unknown as NodePgDatabase<typeof schema>;
 
         // Validate stock for all items using variant repository
-        const orderItems: { variantId: string; productName: string; quantity: number; unitPrice: number }[] = [];
+        const orderItems: { variantId: string; productName: string; quantity: number; unitPrice: number; productId: string; categoryId: string | null; brandId: string | null }[] = [];
 
         for (const item of dto.items) {
           const variant = await this.variantRepository.findVariantById(item.variantId, trx);
@@ -73,6 +73,9 @@ export class OrderService {
             productName: product?.name || 'Unknown Product',
             quantity: item.quantity,
             unitPrice: item.priceAtAdd,
+            productId: product?.id || '',
+            categoryId: product?.categoryId || null,
+            brandId: product?.brandId || null,
           });
         }
 
@@ -118,13 +121,41 @@ export class OrderService {
             throw new BadRequestException(`Minimum order amount is Rs. ${(coupon.minOrderAmount / 100).toLocaleString()}`);
           }
 
+          const hasProductFilter = coupon.productIds && coupon.productIds.length > 0;
+          const hasCategoryFilter = coupon.categoryIds && coupon.categoryIds.length > 0;
+          const hasBrandFilter = coupon.brandIds && coupon.brandIds.length > 0;
+          const hasAnyFilter = hasProductFilter || hasCategoryFilter || hasBrandFilter;
+
+          let applicableSubtotal = subtotal;
+
+          if (hasAnyFilter) {
+            const filterLogic = coupon.filterLogic || 'and';
+            const applicableItems = orderItems.filter(item => {
+              const matchesProduct = !hasProductFilter || coupon.productIds!.includes(item.productId);
+              const matchesCategory = !hasCategoryFilter || (item.categoryId && coupon.categoryIds!.includes(item.categoryId));
+              const matchesBrand = !hasBrandFilter || (item.brandId && coupon.brandIds!.includes(item.brandId));
+
+              if (filterLogic === 'and') {
+                return matchesProduct && matchesCategory && matchesBrand;
+              } else {
+                return matchesProduct || matchesCategory || matchesBrand;
+              }
+            });
+
+            if (applicableItems.length === 0) {
+              throw new BadRequestException('This coupon is not applicable to any items in your cart');
+            }
+
+            applicableSubtotal = applicableItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+          }
+
           // Calculate discount
           switch (coupon.type) {
             case 'fixed':
-              discountAmount = Math.min(coupon.value / 100, subtotal);
+              discountAmount = Math.min(coupon.value / 100, applicableSubtotal);
               break;
             case 'percentage':
-              discountAmount = Math.floor((subtotal * coupon.value) / 100);
+              discountAmount = Math.floor((applicableSubtotal * coupon.value) / 100);
               if (coupon.maxDiscountAmount !== null) {
                 discountAmount = Math.min(discountAmount, coupon.maxDiscountAmount / 100);
               }

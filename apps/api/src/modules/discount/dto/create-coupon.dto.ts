@@ -52,6 +52,17 @@ export class CreateCouponDto {
   @IsOptional()
   categoryIds?: string[];
 
+  @ApiPropertyOptional({ description: 'Applicable brand IDs (null = all brands)', type: [String] })
+  @IsArray()
+  @IsOptional()
+  brandIds?: string[];
+
+  @ApiPropertyOptional({ description: 'Filter logic: "and" (must match all filters) or "or" (match any filter)', example: 'and', enum: ['and', 'or'], default: 'and' })
+  @IsString()
+  @IsIn(['and', 'or'])
+  @IsOptional()
+  filterLogic?: string;
+
   @ApiPropertyOptional({ description: 'Start date (ISO string)', example: '2025-01-01T00:00:00Z' })
   @IsDateString()
   @IsOptional()

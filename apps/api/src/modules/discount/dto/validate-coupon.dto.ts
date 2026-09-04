@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, Min, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -27,6 +27,11 @@ export class ValidateCouponItemDto {
   @IsString()
   @IsNotEmpty()
   categoryId: string;
+
+  @ApiProperty({ description: 'Brand ID' })
+  @IsString()
+  @IsOptional()
+  brandId?: string;
 }
 
 export class ValidateCouponDto {

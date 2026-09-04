@@ -26,6 +26,8 @@ export class DiscountService {
       perUserLimit: dto.perUserLimit,
       productIds: dto.productIds,
       categoryIds: dto.categoryIds,
+      brandIds: dto.brandIds,
+      filterLogic: dto.filterLogic,
       startsAt: dto.startsAt ? new Date(dto.startsAt) : undefined,
       expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : undefined,
       isActive: dto.isActive,
@@ -74,6 +76,8 @@ export class DiscountService {
       ...(dto.perUserLimit !== undefined ? { perUserLimit: dto.perUserLimit } : {}),
       ...(dto.productIds !== undefined ? { productIds: dto.productIds } : {}),
       ...(dto.categoryIds !== undefined ? { categoryIds: dto.categoryIds } : {}),
+      ...(dto.brandIds !== undefined ? { brandIds: dto.brandIds } : {}),
+      ...(dto.filterLogic !== undefined ? { filterLogic: dto.filterLogic } : {}),
       ...(dto.startsAt !== undefined ? { startsAt: new Date(dto.startsAt) } : {}),
       ...(dto.expiresAt !== undefined ? { expiresAt: new Date(dto.expiresAt) } : {}),
       ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
@@ -122,15 +126,25 @@ export class DiscountService {
       return { valid: false, discountAmount: 0, type: coupon.type, code: coupon.code, description: coupon.description || '', message: `Minimum order amount is Rs. ${(coupon.minOrderAmount / 100).toLocaleString()}` };
     }
 
-    if (coupon.productIds && coupon.productIds.length > 0) {
-      const applicableItems = dto.items.filter(item => coupon.productIds!.includes(item.productId));
-      if (applicableItems.length === 0) {
-        return { valid: false, discountAmount: 0, type: coupon.type, code: coupon.code, description: coupon.description || '', message: 'This coupon is not applicable to any items in your cart' };
-      }
-    }
+    const hasProductFilter = coupon.productIds && coupon.productIds.length > 0;
+    const hasCategoryFilter = coupon.categoryIds && coupon.categoryIds.length > 0;
+    const hasBrandFilter = coupon.brandIds && coupon.brandIds.length > 0;
+    const hasAnyFilter = hasProductFilter || hasCategoryFilter || hasBrandFilter;
 
-    if (coupon.categoryIds && coupon.categoryIds.length > 0) {
-      const applicableItems = dto.items.filter(item => coupon.categoryIds!.includes(item.categoryId));
+    if (hasAnyFilter) {
+      const filterLogic = coupon.filterLogic || 'and';
+      const applicableItems = dto.items.filter(item => {
+        const matchesProduct = !hasProductFilter || coupon.productIds!.includes(item.productId);
+        const matchesCategory = !hasCategoryFilter || coupon.categoryIds!.includes(item.categoryId);
+        const matchesBrand = !hasBrandFilter || (item.brandId && coupon.brandIds!.includes(item.brandId));
+
+        if (filterLogic === 'and') {
+          return matchesProduct && matchesCategory && matchesBrand;
+        } else {
+          return matchesProduct || matchesCategory || matchesBrand;
+        }
+      });
+
       if (applicableItems.length === 0) {
         return { valid: false, discountAmount: 0, type: coupon.type, code: coupon.code, description: coupon.description || '', message: 'This coupon is not applicable to any items in your cart' };
       }
@@ -139,13 +153,20 @@ export class DiscountService {
     let discountAmount = 0;
     let applicableSubtotal = dto.subtotal;
 
-    if (coupon.productIds && coupon.productIds.length > 0) {
+    if (hasAnyFilter) {
+      const filterLogic = coupon.filterLogic || 'and';
       applicableSubtotal = dto.items
-        .filter(item => coupon.productIds!.includes(item.productId))
-        .reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
-    } else if (coupon.categoryIds && coupon.categoryIds.length > 0) {
-      applicableSubtotal = dto.items
-        .filter(item => coupon.categoryIds!.includes(item.categoryId))
+        .filter(item => {
+          const matchesProduct = !hasProductFilter || coupon.productIds!.includes(item.productId);
+          const matchesCategory = !hasCategoryFilter || coupon.categoryIds!.includes(item.categoryId);
+          const matchesBrand = !hasBrandFilter || (item.brandId && coupon.brandIds!.includes(item.brandId));
+
+          if (filterLogic === 'and') {
+            return matchesProduct && matchesCategory && matchesBrand;
+          } else {
+            return matchesProduct || matchesCategory || matchesBrand;
+          }
+        })
         .reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
     }
 

@@ -87,6 +87,38 @@ export default function AdminCouponsPage() {
       ),
     },
     {
+      key: "applicability",
+      label: "Applies To",
+      render: (row) => {
+        const hasCategories = row.categoryIds && row.categoryIds.length > 0;
+        const hasBrands = row.brandIds && row.brandIds.length > 0;
+
+        if (!hasCategories && !hasBrands) {
+          return <span className="text-xs text-slate-500">All Products</span>;
+        }
+
+        return (
+          <div className="flex flex-wrap gap-1">
+            {hasCategories && (
+              <span className="inline-flex items-center px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-medium rounded-full">
+                {row.categoryIds!.length} {row.categoryIds!.length === 1 ? "Category" : "Categories"}
+              </span>
+            )}
+            {hasBrands && (
+              <span className="inline-flex items-center px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-medium rounded-full">
+                {row.brandIds!.length} {row.brandIds!.length === 1 ? "Brand" : "Brands"}
+              </span>
+            )}
+            {hasCategories && hasBrands && (
+              <span className="inline-flex items-center px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-medium rounded-full uppercase">
+                {row.filterLogic || "and"}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       key: "startsAt",
       label: "Start Date",
       render: (row) => (
