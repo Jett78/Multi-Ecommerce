@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Product } from "@/types/product";
 import { formatPrice } from "@/lib/utils";
 import Rating from "@/components/rating";
+import WishlistButton from "@/components/wishlist/wishlist-button";
 
 interface ProductCardProps {
   product: Product;
@@ -108,6 +109,9 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             SAVE {discountPercent}%
           </div>
         )}
+        <div className="absolute top-2 right-2 z-10">
+          <WishlistButton product={product} size="sm" />
+        </div>
       </div>
 
       <div className="mt-3 space-y-1.5">

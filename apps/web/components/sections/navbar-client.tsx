@@ -4,10 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, ShoppingCart } from "lucide-react";
+import { Menu, X, ShoppingCart, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CartIcon, dispatchOpenCart } from "@/components/cart/cart-icon";
 import { CartSidebar } from "@/components/cart/cart-sidebar";
+import { useWishlistStore } from "@/stores/wishlist-store";
+import { WishlistSidebar } from "@/components/wishlist/wishlist-sidebar";
 import type { CompanyProfile } from "@/types/company-profile";
 
 interface NavItem {
@@ -27,6 +29,8 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
   const [lastScrollY, setLastScrollY] = React.useState(0);
   const [isOpen, setIsOpen] = React.useState(false);
   const [cartOpen, setCartOpen] = React.useState(false);
+  const [wishlistOpen, setWishlistOpen] = React.useState(false);
+  const wishlistItemCount = useWishlistStore((s) => s.items.length);
 
   React.useEffect(() => {
     const handleOpenCart = () => setCartOpen(true);
@@ -123,6 +127,20 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                 })}
               </nav>
 
+              {/* Wishlist Icon */}
+              <button
+                onClick={() => setWishlistOpen(true)}
+                className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-900"
+                aria-label={`Wishlist with ${wishlistItemCount} items`}
+              >
+                <Heart className="h-5 w-5" />
+                {wishlistItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primarymain text-[10px] font-bold text-white">
+                    {wishlistItemCount > 99 ? "99+" : wishlistItemCount}
+                  </span>
+                )}
+              </button>
+
               {/* Cart Icon */}
               <CartIcon onClick={() => setCartOpen(true)} />
 
@@ -195,7 +213,17 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
           </nav>
 
           {/* Cart Link */}
-          <div className="border-t border-gray-100 p-5">
+          <div className="border-t border-gray-100 p-5 space-y-0">
+            <button
+              onClick={() => { setIsOpen(false); setWishlistOpen(true); }}
+              className="flex w-full items-center gap-3 px-0 py-3 text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-900"
+            >
+              <Heart className="h-5 w-5" />
+              Wishlist
+              {wishlistItemCount > 0 && (
+                <span className="ml-auto text-[11px] text-gray-400">({wishlistItemCount})</span>
+              )}
+            </button>
             <button
               onClick={() => { setIsOpen(false); setCartOpen(true); }}
               className="flex w-full items-center gap-3 px-0 py-3 text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-900"
@@ -209,6 +237,9 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
 
       {/* Cart Sidebar */}
       <CartSidebar open={cartOpen} onClose={() => setCartOpen(false)} />
+
+      {/* Wishlist Sidebar */}
+      <WishlistSidebar open={wishlistOpen} onClose={() => setWishlistOpen(false)} />
     </>
   );
 }

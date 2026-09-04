@@ -7,6 +7,7 @@ import { ShoppingBag, Check, X } from "lucide-react";
 import { dispatchOpenCart } from "@/components/cart/cart-icon";
 import { useCartStore } from "@/stores/cart-store";
 import { showSuccess, showError } from "@/lib/toast-helper";
+import WishlistButton from "@/components/wishlist/wishlist-button";
 
 interface ProductInfoProps {
   product: Product;
@@ -207,25 +208,33 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
         </div>
       )}
 
-      {/* Add to Cart Button */}
-      <button
-        onClick={handleAddToCart}
-        disabled={!isInStock || quantity > currentStock}
-        className={`w-full py-4 text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 ${
-          isInStock && quantity <= currentStock
-            ? "bg-primarymain text-white hover:bg-primarymain/90"
-            : "bg-gray-100 text-gray-400 cursor-not-allowed"
-        }`}
-      >
-        {isInStock ? (
-          <>
-            <ShoppingBag size={16} />
-            ADD TO CART
-          </>
-        ) : (
-          "OUT OF STOCK"
-        )}
-      </button>
+      {/* Add to Cart + Wishlist Buttons */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleAddToCart}
+          disabled={!isInStock}
+          className={`flex-1 py-4 text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 ${
+            isInStock
+              ? "bg-primarymain text-white hover:bg-primarymain/90"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+          }`}
+        >
+          {isInStock ? (
+            <>
+              <ShoppingBag size={16} />
+              ADD TO CART
+            </>
+          ) : (
+            "OUT OF STOCK"
+          )}
+        </button>
+        <WishlistButton
+          product={product}
+          variantId={currentVariantId}
+          size="lg"
+          className="flex-shrink-0 border border-gray-200"
+        />
+      </div>
 
       {/* Description */}
       {product.description && (
