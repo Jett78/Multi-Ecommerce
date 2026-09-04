@@ -11,15 +11,39 @@ interface ProductCardProps {
   index?: number;
 }
 
-function getProductPrice(product: Product) {
+function getCheapestVariant(product: Product) {
   if (product.variants && product.variants.length > 0) {
-    const prices = product.variants.map((v) => v.price);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
-    if (minPrice === maxPrice) return formatPrice(minPrice);
-    return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
+    const inStockVariants = product.variants.filter((v) => v.stockQuantity > 0);
+    if (inStockVariants.length > 0) {
+      return inStockVariants.reduce((cheapest, current) =>
+        current.price < cheapest.price ? current : cheapest
+      );
+    }
+    return product.variants.reduce((cheapest, current) =>
+      current.price < cheapest.price ? current : cheapest
+    );
+  }
+  return null;
+}
+
+function getProductPrice(product: Product) {
+  const variant = getCheapestVariant(product);
+  if (variant) {
+    return formatPrice(variant.price);
   }
   return formatPrice(product.price);
+}
+
+function getCompareAtPrice(product: Product): string | null {
+  const variant = getCheapestVariant(product);
+  if (variant?.compareAtPrice && variant.compareAtPrice > variant.price) {
+    return formatPrice(variant.compareAtPrice);
+  }
+  const comparePrice = product.compareAtPrice;
+  if (comparePrice && comparePrice > (product.price ?? 0)) {
+    return formatPrice(comparePrice);
+  }
+  return null;
 }
 
 function isOutOfStock(product: Product) {
@@ -30,6 +54,15 @@ function isOutOfStock(product: Product) {
 }
 
 function getDiscountPercent(product: Product): number | null {
+  const variant = getCheapestVariant(product);
+  if (variant?.compareAtPrice && variant.price) {
+    if (variant.compareAtPrice > variant.price) {
+      return Math.round(
+        ((variant.compareAtPrice - variant.price) / variant.compareAtPrice) * 100
+      );
+    }
+    return null;
+  }
   const comparePrice = product.compareAtPrice;
   const price = product.price ?? 0;
   if (comparePrice && comparePrice > price) {
@@ -43,6 +76,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
     product.images?.find((img) => img.isPrimary) || product.images?.[0];
   const outOfStock = isOutOfStock(product);
   const discountPercent = getDiscountPercent(product);
+  const compareAtPrice = getCompareAtPrice(product);
 
   return (
     <Link
@@ -81,21 +115,28 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
           {product.name}
         </h3>
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-gray-900">{getProductPrice(product)}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold text-gray-900">{getProductPrice(product)}</p>
+            {compareAtPrice && (
+              <p className="text-xs text-gray-400 line-through">{compareAtPrice}</p>
+            )}
+          </div>
           {product.category && (
             <span className="text-[11px] text-gray-400 uppercase tracking-wide">
               {product.category.name}
             </span>
           )}
         </div>
-        {product.reviewCount > 0 && (
-          <Rating
-            rating={product.averageRating}
-            size="sm"
-            showValue
-            reviewCount={product.reviewCount}
-          />
-        )}
+        <div className="flex items-center justify-between">
+          {product.reviewCount > 0 && (
+            <Rating
+              rating={product.averageRating}
+              size="sm"
+              showValue
+              reviewCount={product.reviewCount}
+            />
+          )}
+        </div>
       </div>
     </Link>
   );
