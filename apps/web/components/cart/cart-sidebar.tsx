@@ -75,7 +75,8 @@ function CartItemRow({
           </span>
           <button
             onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-            className="px-2 py-1 text-gray-500 hover:bg-gray-50 transition-colors"
+            disabled={item.quantity >= item.stockQuantity}
+            className="px-2 py-1 text-gray-500 hover:bg-gray-50 disabled:opacity-30 transition-colors"
           >
             <Plus className="h-3 w-3" />
           </button>

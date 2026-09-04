@@ -44,6 +44,7 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
     }
 
     const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
+    const addQuantity = Math.min(quantity, currentStock);
 
     useCartStore.getState().addItem({
       variantId: currentVariantId,
@@ -56,7 +57,7 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
       imageUrl: primaryImage?.url,
       productId: product.id,
       attributes: selectedVariant?.attributes?.map((a) => ({ attributeName: a.attributeName, attributeValue: a.attributeValue })),
-    }, quantity);
+    }, addQuantity);
 
     dispatchOpenCart();
     showSuccess("Added to cart");
@@ -209,9 +210,9 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
       {/* Add to Cart Button */}
       <button
         onClick={handleAddToCart}
-        disabled={!isInStock}
+        disabled={!isInStock || quantity > currentStock}
         className={`w-full py-4 text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 ${
-          isInStock
+          isInStock && quantity <= currentStock
             ? "bg-primarymain text-white hover:bg-primarymain/90"
             : "bg-gray-100 text-gray-400 cursor-not-allowed"
         }`}

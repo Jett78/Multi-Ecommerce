@@ -41,7 +41,9 @@ export const useCartStore = create<CartStore>()(
         }
         set((state) => ({
           items: state.items.map((i) =>
-            i.variantId === variantId ? { ...i, quantity } : i
+            i.variantId === variantId
+              ? { ...i, quantity: Math.min(quantity, i.stockQuantity) }
+              : i
           ),
         }));
       },
