@@ -8,8 +8,9 @@ import CategorySection from "@/components/sections/category-section";
 import FeaturedProducts from "@/components/sections/featured-products";
 import BestSellers from "@/components/sections/best-seller-products";
 import NewArrivals from "@/components/sections/new-arrivals";
-import YouMayAlsoLike from "@/components/sections/you-may-also-like";
-
+import BrandSection from "@/components/sections/brand-section";
+import TrustFeatures from "@/components/sections/trust-features";
+import WhyChooseUs from "@/components/sections/why-choose-us";
 export default async function Home() {
   const posts = await getBlogs({ take: 3, isActive: true });
 
@@ -17,11 +18,13 @@ export default async function Home() {
     <>
       <Hero />
       <CategorySection />
-      <FeaturedProducts />
-      <MidBanner />
-      <BestSellers />
       <NewArrivals />
-      <YouMayAlsoLike />
+      <WhyChooseUs />
+      <BrandSection />
+      <BestSellers />
+      <MidBanner />
+      <FeaturedProducts />
+      <TrustFeatures />
       <BlogSection posts={posts} />
       <Testimonials />
       <FaqSection />

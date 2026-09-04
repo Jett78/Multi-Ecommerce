@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Montserrat, Geist } from "next/font/google";
+import { Geist } from "next/font/google";
 import { GoogleTagManager } from "@next/third-parties/google";
 import Script from "next/script";
 import { QueryProvider } from "@/providers/query-provider";
@@ -11,12 +11,7 @@ import { Toaster } from "@/components/ui/toast";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-montserrat",
-});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const [seo, company] = await Promise.all([
@@ -52,8 +47,8 @@ export default async function RootLayout({
   const seo = await getPublicSeoSettings();
 
   return (
-    <html lang="en" className={cn("scroll-smooth", "font-sans", geist.variable)}>
-      <body className={`${montserrat.variable} ${montserrat.className} antialiased`}>
+    <html lang="en" className={cn("scroll-smooth", geist.variable)}>
+      <body className="antialiased">
         {seo?.gtmContainerId && (
           <GoogleTagManager gtmId={seo.gtmContainerId} />
         )}

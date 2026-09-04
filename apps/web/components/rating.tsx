@@ -21,21 +21,20 @@ export default function Rating({
 }: RatingProps) {
   const sizeClasses = {
     sm: "w-3 h-3",
-    md: "w-4 h-4",
-    lg: "w-5 h-5",
+    md: "w-3.5 h-3.5",
+    lg: "w-4 h-4",
   };
 
   const textClasses = {
-    sm: "text-xs",
-    md: "text-sm",
-    lg: "text-base",
+    sm: "text-[11px]",
+    md: "text-xs",
+    lg: "text-sm",
   };
 
-  // Rating is stored as integer (45 = 4.5 stars)
   const displayRating = rating / 10;
 
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`flex items-center gap-0.5 ${className}`}>
       <div className="flex">
         {Array.from({ length: maxRating }).map((_, index) => {
           const starValue = index + 1;
@@ -50,7 +49,7 @@ export default function Rating({
                     ? "fill-yellow-400 text-yellow-400"
                     : halfFilled
                     ? "fill-yellow-400/50 text-yellow-400"
-                    : "fill-zinc-200 text-zinc-200"
+                    : "fill-gray-200 text-gray-200"
                 }`}
               />
             </div>
@@ -58,12 +57,12 @@ export default function Rating({
         })}
       </div>
       {showValue && (
-        <span className={`font-space font-bold ${textClasses[size]}`}>
+        <span className={`font-semibold text-gray-900 ${textClasses[size]} ml-0.5`}>
           {displayRating.toFixed(1)}
         </span>
       )}
       {reviewCount !== undefined && (
-        <span className={`font-space text-zinc-500 ${textClasses[size]}`}>
+        <span className={`text-gray-400 ${textClasses[size]} ml-0.5`}>
           ({reviewCount})
         </span>
       )}

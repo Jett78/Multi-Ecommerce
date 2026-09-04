@@ -6,6 +6,7 @@ import { API_ROUTES } from "@/config/api-routes";
 import type { Product } from "@/types/product";
 import ProductCard from "@/components/product-card";
 import ProductFilter from "@/components/product-filter";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function ProductsPage() {
   const [filters, setFilters] = useState({
@@ -16,6 +17,8 @@ export default function ProductsPage() {
     maxPrice: "",
     minRating: "",
   });
+  const [page, setPage] = useState(1);
+  const take = 20;
 
   const { getAllPaginated } = useCrud<Product>({
     endpoint: API_ROUTES.PRODUCT,
@@ -23,8 +26,8 @@ export default function ProductsPage() {
   });
 
   const { data: productsData, isLoading } = getAllPaginated({
-    take: 50,
-    skip: 0,
+    take,
+    skip: (page - 1) * take,
     status: "active",
     ...(filters.categoryId && { categoryId: filters.categoryId }),
     ...(filters.subcategoryId && { subcategoryId: filters.subcategoryId }),
@@ -35,74 +38,117 @@ export default function ProductsPage() {
   });
 
   const products = productsData?.items || [];
+  const total = productsData?.total || 0;
+  const totalPages = Math.ceil(total / take);
 
   const handleFilterChange = useCallback((newFilters: typeof filters) => {
     setFilters(newFilters);
+    setPage(1);
   }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400..800&display=swap');
-        
-        .font-syne { font-family: 'Syne', sans-serif; }
-        .font-space { font-family: 'Space Mono', monospace; }
-        
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
-
+    <div className="min-h-screen bg-white">
       {/* Hero Header */}
-      <div className="relative bg-black text-white overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-yellow-400 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-pink-500 rounded-full blur-3xl" />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-6 py-16 md:py-24">
-          <h1 className="font-syne font-extrabold text-5xl md:text-7xl lg:text-8xl tracking-tight mb-4">
-            SHOP<br />ALL
+      <div className="bg-primarymain text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-3">
+            Shop All
           </h1>
-          <p className="font-space text-sm md:text-base text-zinc-400 max-w-md">
-            {products.length} products · Curated collections · Free shipping over Rs. 5000
+          <p className="text-sm md:text-base text-gray-400 max-w-md">
+            {total} products · Curated collections
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex gap-8">
-          <ProductFilter onFilterChange={handleFilterChange} />
+          {/* Sticky Filter Sidebar */}
+          <div className="hidden md:block w-64 flex-shrink-0">
+            <div className="sticky top-24">
+              <ProductFilter onFilterChange={handleFilterChange} />
+            </div>
+          </div>
 
           {/* Products Grid */}
-          <main className="flex-1">
+          <main className="flex-1 min-w-0">
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                {[...Array(8)].map((_, i) => (
                   <div key={i} className="animate-pulse">
-                    <div className="aspect-square bg-zinc-200 mb-4" />
-                    <div className="h-4 bg-zinc-200 mb-2" />
-                    <div className="h-4 bg-zinc-200 w-2/3" />
+                    <div className="aspect-square bg-gray-100 mb-3" />
+                    <div className="h-3 bg-gray-100 mb-2 w-3/4" />
+                    <div className="h-3 bg-gray-100 w-1/2" />
                   </div>
                 ))}
               </div>
             ) : products.length === 0 ? (
               <div className="text-center py-20">
-                <p className="font-syne text-3xl font-bold text-zinc-300 mb-2">NO PRODUCTS FOUND</p>
-                <p className="font-space text-sm text-zinc-400">Try adjusting your filters</p>
+                <p className="text-xl font-bold text-gray-300 mb-1">No products found</p>
+                <p className="text-sm text-gray-400">Try adjusting your filters</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((product, index) => (
-                  <ProductCard key={product.id} product={product} index={index} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {products.map((product, index) => (
+                    <ProductCard key={product.id} product={product} index={index} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-10 flex items-center justify-center gap-2">
+                    <button
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                      className="w-10 h-10 flex items-center justify-center border border-gray-200 text-gray-500 hover:border-primarymain hover:text-primarymain disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((p) => {
+                        if (totalPages <= 7) return true;
+                        if (p === 1 || p === totalPages) return true;
+                        if (Math.abs(p - page) <= 1) return true;
+                        return false;
+                      })
+                      .reduce<(number | string)[]>((acc, p, i, arr) => {
+                        if (i > 0 && p - (arr[i - 1] as number) > 1) {
+                          acc.push("...");
+                        }
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((p, i) =>
+                        typeof p === "string" ? (
+                          <span key={`dots-${i}`} className="w-10 h-10 flex items-center justify-center text-gray-300 text-sm">
+                            ...
+                          </span>
+                        ) : (
+                          <button
+                            key={p}
+                            onClick={() => setPage(p)}
+                            className={`w-10 h-10 flex items-center justify-center text-sm font-medium transition-colors ${
+                              page === p
+                                ? "bg-primarymain text-white"
+                                : "border border-gray-200 text-gray-600 hover:border-primarymain"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      )}
+
+                    <button
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                      className="w-10 h-10 flex items-center justify-center border border-gray-200 text-gray-500 hover:border-primarymain hover:text-primarymain disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </main>
         </div>

@@ -26,7 +26,7 @@ const ProductSlider = ({ products, title, subtitle }: ProductSliderProps) => {
     infinite: products.length > 4,
     slidesToShow: 5,
     slidesToScroll: 1,
-    speed: 1500,
+    speed: 1000,
     autoplay: true,
     autoplaySpeed: 3500,
     pauseOnHover: true,
@@ -54,13 +54,13 @@ const ProductSlider = ({ products, title, subtitle }: ProductSliderProps) => {
   return (
     <section className="py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 sm:mb-12">
+        <div className="mb-8 sm:mb-10">
           {subtitle && (
-            <p className="tracking-wider text-foreground uppercase text-sm font-bold mb-1">
+            <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-1">
               {subtitle}
             </p>
           )}
-          <h2 className="font-syne font-extrabold text-2xl md:text-3xl tracking-wide uppercase">
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-gray-900 uppercase">
             {title}
           </h2>
         </div>
@@ -77,19 +77,19 @@ const ProductSlider = ({ products, title, subtitle }: ProductSliderProps) => {
 
             <button
               onClick={() => sliderRef.current?.slickPrev()}
-              className="absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-4 rounded-full bg-white/80 p-2 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110"
+              className="absolute left-0 top-[40%] z-10 -translate-y-1/2 -translate-x-3 bg-white border border-gray-200 p-2 transition-colors hover:border-gray-900 hover:bg-gray-50"
             >
-              <ChevronLeft className="h-5 w-5 text-slate-900" />
+              <ChevronLeft className="h-4 w-4 text-gray-900" />
             </button>
             <button
               onClick={() => sliderRef.current?.slickNext()}
-              className="absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-4 rounded-full bg-white/80 p-2 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110"
+              className="absolute right-0 top-[40%] z-10 -translate-y-1/2 translate-x-3 bg-white border border-gray-200 p-2 transition-colors hover:border-gray-900 hover:bg-gray-50"
             >
-              <ChevronRight className="h-5 w-5 text-slate-900" />
+              <ChevronRight className="h-4 w-4 text-gray-900" />
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             {products.map((product, index) => (
               <ProductCard key={product.id} product={product} index={index} />
             ))}

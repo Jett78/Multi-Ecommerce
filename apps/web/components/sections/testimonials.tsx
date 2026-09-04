@@ -13,24 +13,19 @@ export async function Testimonials() {
   const showSlider = testimonials.length >= 3;
 
   return (
-    <section className="relative overflow-hidden bg-muted/30 py-24 sm:py-32">
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-1/2 left-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/[0.03] blur-3xl" />
-      </div>
-
+    <section className="bg-gray-50 py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-       <PageHeader
+        <PageHeader
           title="What our clients say"
           subtitle="Testimonials"
-          desc="Hear from our satisfied clients and discover how our services have made a positive impact "
+          desc="Hear from our satisfied clients and discover how our services have made a positive impact"
         />
 
-
-        <div className="mx-auto mt-16 max-w-6xl">
+        <div className="mx-auto mt-12 max-w-6xl">
           {showSlider ? (
             <TestimonialSlider testimonials={testimonials} />
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {testimonials.map((testimonial) => (
                 <TestimonialCard key={testimonial.id} testimonial={testimonial} />
               ))}

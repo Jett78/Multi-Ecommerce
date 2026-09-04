@@ -11,17 +11,19 @@ type titleprops = {
 const PageHeader = ({ title, subtitle, desc, className }: titleprops) => {
   return (
     <div className="flex flex-col space-y-1 items-center justify-center">
-      <p className="tracking-wider text-foreground uppercase text-base font-bold">{subtitle}</p>
+      {subtitle && (
+        <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">{subtitle}</p>
+      )}
       <h2
         className={cn(
           className,
-          "font-extrabold tracking-wide md:text-2xl text-xl text-center uppercase "
+          "text-xl md:text-2xl font-bold tracking-tight text-gray-900 text-center"
         )}
       >
         {title}
       </h2>
       {desc && (
-        <p className="tracking-wide text-sm text-center text-muted-foreground font-medium text-foreground">{desc}</p>
+        <p className="text-sm text-center text-gray-500 max-w-lg">{desc}</p>
       )}
     </div>
   );

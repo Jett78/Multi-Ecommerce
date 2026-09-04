@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Star, X, ImageIcon } from "lucide-react";
+import { Star, X, ImageIcon, Camera } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import { uploadMultipleImages } from "@/actions/upload-action";
 import SubmittingLoader from "@/components/dashboard/submitting-loader";
@@ -97,131 +97,136 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
     );
   };
 
+  const ratingLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+
   return (
     <>
       {create.isPending && <SubmittingLoader status="Submitting review" />}
-      <form onSubmit={handleSubmit} className="space-y-4 border-2 border-zinc-200 p-4">
-        <h3 className="font-syne font-bold text-xl">WRITE A REVIEW</h3>
-
-        {/* Rating Selection */}
-        <div>
-          <label className="font-space text-xs font-bold uppercase tracking-wider mb-2 block">
-            Rating *
-          </label>
-          <div className="flex gap-1">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type="button"
-                onClick={() => setRating(star)}
-                onMouseEnter={() => setHoverRating(star)}
-                onMouseLeave={() => setHoverRating(0)}
-                className="p-0.5 transition-transform hover:scale-110"
-              >
-                <Star
-                  className={`w-8 h-8 ${
-                    star <= (hoverRating || rating)
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "fill-zinc-200 text-zinc-200"
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-          {rating > 0 && (
-            <p className="font-space text-xs text-zinc-500 mt-1">
-              {rating === 1 && "Poor"}
-              {rating === 2 && "Fair"}
-              {rating === 3 && "Good"}
-              {rating === 4 && "Very Good"}
-              {rating === 5 && "Excellent"}
-            </p>
-          )}
+      <div className="border border-gray-200">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Write a Review</h3>
         </div>
 
-        {/* Title */}
-        <div>
-          <label className="font-space text-xs font-bold uppercase tracking-wider mb-2 block">
-            Title (optional)
-          </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Summarize your review"
-            className="w-full px-3 py-2 border-2 border-zinc-200 font-space text-sm focus:outline-none focus:border-black"
-            maxLength={255}
-          />
-        </div>
-
-        {/* Comment */}
-        <div>
-          <label className="font-space text-xs font-bold uppercase tracking-wider mb-2 block">
-            Review (optional)
-          </label>
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="What did you like or dislike?"
-            rows={4}
-            className="w-full px-3 py-2 border-2 border-zinc-200 font-space text-sm focus:outline-none focus:border-black resize-none"
-          />
-        </div>
-
-        {/* Image Upload */}
-        <div>
-          <label className="font-space text-xs font-bold uppercase tracking-wider mb-2 block">
-            Images (optional, max 5)
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {images.map((imageKey, index) => (
-              <div key={index} className="relative w-20 h-20 border-2 border-zinc-200">
-                <img
-                  src={imageKey}
-                  alt={`Review image ${index + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
-                >
-                  <X size={12} />
-                </button>
+        <form onSubmit={handleSubmit} className="p-5 space-y-5">
+          {/* Rating Selection */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3 block">
+              Your Rating *
+            </label>
+            <div className="flex items-center gap-3">
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="p-0.5 transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-7 h-7 ${
+                        star <= (hoverRating || rating)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "fill-gray-200 text-gray-200"
+                      }`}
+                    />
+                  </button>
+                ))}
               </div>
-            ))}
-            {images.length < 5 && (
-              <label className="w-20 h-20 border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center cursor-pointer hover:border-black transition-colors">
-                <ImageIcon size={20} className="text-zinc-400" />
-                <span className="text-xs text-zinc-400 mt-1">
-                  {uploading ? "Uploading..." : "Add"}
+              {(hoverRating || rating) > 0 && (
+                <span className="text-sm font-medium text-gray-600">
+                  {ratingLabels[hoverRating || rating]}
                 </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  disabled={uploading}
-                  className="sr-only"
-                />
-              </label>
-            )}
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={create.isPending || rating === 0 || uploading}
-          className="w-full py-3 bg-black text-white font-space text-sm font-bold hover:bg-zinc-800 disabled:bg-zinc-200 disabled:text-zinc-400 disabled:cursor-not-allowed transition-colors"
-        >
-          {create.isPending ? "SUBMITTING..." : "SUBMIT REVIEW"}
-        </button>
+          {/* Title */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">
+              Title (optional)
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Summarize your experience"
+              className="w-full px-4 py-3 border border-gray-200 text-sm focus:outline-none focus:border-gray-900 transition-colors"
+              maxLength={255}
+            />
+          </div>
 
-        <p className="font-space text-xs text-zinc-500 text-center">
-          Your review will be visible after moderation
-        </p>
-      </form>
+          {/* Comment */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">
+              Your Review (optional)
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Tell others what you liked or disliked..."
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-200 text-sm focus:outline-none focus:border-gray-900 resize-none transition-colors"
+            />
+          </div>
+
+          {/* Image Upload */}
+          <div>
+            <label className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3 block">
+              Photos (optional, max 5)
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {images.map((imageKey, index) => (
+                <div key={index} className="relative w-20 h-20 border border-gray-200 group">
+                  <img
+                    src={imageKey}
+                    alt={`Review image ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                  >
+                    <X size={16} className="text-white" />
+                  </button>
+                </div>
+              ))}
+              {images.length < 5 && (
+                <label className="w-20 h-20 border border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-gray-900 transition-colors">
+                  <Camera size={18} className="text-gray-400" />
+                  <span className="text-[10px] text-gray-400 mt-1">
+                    {uploading ? "Uploading..." : "Add Photo"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    disabled={uploading}
+                    className="sr-only"
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex items-center justify-between pt-2">
+            <p className="text-[11px] text-gray-400">
+              Your review will appear after moderation
+            </p>
+            <button
+              type="submit"
+              disabled={create.isPending || rating === 0 || uploading}
+              className="px-6 py-3 bg-primarymain text-white text-sm font-bold tracking-wide hover:bg-primarymain/90 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {create.isPending ? "SUBMITTING..." : "SUBMIT REVIEW"}
+            </button>
+          </div>
+        </form>
+      </div>
     </>
   );
 }

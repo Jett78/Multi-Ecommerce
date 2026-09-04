@@ -17,7 +17,7 @@ const HeroBannerSlider = ({ banners }: { banners: Banner[] }) => {
     infinite: true,
     slidesToShow: 1,
     slidesToScroll: 1,
-    speed: 1000,
+    speed: 800,
     autoplay: true,
     autoplaySpeed: 4000,
     pauseOnHover: true,
@@ -30,7 +30,7 @@ const HeroBannerSlider = ({ banners }: { banners: Banner[] }) => {
     <div className="relative w-full">
       <Slider {...settings} ref={sliderRef}>
         {banners.map((banner) => (
-          <div key={banner.id} className="relative h-[400px] w-full sm:h-[500px] md:h-[600px]">
+          <div key={banner.id} className="relative h-[250px] w-full sm:h-[350px] md:h-[450px]">
             {banner.link ? (
               <Link href={banner.link} className="block h-full w-full">
                 <Image
@@ -57,15 +57,15 @@ const HeroBannerSlider = ({ banners }: { banners: Banner[] }) => {
       {/* Custom Arrows */}
       <button
         onClick={() => sliderRef.current?.slickPrev()}
-        className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110"
+        className="absolute left-4 top-1/2 z-10 -translate-y-1/2 bg-white/90 border border-white/20 p-2.5 transition-colors hover:bg-white"
       >
-        <ChevronLeft className="h-5 w-5 text-slate-900" />
+        <ChevronLeft className="h-5 w-5 text-primarymain" />
       </button>
       <button
         onClick={() => sliderRef.current?.slickNext()}
-        className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow-lg backdrop-blur-sm transition-all hover:bg-white hover:scale-110"
+        className="absolute right-4 top-1/2 z-10 -translate-y-1/2 bg-white/90 border border-white/20 p-2.5 transition-colors hover:bg-white"
       >
-        <ChevronRight className="h-5 w-5 text-slate-900" />
+        <ChevronRight className="h-5 w-5 text-primarymain" />
       </button>
     </div>
   );

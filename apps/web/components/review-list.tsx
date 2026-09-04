@@ -1,30 +1,56 @@
 "use client";
 
 import { useState } from "react";
-import Rating from "@/components/rating";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { showSuccess, showError } from "@/lib/toast-helper";
 import type { Review, ReviewReply } from "@/types/review";
-import { Check, ThumbsUp, MessageSquare, Send, Trash2, Reply } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api-client";
+import { showSuccess, showError } from "@/lib/toast-helper";
+import Rating from "@/components/rating";
+import {
+  ThumbsUp,
+  MessageSquare,
+  Send,
+  Check,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 interface ReviewListProps {
   productId: string;
 }
 
-function buildReplyTree(replies: ReviewReply[] | undefined): ReviewReply[] {
-  if (!replies) return [];
-  const map = new Map<string, ReviewReply>();
-  const roots: ReviewReply[] = [];
+interface TreeNode {
+  id: string;
+  comment: string;
+  createdAt: string;
+  isAdminReply?: boolean;
+  userName?: string;
+  userImage?: string;
+  userRole?: string;
+  parentId?: string;
+  replies?: TreeNode[];
+}
+
+function buildReplyTree(replies: ReviewReply[]): TreeNode[] {
+  const map = new Map<string, TreeNode>();
+  const roots: TreeNode[] = [];
 
   replies.forEach((reply) => {
     map.set(reply.id, { ...reply, replies: [] });
   });
 
   replies.forEach((reply) => {
-    const node = map.get(reply.id)!;
-    if (reply.parentId && map.has(reply.parentId)) {
-      map.get(reply.parentId)!.replies!.push(node);
+    const node = map.get(reply.id);
+    if (!node) return;
+    if (reply.parentId) {
+      const parent = map.get(reply.parentId);
+      if (parent) {
+        parent.replies = parent.replies || [];
+        parent.replies.push(node);
+      }
     } else {
       roots.push(node);
     }
@@ -43,7 +69,7 @@ function ReplyItem({
   isSubmitting,
   onSubmitReply,
 }: {
-  reply: ReviewReply;
+  reply: TreeNode;
   reviewId: string;
   depth: number;
   onDelete: (reviewId: string, replyId: string) => void;
@@ -52,92 +78,47 @@ function ReplyItem({
   isSubmitting: boolean;
   onSubmitReply: (reviewId: string, parentId?: string) => void;
 }) {
-  const [showReplyForm, setShowReplyForm] = useState(false);
-  const replyKey = `${reviewId}-${reply.id}`;
-
   return (
-    <div className={`${depth > 0 ? "ml-6 mt-2" : ""}`}>
-      <div
-        className={`flex gap-3 p-3 rounded-lg ${
-          reply.isAdminReply
-            ? "bg-blue-50 border border-blue-100"
-            : "bg-zinc-50 border border-zinc-100"
-        }`}
-      >
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-space text-sm font-bold">
-              {reply.userName || "Anonymous"}
-            </span>
-            {reply.isAdminReply && (
-              <span className="font-space text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">
-                Admin
-              </span>
-            )}
-            <span className="font-space text-xs text-zinc-400">
-              {new Date(reply.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })}
-            </span>
+    <div className={`${depth > 0 ? "ml-6" : ""}`}>
+      <div className="bg-gray-50 border border-gray-100 p-3">
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className="w-6 h-6 bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
+            {(reply as any)?.userName?.[0] || "U"}
           </div>
-          <p className="font-space text-sm text-zinc-700">{reply.comment}</p>
-          <div className="flex items-center gap-3 mt-2">
-            <button
-              onClick={() => setShowReplyForm(!showReplyForm)}
-              className="flex items-center gap-1 text-xs text-zinc-500 hover:text-black font-space transition-colors"
-            >
-              <Reply size={12} />
-              Reply
-            </button>
-            <button
-              onClick={() => onDelete(reviewId, reply.id)}
-              className="flex items-center gap-1 text-xs text-zinc-400 hover:text-red-500 font-space transition-colors"
-            >
-              <Trash2 size={12} />
-            </button>
-          </div>
+          <span className="text-xs font-bold text-gray-900">
+            {(reply as any)?.userName || "User"}
+          </span>
+          {(reply as any)?.isAdminReply && (
+            <span className="text-[10px] font-bold bg-gray-900 text-white px-1.5 py-0.5">
+              ADMIN
+            </span>
+          )}
+          <span className="text-[11px] text-gray-400">
+            {new Date(reply.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        </div>
+        <p className="text-sm text-gray-700">{reply.comment}</p>
+        <div className="flex items-center gap-3 mt-2">
+          <button
+            onClick={() => onDelete(reviewId, reply.id)}
+            className="text-[11px] text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1"
+          >
+            <Trash2 size={10} />
+            Delete
+          </button>
         </div>
       </div>
 
-      {showReplyForm && (
-        <div className="ml-6 mt-2 flex gap-2">
-          <input
-            type="text"
-            value={replyTexts[replyKey] || ""}
-            onChange={(e) =>
-              setReplyTexts((prev) => ({ ...prev, [replyKey]: e.target.value }))
-            }
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                onSubmitReply(reviewId, reply.id);
-                setShowReplyForm(false);
-              }
-            }}
-            placeholder="Write a reply..."
-            className="flex-1 px-3 py-2 border-2 border-zinc-200 font-space text-sm focus:outline-none focus:border-black"
-            disabled={isSubmitting}
-          />
-          <button
-            onClick={() => {
-              onSubmitReply(reviewId, reply.id);
-              setShowReplyForm(false);
-            }}
-            disabled={isSubmitting || !replyTexts[replyKey]?.trim()}
-            className="px-3 py-2 bg-black text-white font-space text-xs font-bold hover:bg-zinc-800 disabled:bg-zinc-200 disabled:text-zinc-400 transition-colors"
-          >
-            {isSubmitting ? "..." : <Send size={14} />}
-          </button>
-        </div>
-      )}
-
       {reply.replies && reply.replies.length > 0 && (
-        <div className="ml-4">
-          {reply.replies.map((childReply) => (
+        <div className="mt-2 space-y-2">
+          {reply.replies.map((child) => (
             <ReplyItem
-              key={childReply.id}
-              reply={childReply}
+              key={child.id}
+              reply={child}
               reviewId={reviewId}
               depth={depth + 1}
               onDelete={onDelete}
@@ -149,6 +130,35 @@ function ReplyItem({
           ))}
         </div>
       )}
+
+      <div className="flex gap-2 mt-2">
+        <input
+          type="text"
+          value={replyTexts[`${reviewId}-${reply.id}`] || ""}
+          onChange={(e) =>
+            setReplyTexts((prev) => ({
+              ...prev,
+              [`${reviewId}-${reply.id}`]: e.target.value,
+            }))
+          }
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              onSubmitReply(reviewId, reply.id);
+            }
+          }}
+          placeholder="Write a reply..."
+          className="flex-1 px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-primarymain transition-colors"
+          disabled={isSubmitting}
+        />
+        <button
+          onClick={() => onSubmitReply(reviewId, reply.id)}
+          disabled={isSubmitting || !replyTexts[`${reviewId}-${reply.id}`]?.trim()}
+          className="px-3 py-2 bg-primarymain text-white hover:bg-primarymain/90 disabled:bg-gray-100 disabled:text-gray-400 transition-colors"
+        >
+          <Send size={14} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -160,6 +170,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({});
   const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
   const take = 10;
+  const queryClient = useQueryClient();
 
   const endpoint = `${API_ROUTES.PRODUCT}/${productId}/reviews`;
   const { getAllPaginated } = useCrud<Review>({
@@ -177,12 +188,19 @@ export default function ReviewList({ productId }: ReviewListProps) {
     isAuthenticated: true,
   });
 
-  const { data, isLoading } = getAllPaginated({
+  const reviewParams = {
     skip: (page - 1) * take,
     take,
     isApproved: true,
-    ...(ratingFilter ? { rating: ratingFilter } : {}),
-  });
+    ...(ratingFilter !== null ? { rating: ratingFilter } : {}),
+  };
+
+  const { data, isLoading } = getAllPaginated(reviewParams);
+
+  const handleRatingFilter = (rating: number | null) => {
+    setRatingFilter(rating);
+    setPage(1);
+  };
 
   const repliesQuery = activeReviewId ? getAllReplies() : null;
   const flatReplies = (repliesQuery?.data as ReviewReply[] | undefined) || [];
@@ -200,34 +218,30 @@ export default function ReviewList({ productId }: ReviewListProps) {
   };
 
   const handleReplySubmit = (reviewId: string, parentId?: string) => {
-    const key = parentId ? `${reviewId}-${parentId}` : reviewId;
-    const text = replyTexts[key]?.trim();
-    if (!text) return;
+    const textKey = parentId ? `${reviewId}-${parentId}` : reviewId;
+    const text = replyTexts[textKey];
+    if (!text?.trim()) return;
 
-    const body: { comment: string; parentId?: string } = { comment: text };
-    if (parentId) {
-      body.parentId = parentId;
-    }
-
-    createReply.mutate(body as any, {
-      onSuccess: () => {
-        showSuccess("Reply posted successfully");
-        setReplyTexts((prev) => ({ ...prev, [key]: "" }));
-      },
-      onError: (error: any) => {
-        showError(error.message || "Failed to post reply");
-      },
-    });
+    createReply.mutate(
+      { comment: text, parentId } as any,
+      {
+        onSuccess: () => {
+          showSuccess("Reply posted!");
+          setReplyTexts((prev) => ({ ...prev, [textKey]: "" }));
+          queryClient.invalidateQueries({ queryKey: ["review-replies"] });
+        },
+        onError: () => showError("Failed to post reply"),
+      }
+    );
   };
 
   const handleDeleteReply = (reviewId: string, replyId: string) => {
     removeReply.mutate(replyId, {
       onSuccess: () => {
         showSuccess("Reply deleted");
+        queryClient.invalidateQueries({ queryKey: ["review-replies"] });
       },
-      onError: (error: any) => {
-        showError(error.message || "Failed to delete reply");
-      },
+      onError: () => showError("Failed to delete reply"),
     });
   };
 
@@ -235,13 +249,15 @@ export default function ReviewList({ productId }: ReviewListProps) {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="animate-pulse border border-zinc-200 p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-4 w-24 bg-zinc-200" />
-              <div className="h-4 w-16 bg-zinc-200" />
+          <div key={i} className="animate-pulse border border-gray-200 p-4">
+            <div className="flex gap-1 mb-2">
+              {[...Array(5)].map((_, j) => (
+                <div key={j} className="w-4 h-4 bg-gray-200" />
+              ))}
             </div>
-            <div className="h-4 w-48 bg-zinc-200 mb-2" />
-            <div className="h-20 bg-zinc-200" />
+            <div className="h-3 bg-gray-200 w-1/3 mb-2" />
+            <div className="h-3 bg-gray-200 w-full mb-1" />
+            <div className="h-3 bg-gray-200 w-2/3" />
           </div>
         ))}
       </div>
@@ -255,13 +271,14 @@ export default function ReviewList({ productId }: ReviewListProps) {
 
   return (
     <div className="space-y-6">
+      {/* Rating Filter */}
       <div className="flex flex-wrap gap-2">
         <button
-          onClick={() => setRatingFilter(null)}
-          className={`px-3 py-1 font-space text-xs border-2 transition-colors ${
+          onClick={() => handleRatingFilter(null)}
+          className={`px-4 py-2 text-xs font-bold tracking-wide transition-colors ${
             ratingFilter === null
-              ? "border-black bg-black text-white"
-              : "border-zinc-200 hover:border-zinc-400"
+              ? "bg-primarymain text-white"
+              : "border border-gray-200 text-gray-600 hover:border-primarymain"
           }`}
         >
           ALL
@@ -269,11 +286,11 @@ export default function ReviewList({ productId }: ReviewListProps) {
         {[5, 4, 3, 2, 1].map((rating) => (
           <button
             key={rating}
-            onClick={() => setRatingFilter(rating)}
-            className={`px-3 py-1 font-space text-xs border-2 transition-colors ${
+            onClick={() => handleRatingFilter(rating)}
+            className={`px-4 py-2 text-xs font-bold tracking-wide transition-colors ${
               ratingFilter === rating
-                ? "border-black bg-black text-white"
-                : "border-zinc-200 hover:border-zinc-400"
+                ? "bg-primarymain text-white"
+                : "border border-gray-200 text-gray-600 hover:border-primarymain"
             }`}
           >
             {rating} ★
@@ -281,73 +298,85 @@ export default function ReviewList({ productId }: ReviewListProps) {
         ))}
       </div>
 
+      {/* Reviews List */}
       {reviews.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed border-zinc-200">
-          <p className="font-space text-zinc-500">No reviews yet</p>
+        <div className="text-center py-16 border border-gray-200">
+          <p className="text-sm text-gray-400">No reviews yet</p>
+          <p className="text-xs text-gray-300 mt-1">Be the first to share your experience</p>
         </div>
       ) : (
         <div className="space-y-4">
           {reviews.map((review: Review) => (
             <div
               key={review.id}
-              className="border-2 border-zinc-200 p-4 hover:border-zinc-400 transition-colors"
+              className="border border-gray-200 hover:border-gray-300 transition-colors"
             >
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <Rating rating={review.rating} size="sm" />
-                  {review.title && (
-                    <h4 className="font-space font-bold mt-1">{review.title}</h4>
+              <div className="p-5">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <Rating rating={review.rating} size="sm" />
+                    {review.title && (
+                      <h4 className="font-bold text-gray-900 mt-2">{review.title}</h4>
+                    )}
+                  </div>
+                  {review.isVerifiedPurchase && (
+                    <span className="flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 px-2 py-1">
+                      <Check size={12} />
+                      Verified Purchase
+                    </span>
                   )}
                 </div>
-                {review.isVerifiedPurchase && (
-                  <span className="flex items-center gap-1 font-space text-xs text-green-600 bg-green-50 px-2 py-1">
-                    <Check size={12} />
-                    Verified Purchase
-                  </span>
+
+                {/* Comment */}
+                {review.comment && (
+                  <p className="text-sm text-gray-600 leading-relaxed">{review.comment}</p>
                 )}
-              </div>
-              {review.comment && (
-                <p className="font-space text-sm text-zinc-700 mt-2">{review.comment}</p>
-              )}
-              {review.images && review.images.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {review.images.map((imageKey, index) => (
-                    <img
-                      key={index}
-                      src={imageKey}
-                      alt={`Review image ${index + 1}`}
-                      className="w-20 h-20 object-cover border border-zinc-200"
-                    />
-                  ))}
+
+                {/* Images */}
+                {review.images && review.images.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {review.images.map((imageKey, index) => (
+                      <img
+                        key={index}
+                        src={imageKey}
+                        alt={`Review image ${index + 1}`}
+                        className="w-20 h-20 object-cover border border-gray-200 hover:border-gray-900 transition-colors cursor-pointer"
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-100">
+                  <span className="text-xs text-gray-400">
+                    {new Date(review.createdAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                  {review.helpfulCount > 0 && (
+                    <span className="flex items-center gap-1 text-xs text-gray-400">
+                      <ThumbsUp size={12} />
+                      {review.helpfulCount} helpful
+                    </span>
+                  )}
+                  <button
+                    onClick={() => toggleReplies(review.id)}
+                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-900 transition-colors"
+                  >
+                    <MessageSquare size={12} />
+                    {flatReplies.length || 0} Replies
+                  </button>
                 </div>
-              )}
-              <div className="flex items-center gap-4 mt-3 text-xs text-zinc-500">
-                <span className="font-space">
-                  {new Date(review.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-                {review.helpfulCount > 0 && (
-                  <span className="flex items-center gap-1 font-space">
-                    <ThumbsUp size={12} />
-                    {review.helpfulCount} helpful
-                  </span>
-                )}
-                <button
-                  onClick={() => toggleReplies(review.id)}
-                  className="flex items-center gap-1 font-space hover:text-black transition-colors"
-                >
-                  <MessageSquare size={12} />
-                  {flatReplies.length || 0} Replies
-                </button>
               </div>
 
+              {/* Replies Section */}
               {expandedReplies.has(review.id) && (
-                <div className="mt-4 pt-4 border-t border-zinc-100">
+                <div className="border-t border-gray-100 p-5 bg-gray-50">
                   {replyTree.length > 0 && (
-                    <div className="space-y-2 mb-4">
+                    <div className="space-y-3 mb-4">
                       {replyTree.map((reply) => (
                         <ReplyItem
                           key={reply.id}
@@ -364,6 +393,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
                     </div>
                   )}
 
+                  {/* Reply Input */}
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -381,7 +411,7 @@ export default function ReviewList({ productId }: ReviewListProps) {
                         }
                       }}
                       placeholder="Write a reply..."
-                      className="flex-1 px-3 py-2 border-2 border-zinc-200 font-space text-sm focus:outline-none focus:border-black"
+                      className="flex-1 px-4 py-2.5 border border-gray-200 text-sm focus:outline-none focus:border-primarymain transition-colors bg-white"
                       disabled={createReply.isPending}
                     />
                     <button
@@ -389,9 +419,9 @@ export default function ReviewList({ productId }: ReviewListProps) {
                       disabled={
                         createReply.isPending || !replyTexts[review.id]?.trim()
                       }
-                      className="px-3 py-2 bg-black text-white font-space text-xs font-bold hover:bg-zinc-800 disabled:bg-zinc-200 disabled:text-zinc-400 transition-colors"
+                      className="px-4 py-2.5 bg-primarymain text-white hover:bg-primarymain/90 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
                     >
-                      {createReply.isPending ? "..." : <Send size={14} />}
+                      <Send size={14} />
                     </button>
                   </div>
                 </div>
@@ -401,24 +431,57 @@ export default function ReviewList({ productId }: ReviewListProps) {
         </div>
       )}
 
+      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-3 py-1 font-space text-xs border-2 border-zinc-200 hover:border-black disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-10 h-10 flex items-center justify-center border border-gray-200 text-gray-500 hover:border-primarymain hover:text-primarymain disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            PREV
+            <ChevronLeft size={16} />
           </button>
-          <span className="font-space text-sm">
-            {page} / {totalPages}
-          </span>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter((p) => {
+              if (totalPages <= 5) return true;
+              if (p === 1 || p === totalPages) return true;
+              if (Math.abs(p - page) <= 1) return true;
+              return false;
+            })
+            .reduce<(number | string)[]>((acc, p, i, arr) => {
+              if (i > 0 && p - (arr[i - 1] as number) > 1) {
+                acc.push("...");
+              }
+              acc.push(p);
+              return acc;
+            }, [])
+            .map((p, i) =>
+              typeof p === "string" ? (
+                <span key={`dots-${i}`} className="w-10 h-10 flex items-center justify-center text-gray-300 text-sm">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`w-10 h-10 flex items-center justify-center text-sm font-medium transition-colors ${
+                    page === p
+                      ? "bg-primarymain text-white"
+                      : "border border-gray-200 text-gray-600 hover:border-primarymain"
+                  }`}
+                >
+                  {p}
+                </button>
+              )
+            )}
+
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-3 py-1 font-space text-xs border-2 border-zinc-200 hover:border-black disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-10 h-10 flex items-center justify-center border border-gray-200 text-gray-500 hover:border-primarymain hover:text-primarymain disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
-            NEXT
+            <ChevronRight size={16} />
           </button>
         </div>
       )}

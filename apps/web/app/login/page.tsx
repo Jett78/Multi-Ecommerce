@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn, signOut } from "@/lib/auth-client";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import PrimaryButton from "@/components/ui/primary-button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -77,29 +76,29 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
             Welcome Back
           </h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-1.5 text-sm text-gray-400">
             Sign in to your account
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl bg-white p-8 shadow-sm ring-1 ring-gray-900/5">
+        <form onSubmit={handleSubmit} className="space-y-4 border border-gray-200 bg-white p-6">
           {error && (
-            <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700 text-center">
+            <div className="border border-red-200 bg-red-50 p-3 text-sm text-red-600 text-center">
               {error}
             </div>
           )}
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 block">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-widest text-gray-400 block">
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               <input
                 type="email"
                 placeholder="you@example.com"
@@ -107,17 +106,17 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-4 py-3.5 text-sm outline-none transition-all placeholder:text-gray-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
+                className="w-full border border-gray-200 bg-white pl-9 pr-4 py-2.5 text-sm outline-none transition-all placeholder:text-gray-300 focus:border-gray-900 disabled:opacity-50"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700 block">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold uppercase tracking-widest text-gray-400 block">
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
@@ -125,18 +124,18 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50/50 pl-10 pr-12 py-3.5 text-sm outline-none transition-all placeholder:text-gray-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
+                className="w-full border border-gray-200 bg-white pl-9 pr-10 py-2.5 text-sm outline-none transition-all placeholder:text-gray-300 focus:border-gray-900 disabled:opacity-50"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 tabIndex={-1}
               >
                 {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
+                  <EyeOff className="h-3.5 w-3.5" />
                 ) : (
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-3.5 w-3.5" />
                 )}
               </button>
             </div>
@@ -146,31 +145,32 @@ export default function LoginPage() {
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-3.5 w-3.5 border-gray-300 text-gray-900 focus:ring-gray-900"
               />
               <span className="text-sm text-gray-600">Remember me</span>
             </label>
             <Link
               href="/forgot-password"
-              className="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+              className="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors"
             >
               Forgot password?
             </Link>
           </div>
 
-          <PrimaryButton
-            text={isLoading ? "Signing in..." : "Sign In"}
+          <button
             type="submit"
             disabled={isLoading}
-            className="w-full !py-3.5"
-          />
+            className="w-full bg-gray-900 py-3 text-sm font-bold text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+          >
+            {isLoading ? "Signing in..." : "Sign In"}
+          </button>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-3 text-gray-500 font-medium">
+              <span className="bg-white px-3 text-gray-400 font-medium">
                 Or continue with
               </span>
             </div>
@@ -180,9 +180,9 @@ export default function LoginPage() {
             type="button"
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-3 border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
+            <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 fill="#4285F4"
@@ -204,17 +204,15 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-600">
+        <p className="text-center text-sm text-gray-500">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"
-            className="font-semibold text-indigo-600 hover:text-indigo-500 transition-colors"
+            className="font-semibold text-gray-900 hover:text-gray-600 transition-colors"
           >
             Create an account
           </Link>
         </p>
-
-      
       </div>
     </div>
   );

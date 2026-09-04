@@ -50,30 +50,30 @@ export function ProfileNav() {
   };
 
   return (
-    <nav className="bg-white rounded-2xl border border-slate-200 p-3">
+    <nav className="bg-white border border-gray-200 p-2">
       <div className="space-y-1">
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={cn(
-              "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200",
+              "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
               isActive(item.href)
                 ? "bg-primarymain text-white"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             )}
           >
-            <item.icon className="size-5" />
+            <item.icon className="size-4" />
             <span>{item.name}</span>
           </Link>
         ))}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-100">
+      <div className="mt-2 pt-2 border-t border-gray-100">
         <AlertDialog>
           <AlertDialogTrigger>
-            <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all duration-200 w-full">
-              <LogOut className="size-5" />
+            <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors w-full">
+              <LogOut className="size-4" />
               <span>Logout</span>
             </button>
           </AlertDialogTrigger>
@@ -89,7 +89,7 @@ export function ProfileNav() {
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleLogout}
-                className="bg-rose-500 hover:bg-rose-600"
+                className="bg-red-600 hover:bg-red-700"
               >
                 Logout
               </AlertDialogAction>

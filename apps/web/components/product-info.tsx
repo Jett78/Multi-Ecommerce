@@ -63,37 +63,37 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Title & Category */}
       <div>
         {product.category && (
-          <span className="inline-block font-space text-xs font-bold uppercase tracking-wider bg-yellow-400 text-black px-3 py-1 mb-4">
+          <span className="inline-block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">
             {product.category.name}
           </span>
         )}
-        <h1 className="font-syne font-extrabold text-4xl md:text-5xl lg:text-6xl tracking-tight mb-4">
+        <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-gray-900 leading-tight mb-3">
           {product.name}
         </h1>
         {product.brand && (
-          <p className="font-space text-sm text-zinc-500">
-            BY {product.brand.name.toUpperCase()}
+          <p className="text-sm text-gray-400">
+            by {product.brand.name}
           </p>
         )}
       </div>
 
       {/* Price */}
-      <div className="pb-8 border-b-2 border-zinc-200">
-        <div className="flex items-baseline gap-4 mb-2">
-          <span className="font-syne text-4xl font-bold">
+      <div className="pb-6 border-b border-gray-200">
+        <div className="flex items-baseline gap-3 mb-2">
+          <span className="text-3xl font-bold text-gray-900">
             {formatPrice(currentPrice)}
           </span>
           {currentComparePrice && (
-            <span className="font-space text-lg text-zinc-400 line-through">
+            <span className="text-base text-gray-400 line-through">
               {formatPrice(currentComparePrice)}
             </span>
           )}
           {currentComparePrice && currentComparePrice > currentPrice && (
-            <span className="font-space text-sm font-bold bg-red-500 text-white px-2 py-1">
+            <span className="text-[11px] font-bold bg-primarymain text-white px-2 py-0.5 tracking-wide">
               SAVE {Math.round(((currentComparePrice - currentPrice) / currentComparePrice) * 100)}%
             </span>
           )}
@@ -102,18 +102,18 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
         {selectedVariant && selectedVariant.attributes && selectedVariant.attributes.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {selectedVariant.attributes.map((attr) => (
-              <span key={attr.id} className="font-space text-xs bg-zinc-100 px-2 py-1">
-                {attr.attributeName}: <span className="font-bold">{attr.attributeValue}</span>
+              <span key={attr.id} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1">
+                {attr.attributeName}: <span className="font-semibold">{attr.attributeValue}</span>
               </span>
             ))}
           </div>
         )}
 
         {hasVariants && Object.keys(attributeGroups).length > 0 && (
-          <div className="space-y-4 pt-4 border-t border-zinc-100">
+          <div className="space-y-4 pt-4 border-t border-gray-100">
             {Object.entries(attributeGroups).map(([attrName, values]) => (
               <div key={attrName}>
-                <h3 className="font-space text-xs font-bold uppercase tracking-wider mb-2">
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">
                   {attrName}
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -131,12 +131,12 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
                         key={value}
                         onClick={() => variant && onSelectVariant(variant)}
                         disabled={!isAvailable}
-                        className={`px-4 py-2 font-space text-sm border-2 transition-all ${
+                        className={`px-4 py-2 text-sm border transition-all ${
                           isSelected
-                            ? "border-black bg-black text-white"
+                            ? "border-primarymain bg-primarymain text-white"
                             : isAvailable
-                            ? "border-black bg-white text-black hover:bg-black hover:text-white"
-                            : "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                            ? "border-gray-300 bg-white text-gray-700 hover:border-primarymain hover:text-primarymain"
+                            : "border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed"
                         }`}
                       >
                         {value}
@@ -148,9 +148,9 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
             ))}
             {selectedVariant && (
               <div className="flex items-center gap-2 text-sm pt-2">
-                <span className="font-space font-bold">STOCK:</span>
-                <span className={`font-space ${currentStock <= 5 ? "text-red-600" : "text-green-600"}`}>
-                  {currentStock} AVAILABLE
+                <span className="font-semibold text-gray-500">Stock:</span>
+                <span className={`font-medium ${currentStock <= 5 ? "text-red-600" : "text-green-600"}`}>
+                  {currentStock} available
                 </span>
               </div>
             )}
@@ -160,22 +160,22 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
 
       {/* Stock Info (for non-variant products) */}
       {!hasVariants && (
-        <div className="flex items-center gap-3 pb-8 border-b-2 border-zinc-200">
+        <div className="flex items-center gap-3 pb-6 border-b border-gray-200">
           {isInStock ? (
             <>
-              <div className="flex items-center justify-center w-6 h-6 bg-green-500 rounded-full">
-                <Check size={16} className="text-white" />
+              <div className="flex items-center justify-center w-5 h-5 bg-green-500 rounded-full">
+                <Check size={12} className="text-white" />
               </div>
-              <span className="font-space text-sm">
-                <span className="font-bold">IN STOCK</span> · {currentStock} available
+              <span className="text-sm">
+                <span className="font-semibold">In stock</span> · {currentStock} available
               </span>
             </>
           ) : (
             <>
-              <div className="flex items-center justify-center w-6 h-6 bg-red-500 rounded-full">
-                <X size={16} className="text-white" />
+              <div className="flex items-center justify-center w-5 h-5 bg-red-500 rounded-full">
+                <X size={12} className="text-white" />
               </div>
-              <span className="font-space text-sm font-bold">OUT OF STOCK</span>
+              <span className="text-sm font-semibold text-red-600">Out of stock</span>
             </>
           )}
         </div>
@@ -184,23 +184,23 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
       {/* Quantity Selector */}
       {isInStock && (
         <div className="flex items-center gap-4">
-          <span className="font-space text-sm font-bold text-zinc-600">QUANTITY:</span>
-          <div className="flex items-center border-2 border-zinc-200">
+          <span className="text-sm font-medium text-gray-500">Quantity</span>
+          <div className="flex items-center border border-gray-300">
             <button
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="px-4 py-2 text-lg font-bold text-zinc-600 hover:bg-zinc-100 transition-colors"
+              className="px-3.5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
             >
               -
             </button>
-            <span className="w-12 text-center font-space text-sm font-bold">{quantity}</span>
+            <span className="w-10 text-center text-sm font-semibold">{quantity}</span>
             <button
               onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
-              className="px-4 py-2 text-lg font-bold text-zinc-600 hover:bg-zinc-100 transition-colors"
+              className="px-3.5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
             >
               +
             </button>
           </div>
-          <span className="font-space text-xs text-zinc-400">
+          <span className="text-xs text-gray-400">
             {currentStock} available
           </span>
         </div>
@@ -210,17 +210,17 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
       <button
         onClick={handleAddToCart}
         disabled={!isInStock}
-        className={`w-full py-4 font-space text-sm font-bold transition-all ${
+        className={`w-full py-4 text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 ${
           isInStock
-            ? "bg-black text-white hover:bg-zinc-800 active:scale-95"
-            : "bg-zinc-200 text-zinc-400 cursor-not-allowed"
+            ? "bg-primarymain text-white hover:bg-primarymain/90"
+            : "bg-gray-100 text-gray-400 cursor-not-allowed"
         }`}
       >
         {isInStock ? (
-          <span className="flex items-center justify-center gap-2">
-            <ShoppingBag size={18} />
+          <>
+            <ShoppingBag size={16} />
             ADD TO CART
-          </span>
+          </>
         ) : (
           "OUT OF STOCK"
         )}
@@ -228,31 +228,31 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
 
       {/* Description */}
       {product.description && (
-        <div className="space-y-4 pt-8 border-t-2 border-zinc-200">
-          <h2 className="font-syne font-bold text-2xl">ABOUT</h2>
+        <div className="space-y-3 pt-6 border-t border-gray-200">
+          <h2 className="text-base font-bold text-gray-900">About this product</h2>
           <div
-            className="font-space text-sm leading-relaxed text-zinc-700 prose prose-sm max-w-none"
+            className="text-sm leading-relaxed text-gray-600 prose prose-sm max-w-none"
             dangerouslySetInnerHTML={{ __html: product.description }}
           />
         </div>
       )}
 
       {/* Product Meta */}
-      <div className="space-y-2 pt-8 border-t-2 border-zinc-200">
+      <div className="space-y-2 pt-6 border-t border-gray-200">
         {product.sku && (
           <div className="flex gap-4">
-            <span className="font-space text-xs font-bold text-zinc-400 uppercase w-24">SKU:</span>
-            <span className="font-space text-xs">{product.sku}</span>
+            <span className="text-xs font-medium text-gray-400 uppercase w-20">SKU</span>
+            <span className="text-xs text-gray-600">{product.sku}</span>
           </div>
         )}
         {product.tags && product.tags.length > 0 && (
           <div className="flex gap-4">
-            <span className="font-space text-xs font-bold text-zinc-400 uppercase w-24">TAGS:</span>
-            <div className="flex flex-wrap gap-2">
+            <span className="text-xs font-medium text-gray-400 uppercase w-20">Tags</span>
+            <div className="flex flex-wrap gap-1.5">
               {product.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="font-space text-xs bg-zinc-100 px-2 py-1 uppercase"
+                  className="text-[11px] bg-gray-100 text-gray-600 px-2 py-0.5 uppercase tracking-wide"
                 >
                   {tag}
                 </span>

@@ -24,17 +24,17 @@ function CartItemRow({
       <button
         onClick={onToggle}
         className={cn(
-          "mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2 transition-colors",
+          "mt-1 flex h-4 w-4 flex-shrink-0 items-center justify-center border transition-colors",
           selected
             ? "border-primarymain bg-primarymain text-white"
-            : "border-gray-300 hover:border-gray-400"
+            : "border-gray-300 hover:border-gray-500"
         )}
       >
-        {selected && <Check className="h-3 w-3" />}
+        {selected && <Check className="h-2.5 w-2.5" />}
       </button>
 
       {/* Image */}
-      <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+      <div className="h-16 w-16 flex-shrink-0 overflow-hidden bg-gray-50 border border-gray-100">
         {item.imageUrl ? (
           <img
             src={item.imageUrl}
@@ -42,7 +42,7 @@ function CartItemRow({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-400">
+          <div className="flex h-full w-full items-center justify-center text-[10px] text-gray-300">
             IMG
           </div>
         )}
@@ -50,32 +50,32 @@ function CartItemRow({
 
       {/* Info + quantity */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-semibold text-gray-900 leading-tight">
+        <h3 className="text-sm font-medium text-gray-900 leading-tight line-clamp-1">
           {item.productName}
         </h3>
         {item.attributes && item.attributes.length > 0 ? (
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="mt-0.5 text-[11px] text-gray-400">
             {item.attributes.map((a) => `${a.attributeName}: ${a.attributeValue}`).join(", ")}
           </p>
         ) : item.variantSku ? (
-          <p className="mt-0.5 text-xs text-gray-500">
+          <p className="mt-0.5 text-[11px] text-gray-400">
             {item.variantSku}
           </p>
         ) : null}
-        <div className="mt-2 inline-flex items-center rounded-lg border border-gray-200">
+        <div className="mt-2 inline-flex items-center border border-gray-200">
           <button
             onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
             disabled={item.quantity <= 1}
-            className="px-2.5 py-1 text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+            className="px-2 py-1 text-gray-500 hover:bg-gray-50 disabled:opacity-30 transition-colors"
           >
             <Minus className="h-3 w-3" />
           </button>
-          <span className="w-8 text-center text-sm font-bold text-primarymain">
+          <span className="w-7 text-center text-xs font-semibold text-gray-900">
             {item.quantity}
           </span>
           <button
             onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-            className="px-2.5 py-1 text-gray-600 hover:bg-gray-50"
+            className="px-2 py-1 text-gray-500 hover:bg-gray-50 transition-colors"
           >
             <Plus className="h-3 w-3" />
           </button>
@@ -84,12 +84,12 @@ function CartItemRow({
 
       {/* Price + remove */}
       <div className="flex flex-col items-end gap-1">
-        <p className="text-sm font-bold text-gray-900 whitespace-nowrap">
+        <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">
           Rs {(item.priceAtAdd * item.quantity).toLocaleString()}
         </p>
         <button
           onClick={() => useCartStore.getState().removeItem(item.variantId)}
-          className="text-xs text-gray-400 hover:text-red-500"
+          className="text-[11px] text-gray-400 hover:text-red-500 transition-colors"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -140,7 +140,7 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
       {/* Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-300",
+          "fixed inset-0 z-[60] bg-black/30 transition-opacity duration-300",
           open ? "opacity-100" : "pointer-events-none opacity-0"
         )}
         onClick={onClose}
@@ -149,55 +149,55 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed top-0 right-0 z-[70] h-full w-full max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col",
+          "fixed top-0 right-0 z-[70] h-full w-full max-w-md bg-white shadow-xl transition-transform duration-300 ease-out flex flex-col border-l border-gray-100",
           open ? "translate-x-0" : "translate-x-full"
         )}
       >
-        {/* Header icon */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-2">
-          <div className="flex-1" />
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primarymain/10">
-            <Truck className="h-6 w-6 text-primarymain" />
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2.5">
+            <Truck className="h-4 w-4 text-gray-400" />
+            <span className="text-sm font-bold text-gray-900">Your Cart</span>
           </div>
           <button
             onClick={onClose}
-            className="flex-1 flex justify-end"
+            className="p-1.5 text-gray-400 hover:text-gray-900 transition-colors"
           >
-            <ArrowRight className="h-6 w-6 text-primarymain" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Select All */}
-        <div className="px-5 pb-2">
-          <button
-            onClick={handleSelectAll}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-900"
-          >
-            <span
-              className={cn(
-                "flex h-5 w-5 items-center justify-center rounded border-2 transition-colors",
-                allSelected
-                  ? "border-primarymain bg-primarymain text-white"
-                  : "border-gray-300"
-              )}
+        {items.length > 0 && (
+          <div className="px-5 py-3 border-b border-gray-50">
+            <button
+              onClick={handleSelectAll}
+              className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
             >
-              {allSelected && <Check className="h-3 w-3" />}
-            </span>
-            Select All ({items.length}/{items.length})
-          </button>
-        </div>
-
-        <div className="mx-5 border-t border-gray-100" />
+              <span
+                className={cn(
+                  "flex h-4 w-4 items-center justify-center border transition-colors",
+                  allSelected
+                    ? "border-primarymain bg-primarymain text-white"
+                    : "border-gray-300"
+                )}
+              >
+                {allSelected && <Check className="h-2.5 w-2.5" />}
+              </span>
+              Select all ({items.length})
+            </button>
+          </div>
+        )}
 
         {/* Items */}
         <div className="flex-1 overflow-y-auto px-5">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-sm font-semibold text-gray-900">Your cart is empty</p>
-              <p className="mt-1 text-xs text-gray-500">Add items to get started</p>
+              <p className="text-sm font-medium text-gray-900">Your cart is empty</p>
+              <p className="mt-1 text-xs text-gray-400">Add items to get started</p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-50">
               {items.map((item) => (
                 <CartItemRow
                   key={item.variantId}
@@ -214,17 +214,17 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
         {items.length > 0 && (
           <div className="border-t border-gray-100 px-5 py-4 space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="font-bold text-gray-900">Total</span>
+              <span className="font-medium text-gray-500">Total</span>
               <span className="font-bold text-gray-900">Rs {total.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-[11px] text-gray-400">
               <span>Shipping</span>
-              <span>Cost will appear on checkout</span>
+              <span>Calculated at checkout</span>
             </div>
             <Link
               href="/checkout"
               onClick={onClose}
-              className="flex w-full items-center justify-center rounded-xl bg-primarymain py-3.5 text-sm font-bold text-white transition-colors hover:bg-primarymain/90"
+              className="flex w-full items-center justify-center bg-primarymain py-3.5 text-sm font-bold text-white transition-colors hover:bg-primarymain/90"
             >
               CHECKOUT ({totalQty})
             </Link>

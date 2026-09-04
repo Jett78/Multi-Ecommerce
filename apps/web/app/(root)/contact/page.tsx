@@ -36,21 +36,21 @@ const ContactPage = async () => {
   }
 
   return (
-    <div className="bg-linear-to-b from-gray-50 to-white pt-24">
-      <section className="mx-auto max-w-7xl px-4 py-16 md:py-24 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-5 gap-8">
+    <div className="bg-gray-50 pt-20">
+      <section className="mx-auto max-w-7xl px-4 py-14 md:py-20 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-5 gap-6">
           {/* Contact Form */}
           <div className="lg:col-span-3">
-            <div className="bg-white border-slate-200 rounded-2xl p-4 md:p-6  border">
-              <h3 className="text-xl font-bold text-gray-900 mb-8">
+            <div className="bg-white border border-gray-200 p-5 md:p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-6">
                 Send us a Message
               </h3>
               <ContactForm />
             </div>
           </div>
           {/* Contact Info Sidebar */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-gray-900 rounded-2xl p-6 text-white shadow-xl">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="bg-gray-900 p-5 text-white">
               <ContactInfo companyInfo={companyInfo} />
             </div>
           </div>
@@ -67,7 +67,7 @@ const ContactPage = async () => {
                 : companyInfo.googleMap
             }
             loading="lazy"
-            className="w-full h-[500px] border-t border-gray-200"
+            className="w-full h-[400px] border-t border-gray-200"
           ></iframe>
         </section>
       )}

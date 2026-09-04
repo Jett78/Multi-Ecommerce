@@ -12,12 +12,9 @@ function getInitials(name: string): string {
 }
 
 const avatarColors = [
-  "from-violet-500 to-indigo-600",
-  "from-cyan-500 to-blue-600",
-  "from-emerald-500 to-teal-600",
-  "from-amber-500 to-orange-600",
-  "from-rose-500 to-pink-600",
-  "from-fuchsia-500 to-purple-600",
+  "from-gray-600 to-gray-800",
+  "from-gray-500 to-gray-700",
+  "from-gray-400 to-gray-600",
 ];
 
 function getAvatarColor(name: string): string {
@@ -39,14 +36,14 @@ const TestimonialCard = ({
   return (
     <div
       className={cn(
-        "group  relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6  transition-all duration-300",
+        "group relative border border-gray-200 bg-white p-5 transition-all duration-200 hover:border-gray-900",
         className
       )}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
-        className="text-primary/20 group-hover:text-primary/40 absolute top-6 right-6 h-10 w-10 transition-colors"
+        className="text-gray-200 group-hover:text-gray-300 absolute top-5 right-5 h-8 w-8 transition-colors"
       >
         <path
           fill="currentColor"
@@ -56,20 +53,20 @@ const TestimonialCard = ({
         />
       </svg>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <div className="relative">
           {testimonial.avatar ? (
             <Image
               src={testimonial.avatar}
               alt={testimonial.name}
-              width={56}
-              height={56}
-              className="ring-primary/20 h-14 w-14 rounded-full object-cover ring-2"
+              width={44}
+              height={44}
+              className="h-11 w-11 rounded-full object-cover"
             />
           ) : (
             <div
               className={cn(
-                "flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white ring-2 ring-primary/20",
+                "flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white",
                 getAvatarColor(testimonial.name)
               )}
             >
@@ -79,18 +76,18 @@ const TestimonialCard = ({
         </div>
 
         <div>
-          <p className="text-sm font-semibold text-zinc-900">
+          <p className="text-sm font-semibold text-gray-900">
             {testimonial.name}
           </p>
           {testimonial.designation && (
-            <p className="text-muted-foreground text-xs">
+            <p className="text-xs text-gray-400">
               {testimonial.designation}
             </p>
           )}
         </div>
       </div>
 
-      <p className="mt-6 text-xs leading-relaxed text-zinc-700 md:text-sm">
+      <p className="mt-4 text-sm leading-relaxed text-gray-600">
         &ldquo;{testimonial.message}&rdquo;
       </p>
     </div>

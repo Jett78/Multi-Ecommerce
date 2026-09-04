@@ -29,56 +29,61 @@ function isOutOfStock(product: Product) {
   return (product.stockQuantity ?? 0) <= 0;
 }
 
+function getDiscountPercent(product: Product): number | null {
+  const comparePrice = product.compareAtPrice;
+  const price = product.price ?? 0;
+  if (comparePrice && comparePrice > price) {
+    return Math.round(((comparePrice - price) / comparePrice) * 100);
+  }
+  return null;
+}
+
 export default function ProductCard({ product, index = 0 }: ProductCardProps) {
   const primaryImage =
     product.images?.find((img) => img.isPrimary) || product.images?.[0];
   const outOfStock = isOutOfStock(product);
+  const discountPercent = getDiscountPercent(product);
 
   return (
     <Link
       href={`/products/${product.slug}`}
       className="group relative"
-      style={{
-        animationDelay: `${index * 50}ms`,
-        animation: "fadeInUp 0.6s ease-out forwards",
-        opacity: 0,
-      }}
     >
-      <div className="relative aspect-square bg-zinc-100 overflow-hidden border-2 border-transparent group-hover:border-black transition-all duration-300">
+      <div className="relative aspect-square bg-gray-50 overflow-hidden border border-gray-200 group-hover:border-primarymain transition-colors duration-200">
         {primaryImage ? (
           <Image
             src={primaryImage.url}
             alt={product.name}
             fill
-            className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+            className="object-contain p-6 group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="flex items-center justify-center h-full font-syne text-4xl font-bold text-zinc-200">
+          <div className="flex items-center justify-center h-full text-4xl font-bold text-gray-200">
             {product.name.charAt(0)}
           </div>
         )}
         {outOfStock && (
           <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
-            <span className="font-space text-white text-xs font-bold px-4 py-2 border-2 border-white">
+            <span className="text-white text-[11px] font-bold tracking-widest px-4 py-1.5 border border-white">
               OUT OF STOCK
             </span>
           </div>
         )}
-        {product.isFeatured && (
-          <div className="absolute top-4 right-4 bg-yellow-400 text-black font-space text-xs font-bold px-3 py-1 rotate-3">
-            FEATURED
+        {discountPercent && (
+          <div className="absolute top-2 left-2 bg-primarymain text-white text-[10px] font-bold tracking-wider px-2 py-1 z-10">
+            SAVE {discountPercent}%
           </div>
         )}
       </div>
 
-      <div className="mt-4 space-y-2">
-        <h3 className="font-syne font-bold text-lg line-clamp-2 group-hover:underline">
+      <div className="mt-3 space-y-1.5">
+        <h3 className="font-medium text-[15px] leading-snug text-gray-900 line-clamp-2 group-hover:underline decoration-1 underline-offset-2">
           {product.name}
         </h3>
         <div className="flex items-center justify-between">
-          <p className="font-space text-sm font-bold">{getProductPrice(product)}</p>
+          <p className="text-sm font-semibold text-gray-900">{getProductPrice(product)}</p>
           {product.category && (
-            <span className="font-space text-xs text-zinc-500 uppercase">
+            <span className="text-[11px] text-gray-400 uppercase tracking-wide">
               {product.category.name}
             </span>
           )}

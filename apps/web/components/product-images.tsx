@@ -56,8 +56,8 @@ export default function ProductImages({ images, productName, isInStock }: Produc
 
   if (images.length === 0) {
     return (
-      <div className="relative aspect-square bg-white border-4 border-black overflow-hidden">
-        <div className="flex items-center justify-center h-full font-syne text-8xl font-bold text-zinc-100">
+      <div className="relative aspect-square bg-gray-50 border border-gray-200 overflow-hidden">
+        <div className="flex items-center justify-center h-full text-8xl font-bold text-gray-100">
           {productName.charAt(0)}
         </div>
       </div>
@@ -65,9 +65,9 @@ export default function ProductImages({ images, productName, isInStock }: Produc
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Main Image Slider */}
-      <div className="relative aspect-square bg-white border-4 border-black overflow-hidden group">
+      <div className="relative aspect-square bg-gray-50 border border-gray-200 overflow-hidden group">
         <Slider ref={mainSliderRef} {...mainSettings}>
           {images.map((img) => (
             <div key={img.id} className="aspect-square">
@@ -89,22 +89,22 @@ export default function ProductImages({ images, productName, isInStock }: Produc
           <>
             <button
               onClick={() => mainSliderRef.current?.slickPrev()}
-              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 border border-gray-200 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-white"
             >
-              <ChevronLeft size={20} />
+              <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => mainSliderRef.current?.slickNext()}
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 shadow-md opacity-0 group-hover:opacity-100 transition-opacity z-10"
+              className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 border border-gray-200 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-white"
             >
-              <ChevronRight size={20} />
+              <ChevronRight size={16} />
             </button>
           </>
         )}
 
         {/* Slide Counter */}
         {images.length > 1 && (
-          <div className="absolute bottom-3 right-3 bg-black/60 text-white font-space text-xs px-2 py-1 z-10">
+          <div className="absolute bottom-3 right-3 bg-gray-900/80 text-white text-[11px] font-medium px-2 py-0.5 z-10">
             {currentSlide + 1} / {images.length}
           </div>
         )}
@@ -113,8 +113,8 @@ export default function ProductImages({ images, productName, isInStock }: Produc
         {!isInStock && (
           <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-20">
             <div className="text-center">
-              <X size={48} className="mx-auto mb-4 text-red-500" />
-              <span className="font-space text-white text-sm font-bold">OUT OF STOCK</span>
+              <X size={40} className="mx-auto mb-3 text-red-400" />
+              <span className="text-white text-sm font-bold tracking-widest">OUT OF STOCK</span>
             </div>
           </div>
         )}
@@ -128,8 +128,8 @@ export default function ProductImages({ images, productName, isInStock }: Produc
               <div key={img.id} className="px-1">
                 <button
                   onClick={() => handleThumbClick(index)}
-                  className={`aspect-square bg-white border-2 w-full overflow-hidden transition-colors ${
-                    currentSlide === index ? "border-black" : "border-zinc-200 hover:border-zinc-400"
+                  className={`aspect-square bg-gray-50 border w-full overflow-hidden transition-colors ${
+                    currentSlide === index ? "border-gray-900" : "border-gray-200 hover:border-gray-400"
                   }`}
                 >
                   <Image

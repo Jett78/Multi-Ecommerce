@@ -26,24 +26,17 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
   const isInStock = currentStock > 0;
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400..800&display=swap');
-        
-        .font-syne { font-family: 'Syne', sans-serif; }
-        .font-space { font-family: 'Space Mono', monospace; }
-      `}</style>
-
-      <div className="max-w-7xl mx-auto px-6 py-12">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <Link
           href="/products"
-          className="inline-flex items-center gap-2 mb-8 font-space text-xs font-bold hover:underline"
+          className="inline-flex items-center gap-1.5 mb-8 text-[13px] font-medium text-gray-500 hover:text-gray-900 transition-colors"
         >
-          <ChevronLeft size={16} />
-          BACK TO SHOP
+          <ChevronLeft size={14} />
+          Back to shop
         </Link>
 
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-14">
           <div className="md:sticky md:top-6 md:self-start">
             <ProductImages
               images={displayImages}
@@ -60,11 +53,11 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
         </div>
 
         {/* Reviews Section */}
-        <div className="mt-16 pt-16 border-t-4 border-black">
-          <div className="grid lg:grid-cols-3 gap-12">
+        <div className="mt-16 pt-12 border-t border-gray-200">
+          <div className="grid lg:grid-cols-3 gap-10">
             {/* Rating Summary - Left Side */}
             <div className="lg:col-span-1">
-              <h2 className="font-syne font-bold text-3xl mb-6">CUSTOMER REVIEWS</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-5">Customer Reviews</h2>
               <RatingSummary productId={product.id} />
               <div className="mt-6">
                 <ReviewForm productId={product.id} />

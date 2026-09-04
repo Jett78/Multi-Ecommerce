@@ -20,46 +20,45 @@ export default function AccountSettingsPage() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6">
       {isSaving && <SubmittingLoader status="Saving settings" />}
 
-      {/* Notification Info Card */}
-      <div className="flex items-start gap-4 bg-white rounded-2xl border border-slate-200 p-6 ">
-        <div className="p-3 bg-blue-50 rounded-xl">
-          <Bell className="size-5 text-blue-600" />
+      {/* Notification Info */}
+      <div className="flex items-start gap-4 bg-white border border-gray-200 p-5">
+        <div className="w-10 h-10 flex items-center justify-center bg-gray-50 border border-gray-200 flex-shrink-0">
+          <Bell className="size-4 text-gray-500" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-slate-900">
+          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
             Notification Preferences
           </h3>
-          <p className="text-xs text-slate-500 mt-1">
-            Choose how you want to be notified about account activity and
-            updates.
+          <p className="text-xs text-gray-400 mt-1">
+            Choose how you want to be notified about account activity and updates.
           </p>
         </div>
       </div>
 
       {/* Notification Settings */}
-      <div className="bg-white rounded-2xl border border-slate-200  overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-linear-to-r from-slate-50/80 to-transparent">
-          <h2 className="text-sm font-bold text-slate-900">Email Notifications</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+      <div className="border border-gray-200 bg-white">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Email Notifications</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
             Manage your email notification settings
           </p>
         </div>
 
         <form onSubmit={handleSave} className="p-6 space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
+            <div className="flex items-center justify-between p-4 border border-gray-100 hover:border-gray-200 transition-colors">
               <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-blue-50 rounded-lg">
-                  <Mail className="size-4 text-blue-600" />
+                <div className="w-10 h-10 flex items-center justify-center bg-gray-50 border border-gray-200">
+                  <Mail className="size-4 text-gray-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900">
+                  <p className="text-sm font-medium text-gray-900">
                     Email Notifications
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-gray-400 mt-0.5">
                     Receive email updates about your account activity.
                   </p>
                 </div>
@@ -71,20 +70,20 @@ export default function AccountSettingsPage() {
                   onChange={(e) => setEmailNotifications(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primarymain" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primarymain" />
               </label>
             </div>
 
-            <div className="flex items-center justify-between p-4 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors">
+            <div className="flex items-center justify-between p-4 border border-gray-100 hover:border-gray-200 transition-colors">
               <div className="flex items-center gap-4">
-                <div className="p-2.5 bg-purple-50 rounded-lg">
-                  <CheckCircle className="size-4 text-purple-600" />
+                <div className="w-10 h-10 flex items-center justify-center bg-gray-50 border border-gray-200">
+                  <CheckCircle className="size-4 text-gray-500" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900">
+                  <p className="text-sm font-medium text-gray-900">
                     Marketing Emails
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-gray-400 mt-0.5">
                     Receive emails about new features and updates.
                   </p>
                 </div>
@@ -96,7 +95,7 @@ export default function AccountSettingsPage() {
                   onChange={(e) => setMarketingEmails(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primarymain" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primarymain" />
               </label>
             </div>
           </div>
@@ -106,7 +105,6 @@ export default function AccountSettingsPage() {
               type="submit"
               text={isSaving ? "Saving..." : "Save Changes"}
               disabled={isSaving}
-              className="rounded-xl"
             />
           </div>
         </form>

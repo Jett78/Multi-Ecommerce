@@ -42,7 +42,7 @@ const paymentMethods = [
     label: "Cash on Delivery",
     desc: "Pay when you receive your order",
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="6" width="20" height="12" rx="2" />
         <circle cx="12" cy="12" r="2" />
         <path d="M6 12h.01M18 12h.01" />
@@ -54,7 +54,7 @@ const paymentMethods = [
     label: "Khalti",
     desc: "Pay via Khalti digital wallet",
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="5" y="2" width="14" height="20" rx="3" />
         <path d="M12 18h.01" />
       </svg>
@@ -361,10 +361,10 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
 
   if (isPending) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white/90">
+      <div className="flex min-h-screen items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-          <p className="text-sm text-gray-400 tracking-wide">Loading checkout...</p>
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-primarymain" />
+          <p className="text-sm text-gray-400">Loading checkout...</p>
         </div>
       </div>
     );
@@ -372,17 +372,17 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-white/90 pt-24">
+      <div className="min-h-screen bg-white pt-24">
         <div className="mx-auto max-w-4xl px-4 py-8">
-          <div className="rounded-2xl border border-gray-200 bg-white py-20 text-center">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gray-50 mb-6">
-              <Package className="h-10 w-10 text-gray-300" />
+          <div className="border border-gray-200 bg-white py-20 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center bg-gray-50 mb-5">
+              <Package className="h-8 w-8 text-gray-300" />
             </div>
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900">Your cart is empty</h2>
+            <h2 className="text-xl font-bold text-gray-900">Your cart is empty</h2>
             <p className="mt-2 text-sm text-gray-400">Add some items to get started.</p>
             <Link
               href="/products"
-              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 text-sm font-semibold text-white transition-all hover:bg-blue-700 active:scale-[0.98]"
+              className="mt-6 inline-flex items-center gap-2 bg-primarymain px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-primarymain/90"
             >
               Browse Products
               <ChevronRight className="h-4 w-4" />
@@ -394,24 +394,22 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-white/90">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-28 pb-16">
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 pb-16">
         {/* Header */}
-        <div className="mb-10">
+        <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
                 Checkout
               </h1>
-              <p className="mt-2 text-sm text-gray-400">
+              <p className="mt-1.5 text-sm text-gray-400">
                 Complete your order in just a few steps
               </p>
             </div>
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2">
-                <ShieldCheck className="h-4 w-4 text-blue-600" />
-                <span className="text-xs font-semibold text-blue-600">Secure Checkout</span>
-              </div>
+            <div className="hidden sm:flex items-center gap-2 border border-gray-200 px-3 py-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-gray-400" />
+              <span className="text-[11px] font-bold tracking-wide text-gray-500 uppercase">Secure</span>
             </div>
           </div>
         </div>
@@ -419,17 +417,17 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 lg:grid-cols-5">
             {/* Left Column */}
-            <div className="lg:col-span-3 space-y-6">
+            <div className="lg:col-span-3 space-y-5">
               {/* Contact Information */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-6">
+              <div className="border border-gray-200 p-5">
                 <SectionHeader
                   title="Contact Information"
                   subtitle="How can we reach you?"
-                  icon={<User className="h-5 w-5" />}
+                  icon={<User className="h-4 w-4" />}
                 />
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">
                       Full Name <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -439,11 +437,11 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                       onChange={handleFormChange}
                       required
                       placeholder="John Doe"
-                      className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
+                      className="block w-full border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-primarymain focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">
                       Email <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -453,11 +451,11 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                       onChange={handleFormChange}
                       required
                       placeholder="you@example.com"
-                      className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
+                      className="block w-full border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-primarymain focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">
                       Phone <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -467,7 +465,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                       onChange={handleFormChange}
                       required
                       placeholder="+977 98XXXXXXXX"
-                      className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
+                      className="block w-full border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-primarymain focus:outline-none"
                     />
                   </div>
                 </div>
@@ -475,29 +473,29 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
 
               {/* Delivery Address */}
               {isAuthenticated && (
-                <div className="rounded-2xl border border-gray-200 bg-white p-6">
+                <div className="border border-gray-200 p-5">
                   <SavedAddressSelector selectedId={selectedAddressId} onApply={applyAddress} />
                 </div>
               )}
 
               {!isAuthenticated && (
-                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+                <div className="border border-gray-200 bg-gray-50 p-5">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-                      <Lock className="h-5 w-5" />
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center bg-gray-200 text-gray-500">
+                      <Lock className="h-4 w-4" />
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-base font-bold text-gray-900">Sign in to continue</h2>
-                      <p className="mt-1 text-sm text-gray-500">
+                      <h2 className="text-sm font-bold text-gray-900">Sign in to continue</h2>
+                      <p className="mt-1 text-xs text-gray-500">
                         Sign in to save your address and complete your order faster.
                       </p>
                       <button
                         type="button"
                         onClick={() => setShowLogin(true)}
-                        className="mt-3 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-blue-700 active:scale-[0.98]"
+                        className="mt-3 inline-flex items-center gap-1.5 bg-primarymain px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-primarymain/90"
                       >
                         Sign in
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -505,11 +503,11 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
               )}
 
               {/* Order Notes */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-6">
+              <div className="border border-gray-200 p-5">
                 <SectionHeader
                   title="Order Notes"
                   subtitle="Any special delivery instructions?"
-                  icon={<FileText className="h-5 w-5" />}
+                  icon={<FileText className="h-4 w-4" />}
                 />
                 <textarea
                   name="notes"
@@ -517,25 +515,25 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                   onChange={handleFormChange}
                   rows={3}
                   placeholder="Apartment number, gate code, preferred delivery time..."
-                  className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none resize-none"
+                  className="block w-full border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-primarymain focus:outline-none resize-none"
                 />
               </div>
 
               {/* Payment Method */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-6">
+              <div className="border border-gray-200 p-5">
                 <SectionHeader
                   title="Payment Method"
                   subtitle="How would you like to pay?"
-                  icon={<CreditCard className="h-5 w-5" />}
+                  icon={<CreditCard className="h-4 w-4" />}
                 />
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {availablePaymentMethods.map((method) => (
                     <label
                       key={method.id}
-                      className={`group flex cursor-pointer items-center gap-4 rounded-xl border-2 p-4 transition-all ${
+                      className={`group flex cursor-pointer items-center gap-3 border p-3.5 transition-all ${
                         paymentMethod === method.id
-                          ? "border-blue-500 bg-blue-50/50"
-                          : "border-gray-100 hover:border-gray-200"
+                          ? "border-primarymain bg-gray-50"
+                          : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
                       <input
@@ -547,9 +545,9 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                         className="sr-only"
                       />
                       <div
-                        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl transition-colors ${
+                        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center transition-colors ${
                           paymentMethod === method.id
-                            ? "bg-blue-600 text-white"
+                            ? "bg-primarymain text-white"
                             : "bg-gray-100 text-gray-400"
                         }`}
                       >
@@ -557,17 +555,17 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-gray-900">{method.label}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{method.desc}</p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">{method.desc}</p>
                       </div>
                       <div
-                        className={`flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all ${
+                        className={`flex h-4 w-4 items-center justify-center border transition-all ${
                           paymentMethod === method.id
-                            ? "border-blue-600 bg-blue-600"
+                            ? "border-primarymain bg-primarymain"
                             : "border-gray-300"
                         }`}
                       >
                         {paymentMethod === method.id && (
-                          <Check className="h-3 w-3 text-white" />
+                          <Check className="h-2.5 w-2.5 text-white" />
                         )}
                       </div>
                     </label>
@@ -579,23 +577,19 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
             {/* Right Column — Order Summary */}
             <div className="lg:col-span-2">
               <div className="sticky top-28">
-                <div className="rounded-2xl border border-gray-200 bg-white p-6">
-                  <div className="flex items-center justify-between mb-5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                        <Package className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h2 className="text-base font-bold text-gray-900">Order Summary</h2>
-                        <p className="text-xs text-gray-400">{itemCount} {itemCount === 1 ? "item" : "items"}</p>
-                      </div>
+                <div className="border border-gray-200 p-5">
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <Package className="h-4 w-4 text-gray-400" />
+                    <div>
+                      <h2 className="text-sm font-bold text-gray-900">Order Summary</h2>
+                      <p className="text-[11px] text-gray-400">{itemCount} {itemCount === 1 ? "item" : "items"}</p>
                     </div>
                   </div>
 
-                  <div className="max-h-72 space-y-4 overflow-y-auto pr-1 mb-5">
+                  <div className="max-h-64 space-y-3 overflow-y-auto pr-1 mb-4">
                     {items.map((item) => (
                       <div key={item.variantId} className="flex items-center gap-3">
-                        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 border border-gray-100">
+                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden bg-gray-50 border border-gray-100">
                           {item.imageUrl ? (
                             <img src={item.imageUrl} alt={item.productName} className="h-full w-full object-cover" />
                           ) : (
@@ -603,15 +597,15 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="truncate text-sm font-semibold text-gray-900">{item.productName}</p>
+                          <p className="truncate text-sm font-medium text-gray-900">{item.productName}</p>
                           {item.attributes && item.attributes.length > 0 && (
-                            <p className="text-xs text-gray-400 mt-0.5">
+                            <p className="text-[11px] text-gray-400 mt-0.5">
                               {item.attributes.map((a) => a.attributeValue).join(", ")}
                             </p>
                           )}
-                          <p className="text-xs text-gray-300 mt-0.5">Qty: {item.quantity}</p>
+                          <p className="text-[11px] text-gray-300 mt-0.5">Qty: {item.quantity}</p>
                         </div>
-                        <p className="text-sm font-bold text-gray-900">
+                        <p className="text-sm font-semibold text-gray-900">
                           Rs. {(item.priceAtAdd * item.quantity).toLocaleString()}
                         </p>
                       </div>
@@ -619,17 +613,17 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                   </div>
 
                   {/* Coupon Input */}
-                  <div className="mb-5">
+                  <div className="mb-4">
                     {appliedCoupon ? (
-                      <div className="flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                      <div className="flex items-center justify-between border border-gray-200 bg-gray-50 px-3 py-2.5">
                         <div className="flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-emerald-600" />
-                          <span className="text-sm font-semibold text-emerald-700">{appliedCoupon.code}</span>
+                          <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                          <span className="text-sm font-semibold text-gray-900">{appliedCoupon.code}</span>
                         </div>
                         <button
                           type="button"
                           onClick={handleRemoveCoupon}
-                          className="flex h-6 w-6 items-center justify-center rounded-full text-emerald-600 hover:bg-emerald-100 transition-colors"
+                          className="flex h-5 w-5 items-center justify-center text-gray-400 hover:text-gray-900 transition-colors"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -641,18 +635,18 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                           value={couponCode}
                           onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(""); }}
                           placeholder="Coupon code"
-                          className="flex-1 rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-blue-500 focus:bg-white focus:outline-none"
+                          className="flex-1 border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-300 transition-colors focus:border-primarymain focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={handleApplyCoupon}
                           disabled={couponLoading || !couponCode.trim()}
-                          className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-600 transition-all hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="flex items-center gap-1.5 border border-gray-200 bg-white px-3.5 py-2 text-sm font-semibold text-gray-700 transition-all hover:border-primarymain hover:text-primarymain disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           {couponLoading ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <Loader2 className="h-3 w-3 animate-spin" />
                           ) : (
-                            <Tag className="h-3.5 w-3.5" />
+                            <Tag className="h-3 w-3" />
                           )}
                           Apply
                         </button>
@@ -663,15 +657,15 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                     )}
                   </div>
 
-                  <div className="space-y-2.5 border-t border-gray-100 pt-5">
+                  <div className="space-y-2 border-t border-gray-100 pt-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Subtotal</span>
                       <span className="font-semibold text-gray-900">Rs. {subtotal.toLocaleString()}</span>
                     </div>
                     {appliedCoupon && appliedCoupon.discountAmount > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-emerald-600">Discount ({appliedCoupon.code})</span>
-                        <span className="font-semibold text-emerald-600">- Rs. {appliedCoupon.discountAmount.toLocaleString()}</span>
+                        <span className="text-green-600">Discount ({appliedCoupon.code})</span>
+                        <span className="font-semibold text-green-600">- Rs. {appliedCoupon.discountAmount.toLocaleString()}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
@@ -683,15 +677,15 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                       ) : deliveryCharge > 0 ? (
                         <span className="font-semibold text-gray-900">Rs. {deliveryCharge.toLocaleString()}</span>
                       ) : appliedCoupon?.type === "free_shipping" ? (
-                        <span className="font-semibold text-emerald-600">Free (coupon)</span>
+                        <span className="font-semibold text-green-600">Free (coupon)</span>
                       ) : selectedAddress ? (
-                        <span className="font-semibold text-emerald-600">Free</span>
+                        <span className="font-semibold text-green-600">Free</span>
                       ) : (
                         <span className="font-semibold text-gray-400">Select address</span>
                       )}
                     </div>
                     {selectedAddress?.district && (
-                      <div className="flex justify-between text-xs">
+                      <div className="flex justify-between text-[11px]">
                         <span className="text-gray-400">Delivery Area</span>
                         <span className="text-gray-500">{selectedAddress.district}{deliveryRate?.providerUsed && deliveryRate.providerUsed !== "default" ? ` (Pathao Courier)` : ''}</span>
                       </div>
@@ -710,22 +704,22 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                     )}
                     <div className="border-t border-gray-100 pt-3">
                       <div className="flex justify-between items-baseline">
-                        <span className="text-base font-bold text-gray-900">Total</span>
-                        <span className="text-2xl font-bold text-gray-900">Rs. {totalWithDelivery.toLocaleString()}</span>
+                        <span className="text-sm font-bold text-gray-900">Total</span>
+                        <span className="text-xl font-bold text-gray-900">Rs. {totalWithDelivery.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Trust badge */}
-                  <div className="mt-5 flex items-center gap-2.5 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
-                    <ShieldCheck className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                    <p className="text-xs font-medium text-emerald-700">
+                  <div className="mt-4 flex items-center gap-2 border border-gray-200 bg-gray-50 px-3 py-2.5">
+                    <ShieldCheck className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                    <p className="text-[11px] font-medium text-gray-500">
                       Your payment is secure and encrypted. We never store your card details.
                     </p>
                   </div>
 
                   {!isAuthenticated && (
-                    <p className="mt-3 text-center text-xs text-gray-400">
+                    <p className="mt-3 text-center text-[11px] text-gray-400">
                       You&apos;ll be asked to sign in when you place your order.
                     </p>
                   )}
@@ -733,7 +727,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                   <button
                     type="submit"
                     disabled={create.isPending}
-                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-bold text-white transition-all hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+                    className="mt-4 flex w-full items-center justify-center gap-2 bg-primarymain px-6 py-3.5 text-sm font-bold text-white transition-colors hover:bg-primarymain/90 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {create.isPending ? (
                       <>
@@ -749,16 +743,16 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                   </button>
 
                   {/* Trust icons */}
-                  <div className="mt-5 grid grid-cols-3 gap-3 border-t border-gray-100 pt-5">
+                  <div className="mt-4 grid grid-cols-3 gap-3 border-t border-gray-100 pt-4">
                     {[
-                      { icon: <ShieldCheck className="h-4 w-4" />, label: "Secured", sub: "Checkout" },
-                      { icon: <RotateCcw className="h-4 w-4" />, label: "Easy", sub: "Returns" },
-                      { icon: <Headphones className="h-4 w-4" />, label: "24/7", sub: "Support" },
+                      { icon: <ShieldCheck className="h-3.5 w-3.5" />, label: "Secured", sub: "Checkout" },
+                      { icon: <RotateCcw className="h-3.5 w-3.5" />, label: "Easy", sub: "Returns" },
+                      { icon: <Headphones className="h-3.5 w-3.5" />, label: "24/7", sub: "Support" },
                     ].map((item, i) => (
-                      <div key={i} className="flex flex-col items-center gap-1 text-center">
+                      <div key={i} className="flex flex-col items-center gap-0.5 text-center">
                         <div className="text-gray-400">{item.icon}</div>
-                        <p className="text-[11px] font-bold text-gray-700">{item.label}</p>
-                        <p className="text-[10px] text-gray-400">{item.sub}</p>
+                        <p className="text-[10px] font-bold text-gray-700">{item.label}</p>
+                        <p className="text-[9px] text-gray-400">{item.sub}</p>
                       </div>
                     ))}
                   </div>
@@ -769,19 +763,19 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
         </form>
 
         {/* Bottom Trust Bar */}
-        <div className="mt-10 grid grid-cols-3 gap-4 rounded-2xl border border-gray-200 bg-white p-5">
+        <div className="mt-8 grid grid-cols-3 gap-4 border border-gray-200 p-4">
           {[
-            { icon: <Truck className="h-5 w-5" />, label: "Free Shipping", sub: "On all orders" },
-            { icon: <RotateCcw className="h-5 w-5" />, label: "Easy Returns", sub: "Hassle free returns" },
-            { icon: <ShieldCheck className="h-5 w-5" />, label: "100% Secure", sub: "Secure payments" },
+            { icon: <Truck className="h-4 w-4" />, label: "Free Shipping", sub: "On all orders" },
+            { icon: <RotateCcw className="h-4 w-4" />, label: "Easy Returns", sub: "Hassle free returns" },
+            { icon: <ShieldCheck className="h-4 w-4" />, label: "100% Secure", sub: "Secure payments" },
           ].map((item, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+            <div key={i} className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center bg-gray-100 text-gray-500">
                 {item.icon}
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-900">{item.label}</p>
-                <p className="text-xs text-gray-400">{item.sub}</p>
+                <p className="text-xs font-bold text-gray-900">{item.label}</p>
+                <p className="text-[10px] text-gray-400">{item.sub}</p>
               </div>
             </div>
           ))}
@@ -790,25 +784,25 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
 
       {/* Login Modal */}
       {showLogin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-8 animate-in fade-in zoom-in-95 duration-200">
-            <div className="mb-6 flex flex-col items-center text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 mb-3">
-                <Lock className="h-5 w-5 text-blue-600" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md border border-gray-200 bg-white p-7">
+            <div className="mb-5 flex flex-col items-center text-center">
+              <div className="flex h-10 w-10 items-center justify-center bg-gray-100 mb-3">
+                <Lock className="h-4 w-4 text-gray-500" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">Welcome back</h2>
+              <h2 className="text-lg font-bold text-gray-900">Welcome back</h2>
               <p className="mt-1 text-sm text-gray-400">Sign in to complete your order</p>
             </div>
 
             <form onSubmit={handleInlineLogin} className="space-y-4">
               {loginError && (
-                <div className="rounded-xl bg-red-50 border border-red-100 p-3 text-sm text-red-600 text-center font-medium">
+                <div className="border border-red-200 bg-red-50 p-3 text-sm text-red-600 text-center font-medium">
                   {loginError}
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Email</label>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Email</label>
                 <input
                   type="email"
                   name="email"
@@ -817,12 +811,12 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                   onChange={handleLoginChange}
                   required
                   disabled={isLoggingIn}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm outline-none transition-all placeholder:text-gray-300 focus:bg-white focus:border-blue-500 disabled:opacity-50"
+                  className="w-full border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition-all placeholder:text-gray-300 focus:border-primarymain disabled:opacity-50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1.5">Password</label>
+                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Password</label>
                 <input
                   type="password"
                   name="password"
@@ -831,27 +825,27 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                   onChange={handleLoginChange}
                   required
                   disabled={isLoggingIn}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm outline-none transition-all placeholder:text-gray-300 focus:bg-white focus:border-blue-500 disabled:opacity-50"
+                  className="w-full border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition-all placeholder:text-gray-300 focus:border-primarymain disabled:opacity-50"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isLoggingIn}
-                className="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white transition-all hover:bg-blue-700 disabled:opacity-50 active:scale-[0.98]"
+                className="w-full bg-primarymain py-3 text-sm font-bold text-white transition-colors hover:bg-primarymain/90 disabled:opacity-50"
               >
                 {isLoggingIn ? "Signing in..." : "Sign In & Place Order"}
               </button>
             </form>
 
-            <div className="mt-5 flex items-center justify-between text-sm border-t border-gray-100 pt-4">
+            <div className="mt-4 flex items-center justify-between text-sm border-t border-gray-100 pt-4">
               <Link
                 href={`/login?redirect=${encodeURIComponent("/checkout")}`}
-                className="font-medium text-gray-400 hover:text-blue-600 transition-colors"
+                className="font-medium text-gray-400 hover:text-gray-900 transition-colors"
               >
                 Full login page
               </Link>
-              <Link href="/register" className="font-medium text-gray-400 hover:text-blue-600 transition-colors">
+              <Link href="/register" className="font-medium text-gray-400 hover:text-gray-900 transition-colors">
                 Create account
               </Link>
             </div>
@@ -880,13 +874,13 @@ function SectionHeader({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="mb-5 flex items-start gap-3">
-      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+    <div className="mb-4 flex items-start gap-2.5">
+      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center bg-gray-100 text-gray-500">
         {icon}
       </div>
       <div className="flex-1">
-        <h2 className="text-base font-bold text-gray-900">{title}</h2>
-        <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>
+        <h2 className="text-sm font-bold text-gray-900">{title}</h2>
+        <p className="text-[11px] text-gray-400 mt-0.5">{subtitle}</p>
       </div>
     </div>
   );

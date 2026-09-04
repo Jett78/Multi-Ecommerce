@@ -88,7 +88,7 @@ export default function UserProfilePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="size-8 border-4 border-primarymain border-t-transparent rounded-full animate-spin" />
+        <div className="size-8 border-4 border-primarymain border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -109,40 +109,33 @@ export default function UserProfilePage() {
     .slice(0, 2);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8">
       {mutation.isPending && <SubmittingLoader status="Saving profile" />}
-      {/* Profile Header Card */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        {/* Cover Background */}
-        <div className="h-32 bg-linear-to-r from-primarymain/20 via-primarymain/10 to-slate-100" />
 
-        {/* Profile Info */}
-        <div className="relative px-6 pb-6">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12">
-            {/* Avatar */}
+      {/* Profile Header */}
+      <div className="border border-gray-200 bg-white">
+        <div className="h-20 bg-gray-50 border-b border-gray-100" />
+        <div className="px-6 pb-6 -mt-10">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-4">
             <AvatarUpload
               currentImage={imageUrl}
               initials={initials}
               onImageUploaded={(url) => setImageUrl(url)}
               size="md"
             />
-
-            {/* Name & Role */}
             <div className="flex-1 sm:pb-1">
-              <h1 className="text-xl font-bold text-slate-900">
+              <h1 className="text-xl font-bold text-gray-900">
                 {profileData.name}
               </h1>
-              <p className="text-sm text-slate-500">{profileData.email}</p>
+              <p className="text-sm text-gray-500">{profileData.email}</p>
             </div>
-
-            {/* Role Badge */}
             <div className="flex items-center gap-2 sm:pb-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-primarymain/10 text-primarymain capitalize">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold bg-gray-100 text-gray-700 uppercase tracking-wide">
                 <Shield className="size-3.5" />
                 {profileData.role?.replace("_", " ")}
               </span>
               {profileData.emailVerified && (
-                <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600">
+                <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold bg-green-50 text-green-700 uppercase tracking-wide">
                   <CheckCircle className="size-3.5" />
                   Verified
                 </span>
@@ -152,37 +145,37 @@ export default function UserProfilePage() {
         </div>
       </div>
 
-      {/* Quick Info Cards */}
+      {/* Quick Info */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="flex items-center gap-4 bg-white rounded-2xl border border-slate-200 p-4 ">
-          <div className="p-3 bg-blue-50 rounded-xl">
-            <Mail className="size-5 text-blue-600" />
+        <div className="flex items-center gap-4 bg-white border border-gray-200 p-4">
+          <div className="w-10 h-10 flex items-center justify-center bg-gray-50 border border-gray-200">
+            <Mail className="size-4 text-gray-500" />
           </div>
           <div>
-            <p className="text-xs text-slate-500">Email</p>
-            <p className="text-sm font-medium text-slate-900 truncate max-w-[180px]">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Email</p>
+            <p className="text-sm font-medium text-gray-900 truncate max-w-[180px]">
               {profileData.email}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4 bg-white rounded-2xl border border-slate-200 p-4 ">
-          <div className="p-3 bg-purple-50 rounded-xl">
-            <Phone className="size-5 text-purple-600" />
+        <div className="flex items-center gap-4 bg-white border border-gray-200 p-4">
+          <div className="w-10 h-10 flex items-center justify-center bg-gray-50 border border-gray-200">
+            <Phone className="size-4 text-gray-500" />
           </div>
           <div>
-            <p className="text-xs text-slate-500">Phone</p>
-            <p className="text-sm font-medium text-slate-900">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Phone</p>
+            <p className="text-sm font-medium text-gray-900">
               {profileData.phone || "Not set"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-4 bg-white rounded-2xl border border-slate-200 p-4 ">
-          <div className="p-3 bg-amber-50 rounded-xl">
-            <Calendar className="size-5 text-amber-600" />
+        <div className="flex items-center gap-4 bg-white border border-gray-200 p-4">
+          <div className="w-10 h-10 flex items-center justify-center bg-gray-50 border border-gray-200">
+            <Calendar className="size-4 text-gray-500" />
           </div>
           <div>
-            <p className="text-xs text-slate-500">Joined</p>
-            <p className="text-sm font-medium text-slate-900">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Joined</p>
+            <p className="text-sm font-medium text-gray-900">
               {new Date(profileData.createdAt).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -194,12 +187,12 @@ export default function UserProfilePage() {
       </div>
 
       {/* Edit Form */}
-      <div className="bg-white rounded-2xl border border-slate-200  overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-linear-to-r from-slate-50/80 to-transparent">
-          <h2 className="text-sm font-bold text-slate-900">
+      <div className="border border-gray-200 bg-white">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
             Personal Information
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-gray-400 mt-0.5">
             Update your personal details
           </p>
         </div>
@@ -207,84 +200,84 @@ export default function UserProfilePage() {
         <form onSubmit={handleSave} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-xs font-semibold text-slate-700">
+              <Label htmlFor="name" className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
                 Full Name
               </Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your full name"
-                  className="pl-10 h-11 rounded-xl"
+                  className="pl-10 h-11 border-gray-200 focus:border-primarymain"
                   disabled={mutation.isPending}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-semibold text-slate-700">
+              <Label htmlFor="email" className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
                 Email Address
               </Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
                   value={profileData.email}
-                  className="pl-10 h-11 rounded-xl bg-slate-50"
+                  className="pl-10 h-11 bg-gray-50 border-gray-200"
                   disabled
                 />
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-gray-400">
                 Contact support to change your email
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-xs font-semibold text-slate-700">
+              <Label htmlFor="phone" className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
                 Phone Number
               </Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                 <Input
                   id="phone"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+977-9841234567"
-                  className="pl-10 h-11 rounded-xl"
+                  className="pl-10 h-11 border-gray-200 focus:border-primarymain"
                   disabled={mutation.isPending}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-semibold text-slate-700">
+              <Label className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
                 Role
               </Label>
               <div className="relative">
-                <Shield className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                <Shield className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                 <Input
                   value={profileData.role?.replace("_", " ") || "customer"}
-                  className="pl-10 h-11 rounded-xl bg-slate-50 capitalize"
+                  className="pl-10 h-11 bg-gray-50 border-gray-200 capitalize"
                   disabled
                 />
               </div>
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="address" className="text-xs font-semibold text-slate-700">
+              <Label htmlFor="address" className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
                 Address
               </Label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" />
                 <Input
                   id="address"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="Enter your full address"
-                  className="pl-10 h-11 rounded-xl"
+                  className="pl-10 h-11 border-gray-200 focus:border-primarymain"
                   disabled={mutation.isPending}
                 />
               </div>
@@ -296,7 +289,6 @@ export default function UserProfilePage() {
               type="submit"
               text={mutation.isPending ? "Saving..." : "Save Changes"}
               disabled={mutation.isPending}
-              className="rounded-xl"
             />
           </div>
         </form>
@@ -304,7 +296,6 @@ export default function UserProfilePage() {
 
       {/* Saved Addresses */}
       <ProfileAddresses />
-
     </div>
   );
 }

@@ -9,10 +9,10 @@ export default function RelatedProducts({ products }: RelatedProductsProps) {
   if (products.length === 0) return null;
 
   return (
-    <div className="mt-16 pt-16 border-t-4 border-black">
+    <div className="mt-14 pt-10 border-t border-gray-200">
       <ProductSlider
         products={products}
-        title="YOU MAY ALSO LIKE"
+        title="You May Also Like"
         subtitle="Similar Products"
       />
     </div>

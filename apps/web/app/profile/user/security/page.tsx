@@ -133,25 +133,25 @@ export default function SecurityPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primarymain border-t-transparent" />
+        <div className="h-8 w-8 animate-spin border-4 border-primarymain border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6">
       {isSaving && <SubmittingLoader status={hasPassword ? "Updating password" : "Setting password"} />}
 
-      {/* Security Info Card */}
-      <div className="flex items-start gap-4 bg-white rounded-2xl border border-slate-200 p-6 ">
-        <div className="p-3 bg-primarymain/10 rounded-xl">
-          <Shield className="size-5 text-primarymain" />
+      {/* Security Info */}
+      <div className="flex items-start gap-4 bg-white border border-gray-200 p-5">
+        <div className="w-10 h-10 flex items-center justify-center bg-gray-50 border border-gray-200 flex-shrink-0">
+          <Shield className="size-4 text-gray-500" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-slate-900">
+          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
             Password & Security
           </h3>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-gray-400 mt-1">
             {hasPassword
               ? "Ensure your account stays secure by using a strong, unique password. You'll be logged out after changing your password."
               : "You signed up with Google. Set a password to also enable email/password login."}
@@ -160,19 +160,19 @@ export default function SecurityPage() {
       </div>
 
       {/* Password Form */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 bg-linear-to-r from-slate-50/80 to-transparent">
+      <div className="border border-gray-200 bg-white">
+        <div className="px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             {hasPassword ? (
-              <Lock className="size-4 text-slate-600" />
+              <Lock className="size-4 text-gray-500" />
             ) : (
-              <KeyRound className="size-4 text-slate-600" />
+              <KeyRound className="size-4 text-gray-500" />
             )}
-            <h2 className="text-sm font-bold text-slate-900">
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
               {hasPassword ? "Change Password" : "Set Password"}
             </h2>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-gray-400 mt-0.5">
             {hasPassword
               ? "Update your password regularly to keep your account secure"
               : "Create a password so you can also sign in with email"}
@@ -184,14 +184,14 @@ export default function SecurityPage() {
           className="p-6 space-y-6"
         >
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700">
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-sm text-red-700">
               <AlertCircle className="size-4 shrink-0" />
               {error}
             </div>
           )}
 
           {success && (
-            <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 text-sm text-green-700">
               <CheckCircle className="size-4 shrink-0" />
               {success}
             </div>
@@ -213,7 +213,7 @@ export default function SecurityPage() {
                   <button
                     type="button"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    className="text-slate-400 hover:text-slate-600 transition-colors"
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     {showCurrentPassword ? (
                       <EyeOff className="size-4" />
@@ -239,7 +239,7 @@ export default function SecurityPage() {
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {showNewPassword ? (
                     <EyeOff className="size-4" />
@@ -282,7 +282,6 @@ export default function SecurityPage() {
                   : hasPassword ? "Update Password" : "Set Password"
               }
               disabled={isSaving}
-              className="rounded-xl"
             />
           </div>
         </form>

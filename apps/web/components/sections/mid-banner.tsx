@@ -11,7 +11,7 @@ export async function MidBanner() {
     return null;
   }
 
-  if (midBanners.length === 1) {
+  if (midBanners.length === 1 && midBanners[0]) {
     const banner = midBanners[0];
     return (
       <section className="w-full">
