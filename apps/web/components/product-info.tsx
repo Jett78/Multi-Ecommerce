@@ -3,19 +3,22 @@
 import * as React from "react";
 import { formatPrice } from "@/lib/utils";
 import type { Product, ProductVariant } from "@/types/product";
-import { ShoppingBag, Check, X } from "lucide-react";
+import type { ActiveFlashSaleProduct } from "@/types/flash-sale";
+import { ShoppingBag, Check, X, Zap } from "lucide-react";
 import { dispatchOpenCart } from "@/components/cart/cart-icon";
 import { useCartStore } from "@/stores/cart-store";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import WishlistButton from "@/components/wishlist/wishlist-button";
+import CountdownTimer from "@/components/countdown-timer";
 
 interface ProductInfoProps {
   product: Product;
   selectedVariant: ProductVariant | null;
   onSelectVariant: (variant: ProductVariant) => void;
+  flashSale?: ActiveFlashSaleProduct | null;
 }
 
-export default function ProductInfo({ product, selectedVariant, onSelectVariant }: ProductInfoProps) {
+export default function ProductInfo({ product, selectedVariant, onSelectVariant, flashSale }: ProductInfoProps) {
   const hasVariants = product.variants && product.variants.length > 0;
   const [quantity, setQuantity] = React.useState(1);
 
@@ -24,6 +27,13 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
   const currentStock = selectedVariant?.stockQuantity ?? product.stockQuantity ?? 0;
   const isInStock = currentStock > 0;
   const currentVariantId = selectedVariant?.id || product.variants?.[0]?.id;
+
+  const hasFlashSale = flashSale != null && flashSale.variantId === currentVariantId;
+  const displayPrice = hasFlashSale ? flashSale.salePrice : currentPrice;
+  const displayOriginalPrice = hasFlashSale ? flashSale.originalPrice : currentComparePrice;
+  const flashSaleDiscount = hasFlashSale && flashSale.originalPrice > flashSale.salePrice
+    ? Math.round(((flashSale.originalPrice - flashSale.salePrice) / flashSale.originalPrice) * 100)
+    : null;
 
   const attributeGroups: Record<string, Set<string>> = hasVariants
     ? product.variants!.reduce((acc, variant) => {
@@ -49,7 +59,7 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
 
     useCartStore.getState().addItem({
       variantId: currentVariantId,
-      priceAtAdd: currentPrice,
+      priceAtAdd: displayPrice,
       productName: product.name,
       productSlug: product.slug,
       variantSku: selectedVariant?.sku ?? null,
@@ -57,6 +67,8 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
       allowBackorder: selectedVariant?.allowBackorder ?? product.allowBackorder ?? false,
       imageUrl: primaryImage?.url,
       productId: product.id,
+      categoryId: product.categoryId,
+      brandId: product.brandId,
       attributes: selectedVariant?.attributes?.map((a) => ({ attributeName: a.attributeName, attributeValue: a.attributeValue })),
     }, addQuantity);
 
@@ -85,16 +97,32 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant 
 
       {/* Price */}
       <div className="pb-6 border-b border-gray-200">
+        {hasFlashSale && (
+          <div className="flex items-center gap-2 mb-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <Zap className="h-4 w-4 text-red-600" fill="currentColor" />
+            <span className="text-xs font-bold text-red-600 uppercase tracking-wide">
+              Flash Sale — {flashSaleDiscount}% OFF
+            </span>
+            <div className="ml-auto">
+              <CountdownTimer endsAt={flashSale.flashSaleEndsAt} className="!text-red-600" />
+            </div>
+          </div>
+        )}
         <div className="flex items-baseline gap-3 mb-2">
-          <span className="text-3xl font-bold text-gray-900">
-            {formatPrice(currentPrice)}
+          <span className={`text-3xl font-bold ${hasFlashSale ? "text-red-600" : "text-gray-900"}`}>
+            {formatPrice(displayPrice)}
           </span>
-          {currentComparePrice && (
+          {displayOriginalPrice && (
             <span className="text-base text-gray-400 line-through">
-              {formatPrice(currentComparePrice)}
+              {formatPrice(displayOriginalPrice)}
             </span>
           )}
-          {currentComparePrice && currentComparePrice > currentPrice && (
+          {hasFlashSale && flashSaleDiscount && (
+            <span className="text-[11px] font-bold bg-red-600 text-white px-2 py-0.5 tracking-wide">
+              SAVE {flashSaleDiscount}%
+            </span>
+          )}
+          {!hasFlashSale && currentComparePrice && currentComparePrice > currentPrice && (
             <span className="text-[11px] font-bold bg-primarymain text-white px-2 py-0.5 tracking-wide">
               SAVE {Math.round(((currentComparePrice - currentPrice) / currentComparePrice) * 100)}%
             </span>

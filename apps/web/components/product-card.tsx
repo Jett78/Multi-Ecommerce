@@ -10,6 +10,9 @@ import WishlistButton from "@/components/wishlist/wishlist-button";
 interface ProductCardProps {
   product: Product;
   index?: number;
+  flashSalePrice?: number;
+  flashSaleOriginalPrice?: number;
+  flashSaleName?: string;
 }
 
 function getCheapestVariant(product: Product) {
@@ -72,12 +75,16 @@ function getDiscountPercent(product: Product): number | null {
   return null;
 }
 
-export default function ProductCard({ product, index = 0 }: ProductCardProps) {
+export default function ProductCard({ product, index = 0, flashSalePrice, flashSaleOriginalPrice, flashSaleName }: ProductCardProps) {
   const primaryImage =
     product.images?.find((img) => img.isPrimary) || product.images?.[0];
   const outOfStock = isOutOfStock(product);
   const discountPercent = getDiscountPercent(product);
   const compareAtPrice = getCompareAtPrice(product);
+  const hasFlashSale = flashSalePrice != null && flashSaleOriginalPrice != null && flashSalePrice < flashSaleOriginalPrice;
+  const flashSaleDiscount = hasFlashSale
+    ? Math.round(((flashSaleOriginalPrice! - flashSalePrice!) / flashSaleOriginalPrice!) * 100)
+    : null;
 
   return (
     <Link
@@ -104,7 +111,13 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             </span>
           </div>
         )}
-        {discountPercent && (
+        {hasFlashSale && flashSaleDiscount && (
+          <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold tracking-wider px-2 py-1 z-10 flex items-center gap-1">
+            <span>FLASH SALE</span>
+            <span>{flashSaleDiscount}% OFF</span>
+          </div>
+        )}
+        {!hasFlashSale && discountPercent && (
           <div className="absolute top-2 left-2 bg-primarymain text-white text-[10px] font-bold tracking-wider px-2 py-1 z-10">
             SAVE {discountPercent}%
           </div>
@@ -120,9 +133,18 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
         </h3>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-gray-900">{getProductPrice(product)}</p>
-            {compareAtPrice && (
-              <p className="text-xs text-gray-400 line-through">{compareAtPrice}</p>
+            {hasFlashSale ? (
+              <>
+                <p className="text-sm font-semibold text-red-600">{formatPrice(flashSalePrice!)}</p>
+                <p className="text-xs text-gray-400 line-through">{formatPrice(flashSaleOriginalPrice!)}</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-gray-900">{getProductPrice(product)}</p>
+                {compareAtPrice && (
+                  <p className="text-xs text-gray-400 line-through">{compareAtPrice}</p>
+                )}
+              </>
             )}
           </div>
           {product.category && (

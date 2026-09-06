@@ -11,6 +11,7 @@ import NewArrivals from "@/components/sections/new-arrivals";
 import BrandSection from "@/components/sections/brand-section";
 import TrustFeatures from "@/components/sections/trust-features";
 import WhyChooseUs from "@/components/sections/why-choose-us";
+import FlashSaleSection from "@/components/sections/flash-sale-section";
 export default async function Home() {
   const posts = await getBlogs({ take: 3, isActive: true });
 
@@ -18,6 +19,7 @@ export default async function Home() {
     <>
       <Hero />
       <CategorySection />
+      <FlashSaleSection />
       <NewArrivals />
       <WhyChooseUs />
       <BrandSection />

@@ -31,6 +31,7 @@ import { ShippingAddressModule } from './modules/shipping-address/shipping-addre
 import { DiscountModule } from './modules/discount/discount.module';
 import { CourierModule } from './modules/courier/courier.module';
 import { BannerModule } from './modules/banner/banner.module';
+import { FlashSaleModule } from './modules/flash-sale/flash-sale.module';
 import { PermissionGuard } from './guards/permission.guard';
 
 @Module({
@@ -63,6 +64,7 @@ import { PermissionGuard } from './guards/permission.guard';
     DiscountModule,
     CourierModule,
     BannerModule,
+    FlashSaleModule,
   ],
   controllers: [AppController],
   providers: [

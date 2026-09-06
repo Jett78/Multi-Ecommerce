@@ -31,6 +31,7 @@ import {
   MapPin,
   Plug,
   Image,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth-client";
@@ -87,11 +88,12 @@ const navigation: NavItem[] = [
   {
     name: "Ecommerce",
     icon: Package,
-    permissions: ["category.read", "product.read", "review.moderate", "order.read", "discount.read"],
+    permissions: ["category.read", "product.read", "review.moderate", "order.read", "discount.read", "flash_sale.read"],
     children: [
       { name: "Categories", href: "/dashboard/categories", icon: Tags, permission: "category.read" },
       { name: "Subcategories", href: "/dashboard/subcategories", icon: Tags, permission: "category.read" },
       { name: "Products", href: "/dashboard/products", icon: Package, permission: "product.read" },
+      { name: "Flash Sales", href: "/dashboard/flash-sales", icon: Zap, permission: "flash_sale.read" },
       { name: "Reviews", href: "/dashboard/reviews", icon: Star, permission: "review.moderate" },
       { name: "Orders", href: "/dashboard/orders", icon: CreditCard, permission: "order.read" },
       { name: "Coupons", href: "/dashboard/coupons", icon: Tag, permission: "discount.read" },

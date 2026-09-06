@@ -202,6 +202,11 @@ async function seed() {
       { resource: 'banner', action: 'create', key: 'banner.create', description: 'Create new banners' },
       { resource: 'banner', action: 'edit', key: 'banner.edit', description: 'Edit existing banners' },
       { resource: 'banner', action: 'delete', key: 'banner.delete', description: 'Delete banners' },
+
+      { resource: 'flash_sale', action: 'read', key: 'flash_sale.read', description: 'View flash sales' },
+      { resource: 'flash_sale', action: 'create', key: 'flash_sale.create', description: 'Create new flash sales' },
+      { resource: 'flash_sale', action: 'edit', key: 'flash_sale.edit', description: 'Edit flash sales and products' },
+      { resource: 'flash_sale', action: 'delete', key: 'flash_sale.delete', description: 'Delete flash sales' },
     ];
 
     for (const perm of permissionsData) {
@@ -248,6 +253,7 @@ async function seed() {
         'delivery.read', 'delivery.create', 'delivery.edit', 'delivery.delete',
         'district_mapping.read', 'district_mapping.edit',
         'banner.read', 'banner.create', 'banner.edit', 'banner.delete',
+        'flash_sale.read', 'flash_sale.create', 'flash_sale.edit', 'flash_sale.delete',
       ]},
       { role: 'editor', permissions: [
         'blog.read', 'blog.create', 'blog.edit', 'blog.delete',
@@ -262,6 +268,7 @@ async function seed() {
         'product.read', 'product.create', 'product.edit',
         'review.moderate',
         'banner.read', 'banner.create', 'banner.edit', 'banner.delete',
+        'flash_sale.read',
       ]},
       { role: 'manager', permissions: [
         'blog.read',
@@ -274,6 +281,7 @@ async function seed() {
         'category.read',
         'product.read',
         'banner.read',
+        'flash_sale.read',
       ]},
     ];
 

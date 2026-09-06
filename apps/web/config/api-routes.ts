@@ -45,4 +45,7 @@ export const API_ROUTES = {
   COURIER_LOCATIONS: `${API_BASE_URL}/courier/locations`,
   UPLOAD: `${API_BASE_URL}/upload`,
   BANNER: `${API_BASE_URL}/banners`,
+  FLASH_SALE: `${API_BASE_URL}/flash-sales`,
+  FLASH_SALE_ACTIVE: `${API_BASE_URL}/flash-sales/active`,
+  FLASH_SALE_ACTIVE_PRODUCTS: `${API_BASE_URL}/flash-sales/active/products`,
 } as const;

@@ -801,6 +801,8 @@ export const coupons = pgTable('coupons', {
   perUserLimit: integer('per_user_limit'),
   productIds: uuid('product_ids').array(),
   categoryIds: uuid('category_ids').array(),
+  brandIds: uuid('brand_ids').array(),
+  filterLogic: varchar('filter_logic', { length: 3 }).default('and').notNull(),
   startsAt: timestamp('starts_at', { withTimezone: true }),
   expiresAt: timestamp('expires_at', { withTimezone: true }),
   isActive: boolean('is_active').default(true).notNull(),
@@ -811,6 +813,7 @@ export const coupons = pgTable('coupons', {
   codeIdx: index('coupons_code_idx').on(table.code),
   isActiveIdx: index('coupons_is_active_idx').on(table.isActive),
   expiresAtIdx: index('coupons_expires_at_idx').on(table.expiresAt),
+  filterLogicIdx: index('coupons_filter_logic_idx').on(table.filterLogic),
 }));
 
 export const orderCoupons = pgTable('order_coupons', {
@@ -956,4 +959,56 @@ export const banners = pgTable('banners', {
 }, (table) => ({
   sortOrderIdx: index('banners_sort_order_idx').on(table.sortOrder),
   typeIdx: index('banners_type_idx').on(table.type),
+}));
+
+// ============================================================
+// FLASH SALES
+// ============================================================
+
+export const flashSales = pgTable('flash_sales', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  description: text('description'),
+  startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),
+  endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  imageUrl: varchar('image_url', { length: 500 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  slugIdx: index('flash_sales_slug_idx').on(table.slug),
+  isActiveIdx: index('flash_sales_is_active_idx').on(table.isActive),
+  startsAtIdx: index('flash_sales_starts_at_idx').on(table.startsAt),
+  endsAtIdx: index('flash_sales_ends_at_idx').on(table.endsAt),
+}));
+
+export const flashSaleProducts = pgTable('flash_sale_products', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  flashSaleId: uuid('flash_sale_id').notNull().references(() => flashSales.id, { onDelete: 'cascade' }),
+  variantId: uuid('variant_id').notNull().references(() => productVariants.id, { onDelete: 'cascade' }),
+  salePrice: integer('sale_price').notNull(),
+  originalPrice: integer('original_price').notNull(),
+  maxQuantity: integer('max_quantity'),
+  soldQuantity: integer('sold_quantity').default(0).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  flashSaleIdIdx: index('flash_sale_products_flash_sale_id_idx').on(table.flashSaleId),
+  variantIdIdx: index('flash_sale_products_variant_id_idx').on(table.variantId),
+  uniqueFlashSaleVariant: index('unique_flash_sale_variant_idx').on(table.flashSaleId, table.variantId),
+}));
+
+export const flashSalesRelations = relations(flashSales, ({ many }) => ({
+  products: many(flashSaleProducts),
+}));
+
+export const flashSaleProductsRelations = relations(flashSaleProducts, ({ one }) => ({
+  flashSale: one(flashSales, {
+    fields: [flashSaleProducts.flashSaleId],
+    references: [flashSales.id],
+  }),
+  variant: one(productVariants, {
+    fields: [flashSaleProducts.variantId],
+    references: [productVariants.id],
+  }),
 }));

@@ -73,3 +73,7 @@ export async function revalidateCoupons() {
 export async function revalidateBanners() {
   revalidateTag("banners", "max");
 }
+
+export async function revalidateFlashSales() {
+  revalidateTag("flash-sales", "max");
+}
