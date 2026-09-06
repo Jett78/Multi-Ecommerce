@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Product, ProductVariant } from "@/types/product";
+import type { ActiveFlashSaleProduct } from "@/types/flash-sale";
 import { ChevronLeft } from "lucide-react";
 import ProductImages from "@/components/product-images";
 import ProductInfo from "@/components/product-info";
@@ -14,9 +15,10 @@ import RelatedProducts from "@/components/product/related-products";
 interface ProductDetailClientProps {
   product: Product;
   relatedProducts?: Product[];
+  flashSale?: ActiveFlashSaleProduct | null;
 }
 
-export default function ProductDetailClient({ product, relatedProducts = [] }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, relatedProducts = [], flashSale }: ProductDetailClientProps) {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
     product.variants?.[0] ?? null
   );
@@ -24,6 +26,10 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
   const displayImages = product.images || [];
   const currentStock = selectedVariant?.stockQuantity ?? product.stockQuantity ?? 0;
   const isInStock = currentStock > 0;
+
+  const matchingFlashSale = flashSale && selectedVariant && flashSale.variantId === selectedVariant.id
+    ? flashSale
+    : null;
 
   return (
     <div className="min-h-screen bg-white">
@@ -49,6 +55,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
             product={product}
             selectedVariant={selectedVariant}
             onSelectVariant={setSelectedVariant}
+            flashSale={matchingFlashSale}
           />
         </div>
 

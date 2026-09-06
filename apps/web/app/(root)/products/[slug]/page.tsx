@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductDetailClient from "@/components/product-detail-client";
 import { getProductBySlug, getAllActiveProductSlugs, getRelatedProducts } from "@/actions/product-action";
+import { getActiveFlashSaleProducts } from "@/actions/flash-sale-action";
 
 export async function generateStaticParams() {
   const slugs = await getAllActiveProductSlugs();
@@ -29,7 +30,21 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   if (!product) notFound();
 
-  const relatedProducts = await getRelatedProducts(product.id, 8);
+  const [relatedProducts, flashSaleProducts] = await Promise.all([
+    getRelatedProducts(product.id, 8),
+    getActiveFlashSaleProducts(),
+  ]);
 
-  return <ProductDetailClient product={product} relatedProducts={relatedProducts} />;
+  const productVariantIds = product.variants?.map((v) => v.id) || [];
+  const flashSale = flashSaleProducts.find((fp) =>
+    productVariantIds.includes(fp.variantId)
+  ) || null;
+
+  return (
+    <ProductDetailClient
+      product={product}
+      relatedProducts={relatedProducts}
+      flashSale={flashSale}
+    />
+  );
 }

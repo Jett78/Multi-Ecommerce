@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Zap, ChevronRight } from "lucide-react";
 import CountdownTimer from "@/components/countdown-timer";
 import { formatPrice } from "@/lib/utils";
@@ -72,15 +73,25 @@ export default function FlashSaleSectionClient({ sale, products }: FlashSaleSect
               <Link
                 key={item.id}
                 href={`/products/${item.productSlug}`}
-                className="group bg-white rounded-xl overflow-hidden shadow-lg shadow-black/5 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
+                className="group relative bg-white rounded-xl overflow-hidden shadow-lg shadow-black/5 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
               >
                 <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                  <div className="flex items-center justify-center h-full text-4xl font-bold text-gray-200">
-                    {item.productName.charAt(0)}
-                  </div>
-                  {/* Discount badge */}
-                  <div className="absolute top-2 left-2 bg-primarymain text-white text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-lg z-10 shadow-md">
-                    {discountPercent}% OFF
+                  {item.imageUrl ? (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.productName}
+                      fill
+                      className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-4xl font-bold text-gray-200">
+                      {item.productName.charAt(0)}
+                    </div>
+                  )}
+                  {/* Flash Sale badge - matching ProductCard style */}
+                  <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold tracking-wider px-2 py-1 z-10 flex items-center gap-1 shadow-md">
+                    <span>FLASH SALE</span>
+                    <span>{discountPercent}% OFF</span>
                   </div>
                   {/* Stock bar */}
                   {stockRemaining !== null && stockRemaining <= 10 && (
@@ -108,7 +119,7 @@ export default function FlashSaleSectionClient({ sale, products }: FlashSaleSect
                     {item.productName}
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-primarymain">
+                    <span className="text-sm font-bold text-red-600">
                       {formatPrice(item.salePrice)}
                     </span>
                     <span className="text-xs text-gray-400 line-through">

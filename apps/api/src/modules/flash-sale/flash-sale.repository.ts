@@ -150,7 +150,7 @@ export class FlashSaleRepository {
 
   async findActiveProducts() {
     const now = new Date();
-    return this.db
+    const rows = await this.db
       .select({
         id: schema.flashSaleProducts.id,
         flashSaleId: schema.flashSaleProducts.flashSaleId,
@@ -166,11 +166,19 @@ export class FlashSaleRepository {
         productId: schema.products.id,
         productName: schema.products.name,
         productSlug: schema.products.slug,
+        imageKey: schema.productImages.imageKey,
       })
       .from(schema.flashSaleProducts)
       .innerJoin(schema.flashSales, eq(schema.flashSaleProducts.flashSaleId, schema.flashSales.id))
       .innerJoin(schema.productVariants, eq(schema.flashSaleProducts.variantId, schema.productVariants.id))
       .innerJoin(schema.products, eq(schema.productVariants.productId, schema.products.id))
+      .leftJoin(
+        schema.productImages,
+        and(
+          eq(schema.productImages.productId, schema.products.id),
+          eq(schema.productImages.isPrimary, true),
+        ),
+      )
       .where(
         and(
           eq(schema.flashSales.isActive, true),
@@ -178,6 +186,11 @@ export class FlashSaleRepository {
           gte(schema.flashSales.endsAt, now),
         )
       );
+
+    return rows.map((row) => ({
+      ...row,
+      imageUrl: row.imageKey ? this.buildImageUrl(row.imageKey) : null,
+    }));
   }
 
   async findActiveProductByVariantId(variantId: string) {
@@ -274,5 +287,19 @@ export class FlashSaleRepository {
       .update(schema.flashSaleProducts)
       .set({ soldQuantity: sql`${schema.flashSaleProducts.soldQuantity} + ${quantity}` })
       .where(eq(schema.flashSaleProducts.id, id));
+  }
+
+  private buildImageUrl(key: string): string {
+    if (key.startsWith('http://') || key.startsWith('https://')) {
+      return key;
+    }
+    const cloudfrontUrl = process.env.AWS_CLOUDFRONT_URL || '';
+    const bucketName = process.env.S3_BUCKET_NAME || '';
+    const region = process.env.AWS_REGION || 'ap-south-1';
+
+    if (cloudfrontUrl) {
+      return `https://${cloudfrontUrl}/${key}`;
+    }
+    return `https://${bucketName}.s3.${region}.amazonaws.com/${key}`;
   }
 }

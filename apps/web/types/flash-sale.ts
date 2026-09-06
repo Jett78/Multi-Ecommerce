@@ -42,4 +42,5 @@ export interface ActiveFlashSaleProduct {
   productId: string;
   productName: string;
   productSlug: string;
+  imageUrl?: string | null;
 }

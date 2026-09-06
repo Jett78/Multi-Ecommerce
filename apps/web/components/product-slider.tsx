@@ -3,10 +3,12 @@
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Product } from "@/types/product";
+import type { ActiveFlashSaleProduct } from "@/types/flash-sale";
 import ProductCard from "@/components/product-card";
+import { getActiveFlashSaleProducts } from "@/actions/flash-sale-action";
 
 interface ProductSliderProps {
   products: Product[];
@@ -16,6 +18,11 @@ interface ProductSliderProps {
 
 const ProductSlider = ({ products, title, subtitle }: ProductSliderProps) => {
   const sliderRef = useRef<Slider | null>(null);
+  const [flashSaleProducts, setFlashSaleProducts] = useState<ActiveFlashSaleProduct[]>([]);
+
+  useEffect(() => {
+    getActiveFlashSaleProducts().then(setFlashSaleProducts);
+  }, []);
 
   if (products.length === 0) return null;
 
@@ -68,11 +75,22 @@ const ProductSlider = ({ products, title, subtitle }: ProductSliderProps) => {
         {showSlider ? (
           <div className="relative">
             <Slider {...settings} ref={sliderRef}>
-              {products.map((product) => (
-                <div key={product.id} className="px-2">
-                  <ProductCard product={product} />
-                </div>
-              ))}
+              {products.map((product) => {
+                const productVariantIds = product.variants?.map((v) => v.id) || [];
+                const flashSale = flashSaleProducts.find((fp) =>
+                  productVariantIds.includes(fp.variantId)
+                ) || null;
+                return (
+                  <div key={product.id} className="px-2">
+                    <ProductCard
+                      product={product}
+                      flashSalePrice={flashSale?.salePrice}
+                      flashSaleOriginalPrice={flashSale?.originalPrice}
+                      flashSaleName={flashSale?.flashSaleName}
+                    />
+                  </div>
+                );
+              })}
             </Slider>
 
             <button
@@ -90,9 +108,22 @@ const ProductSlider = ({ products, title, subtitle }: ProductSliderProps) => {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-            {products.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
-            ))}
+            {products.map((product, index) => {
+              const productVariantIds = product.variants?.map((v) => v.id) || [];
+              const flashSale = flashSaleProducts.find((fp) =>
+                productVariantIds.includes(fp.variantId)
+              ) || null;
+              return (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  index={index}
+                  flashSalePrice={flashSale?.salePrice}
+                  flashSaleOriginalPrice={flashSale?.originalPrice}
+                  flashSaleName={flashSale?.flashSaleName}
+                />
+              );
+            })}
           </div>
         )}
       </div>

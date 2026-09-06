@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
 import type { Product } from "@/types/product";
+import type { ActiveFlashSaleProduct } from "@/types/flash-sale";
 import ProductCard from "@/components/product-card";
 import ProductFilter from "@/components/product-filter";
+import { getActiveFlashSaleProducts } from "@/actions/flash-sale-action";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function ProductsPage() {
@@ -18,6 +20,7 @@ export default function ProductsPage() {
     minRating: "",
   });
   const [page, setPage] = useState(1);
+  const [flashSaleProducts, setFlashSaleProducts] = useState<ActiveFlashSaleProduct[]>([]);
   const take = 20;
 
   const { getAllPaginated } = useCrud<Product>({
@@ -40,6 +43,10 @@ export default function ProductsPage() {
   const products = productsData?.items || [];
   const total = productsData?.total || 0;
   const totalPages = Math.ceil(total / take);
+
+  useEffect(() => {
+    getActiveFlashSaleProducts().then(setFlashSaleProducts);
+  }, []);
 
   const handleFilterChange = useCallback((newFilters: typeof filters) => {
     setFilters(newFilters);
@@ -89,9 +96,22 @@ export default function ProductsPage() {
             ) : (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                  {products.map((product, index) => (
-                    <ProductCard key={product.id} product={product} index={index} />
-                  ))}
+                  {products.map((product, index) => {
+                    const productVariantIds = product.variants?.map((v: { id: string }) => v.id) || [];
+                    const flashSale = flashSaleProducts.find((fp) =>
+                      productVariantIds.includes(fp.variantId)
+                    ) || null;
+                    return (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        index={index}
+                        flashSalePrice={flashSale?.salePrice}
+                        flashSaleOriginalPrice={flashSale?.originalPrice}
+                        flashSaleName={flashSale?.flashSaleName}
+                      />
+                    );
+                  })}
                 </div>
 
                 {/* Pagination */}

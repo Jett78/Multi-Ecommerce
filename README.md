@@ -214,6 +214,7 @@ npm run db:reset && npm run db:seed
 | **Shopping Cart** | Client-side Cart (Zustand + localStorage) | ✅ |
 | | Server-side Cart API | ✅ |
 | | Cart Item Selection | ✅ |
+| | Cart Quantity Stock Validation | ✅ |
 | **Checkout** | Multi-step Checkout Flow | ✅ |
 | | Contact Information Form | ✅ |
 | | Saved Address Selection | ✅ |
@@ -231,14 +232,14 @@ npm run db:reset && npm run db:seed
 | | Admin Order Management | ✅ |
 | | Order Statistics | ✅ |
 | | Order Search & Filters | ✅ |
-| | Bulk Order Actions | ❌ |
-| | Order Invoices / Receipts | ❌ |
+| | Bulk Order Actions | ✅ |
+| | Order Invoices / Receipts | ✅ |
 | | Return / Refund Management | ❌ |
 | **Coupons & Discounts** | Coupon CRUD (Fixed, %, Free Shipping) | ✅ |
 | | Coupon Validation | ✅ |
 | | Min Order Amount Rule | ✅ |
 | | Usage Limit & Per-User Limit | ✅ |
-| | Product/Category Specific Coupons | ❌ |
+| | Product/Category Specific Coupons | ✅ |
 | | Bulk Coupon Generation | ❌ |
 | **Reviews & Ratings** | Product Reviews with Ratings | ✅ |
 | | Rating Breakdown / Summary | ✅ |
@@ -253,6 +254,7 @@ npm run db:reset && npm run db:seed
 | | Low Stock Threshold Alerts | ✅ |
 | | Allow Backorder | ✅ |
 | | Auto Stock Decrement on Order | ✅ |
+| | Add to Cart Stock Validation | ✅ |
 | | Bulk Stock Import | ❌ |
 | **Shipping & Delivery** | Saved Shipping Addresses | ✅ |
 | | Province/District Address Model | ✅ |
@@ -261,7 +263,7 @@ npm run db:reset && npm run db:seed
 | | Courier District Mappings | ✅ |
 | | Send to Courier (Single & Bulk) | ✅ |
 | | Sync Courier Status | ✅ |
-| | Customer-facing Order Tracking | ❌ |
+| | Customer-facing Order Tracking | ✅ |
 | | Multiple Shipping Methods | ❌ |
 | | Shipping Label Printing | ❌ |
 | **User & Auth** | Email/Password Authentication | ✅ |
@@ -313,6 +315,8 @@ npm run db:reset && npm run db:seed
 | **Storefront** | Responsive Homepage | ✅ |
 | | Product Listing Page | ✅ |
 | | Product Detail Page | ✅ |
+| | Product Card (Discount Badge, Strikethrough Price) | ✅ |
+| | Smart Variant Selection (Cheapest In-Stock) | ✅ |
 | | About Page | ✅ |
 | | Contact Page | ✅ |
 | | Blog Listing & Detail Pages | ✅ |
@@ -320,11 +324,11 @@ npm run db:reset && npm run db:seed
 | | WhatsApp Float Button | ✅ |
 | | Social Share Buttons | ✅ |
 |
-| **Not Yet Implemented** | Wishlist / Save for Later | ❌ |
+| **Not Yet Implemented** | Wishlist / Save for Later | ✅ |
 | | Product Comparison | ❌ |
 | | Recently Viewed Products | ❌ |
 | | Product Bundles / Kits | ❌ |
-| | Flash Sales / Limited Offers | ❌ |
+| | Flash Sales / Limited Offers | ✅ |
 | | Loyalty / Rewards Program | ❌ |
 | | Abandoned Cart Recovery | ❌ |
 | | Multi-Currency Support | ❌ |
@@ -343,9 +347,9 @@ npm run db:reset && npm run db:seed
 
 | Metric | Count |
 |--------|-------|
-| Features Completed | ~65 |
-| Features Remaining | ~25+ |
-| Completion | ~70% |
+| Features Completed | ~74 |
+| Features Remaining | ~19+ |
+| Completion | ~80% |
 
 ## Available Scripts
 
