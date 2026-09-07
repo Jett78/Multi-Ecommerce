@@ -17,8 +17,6 @@ interface ProductImagesProps {
 export default function ProductImages({ images, productName, isInStock }: ProductImagesProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const mainSliderRef = useRef<Slider | null>(null);
-  const thumbSliderRef = useRef<Slider | null>(null);
-
   const mainSettings = {
     dots: false,
     infinite: images.length > 1,
@@ -29,25 +27,7 @@ export default function ProductImages({ images, productName, isInStock }: Produc
     fade: false,
     afterChange: (index: number) => {
       setCurrentSlide(index);
-      thumbSliderRef.current?.slickGoTo(index);
     },
-  };
-
-  const thumbSettings = {
-    dots: false,
-    infinite: false,
-    speed: 400,
-    slidesToShow: Math.min(images.length, 4),
-    slidesToScroll: 1,
-    arrows: false,
-    focusOnSelect: true,
-    swipeToSlide: true,
-    responsive: [
-      {
-        breakpoint: 768,
-        settings: { slidesToShow: 3 },
-      },
-    ],
   };
 
   const handleThumbClick = (index: number) => {
@@ -120,29 +100,26 @@ export default function ProductImages({ images, productName, isInStock }: Produc
         )}
       </div>
 
-      {/* Thumbnail Slider */}
+      {/* Thumbnail Grid */}
       {images.length > 1 && (
-        <div className="relative">
-          <Slider ref={thumbSliderRef} {...thumbSettings}>
-            {images.map((img, index) => (
-              <div key={img.id} className="px-1">
-                <button
-                  onClick={() => handleThumbClick(index)}
-                  className={`aspect-square bg-gray-50 border w-full overflow-hidden transition-colors ${
-                    currentSlide === index ? "border-gray-900" : "border-gray-200 hover:border-gray-400"
-                  }`}
-                >
-                  <Image
-                    src={img.url}
-                    alt={`${productName} ${index + 1}`}
-                    width={200}
-                    height={200}
-                    className="w-full h-full object-contain p-1"
-                  />
-                </button>
-              </div>
-            ))}
-          </Slider>
+        <div className="grid grid-cols-4 gap-2">
+          {images.slice(0, 4).map((img, index) => (
+            <button
+              key={img.id}
+              onClick={() => handleThumbClick(index)}
+              className={`aspect-square bg-gray-50 border overflow-hidden transition-colors ${
+                currentSlide === index ? "border-gray-900" : "border-gray-200 hover:border-gray-400"
+              }`}
+            >
+              <Image
+                src={img.url}
+                alt={`${productName} ${index + 1}`}
+                width={100}
+                height={100}
+                className="w-full h-full object-contain p-0.5"
+              />
+            </button>
+          ))}
         </div>
       )}
     </div>
