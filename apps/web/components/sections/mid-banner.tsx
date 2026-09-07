@@ -20,7 +20,7 @@ export async function MidBanner() {
             src={banner.imageUrl}
             alt={banner.title}
             fill
-            className="object-cover"
+            className=""
           />
           {banner.link && (
             <Link
