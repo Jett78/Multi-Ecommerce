@@ -27,7 +27,8 @@ import { useForm } from "@/hooks/useForm";
 import { useCartStore } from "@/stores/cart-store";
 import { useDeliveryCharge } from "@/hooks/use-delivery-charge";
 import { showSuccess, showError } from "@/lib/toast-helper";
-import { useSession, signIn } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
+import { useAuthModal } from "@/contexts/auth-modal-context";
 import { API_ROUTES } from "@/config/api-routes";
 import { initiateKhaltiPayment } from "@/actions/khalti-action";
 import { SavedAddressSelector } from "@/components/address/saved-address-selector";
@@ -82,6 +83,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
 
   const { data: session } = useSession() as any;
   const isAuthenticated = !!session?.user;
+  const { openLogin } = useAuthModal();
 
   const { create } = useCrud<Record<string, any>>({
     endpoint: API_ROUTES.ORDERS + "/checkout",
@@ -93,11 +95,6 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
     customerEmail: "",
     customerPhone: "",
     notes: "",
-  });
-
-  const { values: loginForm, setField: setLoginField, handleChange: handleLoginChange } = useForm({
-    email: "",
-    password: "",
   });
 
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>("cod");
@@ -122,9 +119,6 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
   const [couponCode, setCouponCode] = React.useState("");
   const [couponLoading, setCouponLoading] = React.useState(false);
   const [couponError, setCouponError] = React.useState("");
-  const [showLogin, setShowLogin] = React.useState(false);
-  const [loginError, setLoginError] = React.useState("");
-  const [isLoggingIn, setIsLoggingIn] = React.useState(false);
   const [selectedAddressId, setSelectedAddressId] = React.useState<string | undefined>(undefined);
   const [selectedAddress, setSelectedAddress] = React.useState<ShippingAddress | null>(null);
 
@@ -332,35 +326,10 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
       return;
     }
     if (!isAuthenticated) {
-      setShowLogin(true);
+      openLogin("/checkout");
       return;
     }
     await placeOrder();
-  };
-
-  const handleInlineLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError("");
-    setIsLoggingIn(true);
-    try {
-      const { error } = await signIn.email({ email: loginForm.email, password: loginForm.password });
-      if (error) {
-        setLoginError(error.message || "Login failed. Please try again.");
-        return;
-      }
-      try {
-        const res = await fetch(`${API_URL}/auth/profile`, { credentials: "include" });
-        const data = await res.json();
-        const role = data?.data?.role || "customer";
-        document.cookie = `user_role=${role}; path=/; max-age=${60 * 60 * 24 * 7}`;
-      } catch {}
-      setShowLogin(false);
-      await placeOrder();
-    } catch {
-      setLoginError("An error occurred. Please try again.");
-    } finally {
-      setIsLoggingIn(false);
-    }
   };
 
   if (items.length === 0) {
@@ -484,7 +453,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                       </p>
                       <button
                         type="button"
-                        onClick={() => setShowLogin(true)}
+                        onClick={() => openLogin("/checkout")}
                         className="mt-3 inline-flex items-center gap-1.5 bg-primarymain px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-primarymain/90"
                       >
                         Sign in
@@ -774,85 +743,6 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
           ))}
         </div>
       </div>
-
-      {/* Login Modal */}
-      {showLogin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md border border-gray-200 bg-white p-7">
-            <div className="mb-5 flex flex-col items-center text-center">
-              <div className="flex h-10 w-10 items-center justify-center bg-gray-100 mb-3">
-                <Lock className="h-4 w-4 text-gray-500" />
-              </div>
-              <h2 className="text-lg font-bold text-gray-900">Welcome back</h2>
-              <p className="mt-1 text-sm text-gray-400">Sign in to complete your order</p>
-            </div>
-
-            <form onSubmit={handleInlineLogin} className="space-y-4">
-              {loginError && (
-                <div className="border border-red-200 bg-red-50 p-3 text-sm text-red-600 text-center font-medium">
-                  {loginError}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="you@example.com"
-                  value={loginForm.email}
-                  onChange={handleLoginChange}
-                  required
-                  disabled={isLoggingIn}
-                  className="w-full border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition-all placeholder:text-gray-300 focus:border-primarymain disabled:opacity-50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Enter your password"
-                  value={loginForm.password}
-                  onChange={handleLoginChange}
-                  required
-                  disabled={isLoggingIn}
-                  className="w-full border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none transition-all placeholder:text-gray-300 focus:border-primarymain disabled:opacity-50"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoggingIn}
-                className="w-full bg-primarymain py-3 text-sm font-bold text-white transition-colors hover:bg-primarymain/90 disabled:opacity-50"
-              >
-                {isLoggingIn ? "Signing in..." : "Sign In & Place Order"}
-              </button>
-            </form>
-
-            <div className="mt-4 flex items-center justify-between text-sm border-t border-gray-100 pt-4">
-              <Link
-                href={`/login?redirect=${encodeURIComponent("/checkout")}`}
-                className="font-medium text-gray-400 hover:text-gray-900 transition-colors"
-              >
-                Full login page
-              </Link>
-              <Link href="/register" className="font-medium text-gray-400 hover:text-gray-900 transition-colors">
-                Create account
-              </Link>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowLogin(false)}
-              className="mt-3 w-full text-center text-sm text-gray-300 hover:text-gray-500 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

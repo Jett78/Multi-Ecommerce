@@ -3,13 +3,15 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { Menu, X, ShoppingCart, Heart } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, X, ShoppingCart, Heart, User, LogOut, Package, Settings, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CartIcon, dispatchOpenCart } from "@/components/cart/cart-icon";
 import { CartSidebar } from "@/components/cart/cart-sidebar";
 import { useWishlistStore } from "@/stores/wishlist-store";
 import { WishlistSidebar } from "@/components/wishlist/wishlist-sidebar";
+import { useSession, signOut } from "@/lib/auth-client";
+import { useAuthModal } from "@/contexts/auth-modal-context";
 import type { CompanyProfile } from "@/types/company-profile";
 
 interface NavItem {
@@ -25,12 +27,18 @@ interface NavbarClientProps {
 
 export function NavbarClient({ company, navItems }: NavbarClientProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [showNavbar, setShowNavbar] = React.useState(true);
   const [lastScrollY, setLastScrollY] = React.useState(0);
   const [isOpen, setIsOpen] = React.useState(false);
   const [cartOpen, setCartOpen] = React.useState(false);
   const [wishlistOpen, setWishlistOpen] = React.useState(false);
+  const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const wishlistItemCount = useWishlistStore((s) => s.items.length);
+  const { data: session } = useSession() as any;
+  const isAuthenticated = !!session?.user;
+  const { openLogin } = useAuthModal();
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const handleOpenCart = () => setCartOpen(true);
@@ -68,6 +76,27 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    await signOut();
+    document.cookie = "user_role=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    setUserMenuOpen(false);
+    router.push("/");
+  };
+
+  const handleLoginClick = () => {
+    openLogin(pathname);
+  };
 
   return (
     <>
@@ -144,6 +173,68 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
               {/* Cart Icon */}
               <CartIcon onClick={() => setCartOpen(true)} />
 
+              {/* Auth Button */}
+              {isAuthenticated ? (
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className="inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                  >
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200">
+                      <User className="h-4 w-4 text-gray-600" />
+                    </div>
+                    <span className="hidden sm:inline max-w-[100px] truncate">{session.user.name}</span>
+                    <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", userMenuOpen && "rotate-180")} />
+                  </button>
+
+                  {/* User Dropdown */}
+                  {userMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-48 border border-gray-200 bg-white py-1 shadow-lg z-50">
+                      <Link
+                        href="/profile/user"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <User className="h-4 w-4" />
+                        My Profile
+                      </Link>
+                      <Link
+                        href="/profile/user/orders"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <Package className="h-4 w-4" />
+                        My Orders
+                      </Link>
+                      <Link
+                        href="/profile/user/settings"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <Settings className="h-4 w-4" />
+                        Settings
+                      </Link>
+                      <div className="border-t border-gray-100 my-1" />
+                      <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={handleLoginClick}
+                  className="inline-flex h-10 items-center gap-2 rounded-lg bg-gray-900 px-4 text-sm font-bold text-white transition-colors hover:bg-gray-800"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sign In</span>
+                </button>
+              )}
+
               {/* Hamburger */}
               <button
                 className="inline-flex h-9 w-9 items-center justify-center text-gray-600 transition-colors hover:text-gray-900 md:hidden"
@@ -212,8 +303,53 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
             </div>
           </nav>
 
-          {/* Cart Link */}
+          {/* Auth Section */}
           <div className="border-t border-gray-100 p-5 space-y-0">
+            {isAuthenticated ? (
+              <>
+                <div className="flex items-center gap-3 px-0 py-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200">
+                    <User className="h-5 w-5 text-gray-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{session.user.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{session.user.email}</p>
+                  </div>
+                </div>
+                <Link
+                  href="/profile/user"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-0 py-3 text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-900"
+                >
+                  <User className="h-5 w-5" />
+                  My Profile
+                </Link>
+                <Link
+                  href="/profile/user/orders"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 px-0 py-3 text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-900"
+                >
+                  <Package className="h-5 w-5" />
+                  My Orders
+                </Link>
+                <button
+                  onClick={() => { setIsOpen(false); handleLogout(); }}
+                  className="flex w-full items-center gap-3 px-0 py-3 text-[15px] font-medium text-red-600 transition-colors hover:text-red-700"
+                >
+                  <LogOut className="h-5 w-5" />
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => { setIsOpen(false); handleLoginClick(); }}
+                className="flex w-full items-center justify-center gap-2 bg-gray-900 py-3 text-sm font-bold text-white transition-colors hover:bg-gray-800"
+              >
+                <User className="h-4 w-4" />
+                Sign In
+              </button>
+            )}
+
             <button
               onClick={() => { setIsOpen(false); setWishlistOpen(true); }}
               className="flex w-full items-center gap-3 px-0 py-3 text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-900"
