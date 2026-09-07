@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { X, Plus, Minus, ArrowRight, Truck, Check } from "lucide-react";
+import { X, Plus, Minus, Truck, Check } from "lucide-react";
 import { useCartStore } from "@/stores/cart-store";
 import type { CartItem } from "@/types/cart";
 import { cn } from "@/lib/utils";
@@ -106,35 +106,30 @@ interface CartSidebarProps {
 
 export function CartSidebar({ open, onClose }: CartSidebarProps) {
   const items = useCartStore((s) => s.items);
-  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+  const selectedVariantIds = useCartStore((s) => s.selectedVariantIds);
+  const setSelectedVariantIds = useCartStore((s) => s.setSelectedVariantIds);
+  const toggleSelectedVariant = useCartStore((s) => s.toggleSelectedVariant);
+  const selectAllVariants = useCartStore((s) => s.selectAllVariants);
+  const deselectAllVariants = useCartStore((s) => s.deselectAllVariants);
 
   React.useEffect(() => {
-    if (open) {
-      setSelectedIds(new Set(items.map((i) => i.variantId)));
+    if (open && items.length > 0 && selectedVariantIds.length === 0) {
+      setSelectedVariantIds(items.map((i) => i.variantId));
     }
   }, [open]);
 
-  const handleToggleItem = (variantId: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(variantId)) next.delete(variantId);
-      else next.add(variantId);
-      return next;
-    });
-  };
-
-  const handleSelectAll = () => {
-    if (selectedIds.size === items.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(items.map((i) => i.variantId)));
-    }
-  };
-
-  const selectedItems = items.filter((i) => selectedIds.has(i.variantId));
+  const selectedItems = items.filter((i) => selectedVariantIds.includes(i.variantId));
   const total = selectedItems.reduce((sum, i) => sum + i.priceAtAdd * i.quantity, 0);
   const totalQty = selectedItems.reduce((sum, i) => sum + i.quantity, 0);
-  const allSelected = items.length > 0 && selectedIds.size === items.length;
+  const allSelected = items.length > 0 && selectedVariantIds.length === items.length;
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      deselectAllVariants();
+    } else {
+      selectAllVariants();
+    }
+  };
 
   return (
     <>
@@ -203,8 +198,8 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
                 <CartItemRow
                   key={item.variantId}
                   item={item}
-                  selected={selectedIds.has(item.variantId)}
-                  onToggle={() => handleToggleItem(item.variantId)}
+                  selected={selectedVariantIds.includes(item.variantId)}
+                  onToggle={() => toggleSelectedVariant(item.variantId)}
                 />
               ))}
             </div>
@@ -222,13 +217,22 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
               <span>Shipping</span>
               <span>Calculated at checkout</span>
             </div>
-            <Link
-              href="/checkout"
-              onClick={onClose}
-              className="flex w-full items-center justify-center bg-primarymain py-3.5 text-sm font-bold text-white transition-colors hover:bg-primarymain/90"
-            >
-              CHECKOUT ({totalQty})
-            </Link>
+            {selectedVariantIds.length > 0 ? (
+              <Link
+                href="/checkout"
+                onClick={onClose}
+                className="flex w-full items-center justify-center bg-primarymain py-3.5 text-sm font-bold text-white transition-colors hover:bg-primarymain/90"
+              >
+                CHECKOUT ({totalQty})
+              </Link>
+            ) : (
+              <button
+                disabled
+                className="flex w-full items-center justify-center bg-gray-200 py-3.5 text-sm font-bold text-gray-400 cursor-not-allowed"
+              >
+                SELECT ITEMS TO CHECKOUT
+              </button>
+            )}
           </div>
         )}
       </div>

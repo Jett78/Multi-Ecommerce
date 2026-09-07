@@ -64,20 +64,23 @@ const paymentMethods = [
 
 export function CheckoutView({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
-  const items = useCartStore((s) => s.items);
-  const subtotal = useCartStore((s) => s.subtotal());
-  const itemCount = useCartStore((s) => s.itemCount());
+  const allItems = useCartStore((s) => s.items);
+  const selectedVariantIds = useCartStore((s) => s.selectedVariantIds);
+  const items = React.useMemo(
+    () => allItems.filter((i) => selectedVariantIds.includes(i.variantId)),
+    [allItems, selectedVariantIds]
+  );
+  const subtotal = useCartStore((s) => s.discountedTotal());
   const clearCart = useCartStore((s) => s.clearCart);
   const appliedCoupon = useCartStore((s) => s.appliedCoupon);
   const setCoupon = useCartStore((s) => s.setCoupon);
   const removeCoupon = useCartStore((s) => s.removeCoupon);
-  const discountedTotal = useCartStore((s) => s.discountedTotal());
   const deliveryCharge = useCartStore((s) => s.deliveryCharge);
   const setDeliveryCharge = useCartStore((s) => s.setDeliveryCharge);
   const totalWithDelivery = useCartStore((s) => s.totalWithDelivery());
   const { rate: deliveryRate, isLoading: deliveryLoading, error: deliveryError, calculateCharge, reset: resetDelivery } = useDeliveryCharge();
 
-  const { data: session, isPending } = useSession() as any;
+  const { data: session } = useSession() as any;
   const isAuthenticated = !!session?.user;
 
   const { create } = useCrud<Record<string, any>>({
@@ -145,7 +148,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
       const rate = await calculateCharge(
         selectedAddress.district,
         Math.max(totalWeight, 0.5),
-        discountedTotal
+        subtotal
       );
       if (rate) {
         setDeliveryCharge(rate.finalPrice, rate.providerUsed || rate.provider, rate.estimatedDays);
@@ -360,17 +363,6 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
     }
   };
 
-  if (isPending) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-primarymain" />
-          <p className="text-sm text-gray-400">Loading checkout...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-white pt-24">
@@ -583,7 +575,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                     <Package className="h-4 w-4 text-gray-400" />
                     <div>
                       <h2 className="text-sm font-bold text-gray-900">Order Summary</h2>
-                      <p className="text-[11px] text-gray-400">{itemCount} {itemCount === 1 ? "item" : "items"}</p>
+                      <p className="text-[11px] text-gray-400">{items.length} {items.length === 1 ? "item" : "items"}</p>
                     </div>
                   </div>
 

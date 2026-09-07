@@ -26,6 +26,12 @@ export interface CartStore {
   updateQuantity: (variantId: string, quantity: number) => void;
   removeItem: (variantId: string) => void;
   clearCart: () => void;
+  selectedVariantIds: string[];
+  setSelectedVariantIds: (ids: string[]) => void;
+  toggleSelectedVariant: (variantId: string) => void;
+  selectAllVariants: () => void;
+  deselectAllVariants: () => void;
+  getSelectedItems: () => CartItem[];
   itemCount: () => number;
   subtotal: () => number;
   setCoupon: (coupon: AppliedCoupon | null) => void;

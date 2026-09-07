@@ -15,6 +15,7 @@ export const useCartStore = create<CartStore>()(
       deliveryCharge: 0,
       deliveryProvider: null,
       estimatedDeliveryDays: null,
+      selectedVariantIds: [],
 
       addItem: (item, quantity = 1) => {
         set((state) => {
@@ -56,6 +57,28 @@ export const useCartStore = create<CartStore>()(
 
       clearCart: () => {
         set({ items: [], appliedCoupon: null, deliveryCharge: 0, deliveryProvider: null, estimatedDeliveryDays: null });
+      },
+
+      setSelectedVariantIds: (ids) => set({ selectedVariantIds: ids }),
+
+      toggleSelectedVariant: (variantId) => set((state) => {
+        const exists = state.selectedVariantIds.includes(variantId);
+        return {
+          selectedVariantIds: exists
+            ? state.selectedVariantIds.filter((id) => id !== variantId)
+            : [...state.selectedVariantIds, variantId],
+        };
+      }),
+
+      selectAllVariants: () => set((state) => ({
+        selectedVariantIds: state.items.map((i) => i.variantId),
+      })),
+
+      deselectAllVariants: () => set({ selectedVariantIds: [] }),
+
+      getSelectedItems: () => {
+        const state = get();
+        return state.items.filter((i) => state.selectedVariantIds.includes(i.variantId));
       },
 
       itemCount: () => {
