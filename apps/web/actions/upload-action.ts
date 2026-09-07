@@ -83,3 +83,45 @@ export async function uploadMultipleImages(
     return { success: false, error: "Upload failed" };
   }
 }
+
+export async function uploadFromUrl(
+  url: string,
+  folder: string = "uploads"
+): Promise<UploadResult> {
+  try {
+    const cookieStore = await cookies();
+    const sessionToken =
+      cookieStore.get("better-auth.session_token")?.value ||
+      cookieStore.get("__Secure-better-auth.session_token")?.value;
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (sessionToken) {
+      headers["Cookie"] = `better-auth.session_token=${sessionToken}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/upload/from-url`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ url, folder }),
+    });
+
+    const data: UploadResponse = await response.json();
+
+    if (!response.ok || !data.success) {
+      return { success: false, error: data.message || "Upload failed" };
+    }
+
+    return {
+      success: true,
+      data: {
+        urls: { original: data.data.url },
+        keys: { original: data.data.key },
+      },
+    };
+  } catch (error) {
+    console.error("Upload from URL error:", error);
+    return { success: false, error: "Failed to upload image from URL" };
+  }
+}

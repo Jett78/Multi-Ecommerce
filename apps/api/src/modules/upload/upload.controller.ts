@@ -25,6 +25,17 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from '@thallesp/nestjs-better-auth';
 import { UploadService } from './upload.service';
+import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+
+export class UploadFromUrlDto {
+  @IsString()
+  @IsNotEmpty()
+  url: string;
+
+  @IsString()
+  @IsOptional()
+  folder?: string;
+}
 
 @ApiTags('upload')
 @Controller('upload')
@@ -128,6 +139,31 @@ export class UploadController {
       success: true,
       statusCode: 201,
       message: 'File uploaded successfully',
+      data: result,
+    };
+  }
+
+  @Post('from-url')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Upload image from external URL to S3' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', example: 'https://example.com/image.jpg', description: 'External image URL' },
+        folder: { type: 'string', example: 'uploads', description: 'Upload folder' },
+      },
+      required: ['url'],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Image uploaded successfully from URL' })
+  @ApiResponse({ status: 400, description: 'Invalid URL or content type not allowed' })
+  async uploadFromUrl(@Body() dto: UploadFromUrlDto) {
+    const result = await this.uploadService.uploadFromUrl(dto.url, dto.folder || 'uploads');
+    return {
+      success: true,
+      statusCode: 201,
+      message: 'Image uploaded successfully from URL',
       data: result,
     };
   }

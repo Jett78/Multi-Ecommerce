@@ -1,21 +1,14 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { uploadMultipleImages } from "@/actions/upload-action";
+import { uploadMultipleImages, uploadFromUrl } from "@/actions/upload-action";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import Image from "next/image";
 import { X, Upload, Loader2, Link } from "lucide-react";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
-function extractKeyFromUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    return decodeURIComponent(parsed.pathname.slice(1));
-  } catch {
-    return url;
-  }
-}
+
 
 interface ImageUploadMultipleProps {
   onSuccess?: (images: Array<{ url: string; key: string }>) => void;
@@ -43,7 +36,7 @@ export default function ImageUploadMultiple({
     }
   }, [defaultImages]);
 
-  const handleAddUrl = () => {
+  const handleAddUrl = async () => {
     const trimmed = urlInput.trim();
     if (!trimmed) return;
 
@@ -52,13 +45,29 @@ export default function ImageUploadMultiple({
       return;
     }
 
-    const key = extractKeyFromUrl(trimmed);
-    const newImage = { url: trimmed, key };
-    const updatedImages = [...images, newImage];
-    setImages(updatedImages);
-    onSuccess?.(updatedImages);
-    setUrlInput("");
-    showSuccess("Image added from URL");
+    try {
+      new URL(trimmed);
+    } catch {
+      showError("Please enter a valid URL");
+      return;
+    }
+
+    setIsUploading(true);
+
+    const res = await uploadFromUrl(trimmed, folder);
+
+    setIsUploading(false);
+
+    if (res.success && res.data) {
+      const newImage = { url: res.data.urls.original, key: res.data.keys.original };
+      const updatedImages = [...images, newImage];
+      setImages(updatedImages);
+      onSuccess?.(updatedImages);
+      setUrlInput("");
+      showSuccess("Image uploaded to S3");
+    } else {
+      showError(res.error || "Failed to upload image");
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

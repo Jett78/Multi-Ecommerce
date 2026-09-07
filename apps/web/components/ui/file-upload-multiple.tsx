@@ -2,14 +2,13 @@
 
 import React, { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { uploadSingleImage } from "@/actions/upload-action";
+import { uploadSingleImage, uploadFromUrl } from "@/actions/upload-action";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import type { FileUploadMultipleProps } from "@/types/components";
 
 export default function FileUploadMultiple({
   onSuccess,
   defaultImages = [],
-  className,
   accept = "image/*",
   folder = "uploads",
   maxFiles = 10,
@@ -23,7 +22,7 @@ export default function FileUploadMultiple({
     inputRef.current?.click();
   };
 
-  const handleAddUrl = () => {
+  const handleAddUrl = async () => {
     const trimmed = urlInput.trim();
     if (!trimmed) return;
 
@@ -32,10 +31,30 @@ export default function FileUploadMultiple({
       return;
     }
 
-    const newImage = { key: trimmed, url: trimmed };
-    onSuccess?.([...defaultImages, newImage]);
-    setUrlInput("");
-    showSuccess("Image added from URL");
+    try {
+      new URL(trimmed);
+    } catch {
+      showError("Please enter a valid URL");
+      return;
+    }
+
+    setUploading(true);
+
+    const res = await uploadFromUrl(trimmed, folder);
+
+    setUploading(false);
+
+    if (res.success && res.data) {
+      const newImage = {
+        key: res.data.keys.original,
+        url: res.data.urls.original,
+      };
+      onSuccess?.([...defaultImages, newImage]);
+      setUrlInput("");
+      showSuccess("Image uploaded to S3");
+    } else {
+      showError(res.error || "Failed to upload image");
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -2,21 +2,13 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { uploadSingleImage } from "@/actions/upload-action";
+import { uploadSingleImage, uploadFromUrl } from "@/actions/upload-action";
 import { showError, showSuccess } from "@/lib/toast-helper";
 import { Link } from "lucide-react";
 import type { FileUploadProps } from "@/types/components";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
 
-function extractKeyFromUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    return decodeURIComponent(parsed.pathname.slice(1));
-  } catch {
-    return url;
-  }
-}
 
 export default function FileUpload({
   onSuccess,
@@ -41,15 +33,36 @@ export default function FileUpload({
     inputRef.current?.click();
   };
 
-  const handleAddUrl = () => {
+  const handleAddUrl = async () => {
     const trimmed = urlInput.trim();
     if (!trimmed) return;
 
-    const key = extractKeyFromUrl(trimmed);
+    try {
+      new URL(trimmed);
+    } catch {
+      showError("Please enter a valid URL");
+      return;
+    }
+
+    setUploading(true);
     setPreviewUrl(trimmed);
-    onSuccess?.({ key, url: trimmed });
-    setUrlInput("");
-    showSuccess("Image added from URL");
+
+    const res = await uploadFromUrl(trimmed, folder);
+
+    setUploading(false);
+
+    if (res.success && res.data) {
+      const s3Url = res.data.urls.original;
+      const s3Key = res.data.keys.original;
+
+      setPreviewUrl(s3Url);
+      onSuccess?.({ key: s3Key, url: s3Url });
+      setUrlInput("");
+      showSuccess("Image uploaded to S3");
+    } else {
+      setPreviewUrl(null);
+      showError(res.error || "Failed to upload image");
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

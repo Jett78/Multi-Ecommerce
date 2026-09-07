@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ConfigService } from '@nestjs/config';
@@ -52,6 +52,77 @@ export class UploadService {
 
     this.logger.log(`File uploaded: ${key}`);
     return { key, url, bucket: this.bucketName };
+  }
+
+  async uploadFromUrl(
+    imageUrl: string,
+    folder: string = 'uploads',
+  ): Promise<UploadResult> {
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(imageUrl);
+    } catch {
+      throw new BadRequestException('Invalid URL provided');
+    }
+
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      throw new BadRequestException('Only HTTP/HTTPS URLs are allowed');
+    }
+
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new BadRequestException(`Failed to fetch image: ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type') || this.getContentTypeFromUrl(imageUrl);
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(contentType)) {
+      throw new BadRequestException(`Content type ${contentType} is not allowed`);
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    const ext = this.getExtensionFromContentType(contentType) || path.extname(parsedUrl.pathname) || '.jpg';
+    const key = `${folder}/${uuidv4()}${ext}`;
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      Body: buffer,
+      ContentType: contentType,
+    });
+
+    await this.s3Client.send(command);
+
+    const url = this.buildUrl(key);
+
+    this.logger.log(`File uploaded from URL: ${key}`);
+    return { key, url, bucket: this.bucketName };
+  }
+
+  private getContentTypeFromUrl(url: string): string {
+    const ext = path.extname(new URL(url).pathname).toLowerCase();
+    const mimeTypes: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.svg': 'image/svg+xml',
+    };
+    return mimeTypes[ext] || 'image/jpeg';
+  }
+
+  private getExtensionFromContentType(contentType: string): string | null {
+    const extensions: Record<string, string> = {
+      'image/jpeg': '.jpg',
+      'image/png': '.png',
+      'image/gif': '.gif',
+      'image/webp': '.webp',
+      'image/svg+xml': '.svg',
+    };
+    return extensions[contentType] || null;
   }
 
   async deleteFile(key: string): Promise<void> {
