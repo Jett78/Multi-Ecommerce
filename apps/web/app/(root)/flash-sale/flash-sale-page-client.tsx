@@ -35,11 +35,26 @@ export default function FlashSalePageClient({ sale, products }: FlashSalePageCli
     <div className="min-h-screen">
       {/* Hero Banner */}
       <div className="relative overflow-hidden bg-gradient-to-br from-primarymain via-indigo-600 to-violet-600">
+        {/* Cover Image */}
+        {sale.imageUrl && (
+          <div className="absolute inset-0">
+            <Image
+              src={sale.imageUrl}
+              alt={sale.name}
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-primarymain/90 via-primarymain/70 to-transparent" />
+          </div>
+        )}
         {/* Decorative */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-72 h-72 bg-white rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
-        </div>
+        {!sale.imageUrl && (
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-72 h-72 bg-white rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
+          </div>
+        )}
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
           <Link
