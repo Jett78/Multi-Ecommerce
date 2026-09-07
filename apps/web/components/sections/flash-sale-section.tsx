@@ -7,14 +7,21 @@ export default async function FlashSaleSection() {
     getActiveFlashSaleProducts(),
   ]);
 
-  const activeSale = sales[0];
-
-  if (!activeSale || saleProducts.length === 0) return null;
+  if (sales.length === 0) return null;
 
   return (
-    <FlashSaleSectionClient
-      sale={activeSale}
-      products={saleProducts}
-    />
+    <div className="space-y-6">
+      {sales.map((sale) => {
+        const filteredProducts = saleProducts.filter(p => p.flashSaleId === sale.id);
+        if (filteredProducts.length === 0) return null;
+        return (
+          <FlashSaleSectionClient
+            key={sale.id}
+            sale={sale}
+            products={filteredProducts}
+          />
+        );
+      })}
+    </div>
   );
 }

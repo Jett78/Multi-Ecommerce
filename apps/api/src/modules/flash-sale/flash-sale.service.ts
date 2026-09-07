@@ -93,6 +93,40 @@ export class FlashSaleService {
     }
 
     await this.repository.update(id, updateData);
+
+    if (dto.products !== undefined) {
+      const existingVariantIds = new Set(existing.products?.map(p => p.variantId) || []);
+      const newVariantIds = new Set(dto.products.map(p => p.variantId));
+
+      const toRemove = existing.products?.filter(p => !newVariantIds.has(p.variantId)) || [];
+      for (const product of toRemove) {
+        await this.repository.removeProduct(product.id);
+      }
+
+      for (const product of dto.products) {
+        const existingProduct = existing.products?.find(p => p.variantId === product.variantId);
+        if (existingProduct) {
+          await this.repository.updateProduct(existingProduct.id, {
+            salePrice: product.salePrice,
+            originalPrice: product.originalPrice,
+            maxQuantity: product.maxQuantity,
+          });
+        } else {
+          const inActiveSale = await this.repository.checkVariantInActiveSale(product.variantId, id);
+          if (inActiveSale) {
+            throw new ConflictException(`Variant "${product.variantId}" is already in an active flash sale`);
+          }
+          await this.repository.addProduct({
+            flashSaleId: id,
+            variantId: product.variantId,
+            salePrice: product.salePrice,
+            originalPrice: product.originalPrice,
+            maxQuantity: product.maxQuantity,
+          });
+        }
+      }
+    }
+
     return this.findById(id);
   }
 

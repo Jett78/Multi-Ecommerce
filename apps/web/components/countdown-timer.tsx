@@ -61,15 +61,15 @@ export default function CountdownTimer({ endsAt, className = "", onEnd }: Countd
       {blocks.map((block, i) => (
         <div key={block.label} className="flex items-center gap-1.5">
           <div className="flex flex-col items-center">
-            <span className="text-lg font-bold text-white tabular-nums leading-none">
+            <span className="text-lg font-bold text-gray-900 tabular-nums leading-none">
               {String(block.value).padStart(2, "0")}
             </span>
-            <span className="text-[9px] font-medium text-white/60 uppercase tracking-wider">
+            <span className="text-[9px] font-medium text-gray-500 uppercase tracking-wider">
               {block.label}
             </span>
           </div>
           {i < blocks.length - 1 && (
-            <span className="text-lg font-bold text-white/40 mb-2">:</span>
+            <span className="text-lg font-bold text-gray-400 mb-2">:</span>
           )}
         </div>
       ))}

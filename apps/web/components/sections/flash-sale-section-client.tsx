@@ -1,20 +1,59 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { Zap, ChevronRight } from "lucide-react";
+import { Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import { useRef } from "react";
 import CountdownTimer from "@/components/countdown-timer";
-import { formatPrice } from "@/lib/utils";
 import type { FlashSale, ActiveFlashSaleProduct } from "@/types/flash-sale";
+import ProductCard from "@/components/product-card";
+import Image from "next/image";
 
 interface FlashSaleSectionClientProps {
   sale: FlashSale;
   products: ActiveFlashSaleProduct[];
 }
 
-export default function FlashSaleSectionClient({ sale, products }: FlashSaleSectionClientProps) {
+export default function FlashSaleSectionClient({
+  sale,
+  products,
+}: FlashSaleSectionClientProps) {
+  const sliderRef = useRef<Slider | null>(null);
+  const showSlider = products.length > 5;
+
+  const settings = {
+    dots: true,
+    infinite: products.length > 5,
+    slidesToShow: 5,
+    slidesToScroll: 1,
+    speed: 1000,
+    autoplay: true,
+    autoplaySpeed: 3500,
+    pauseOnHover: true,
+    arrows: false,
+    responsive: [
+      {
+        breakpoint: 1280,
+        settings: { slidesToShow: 4 },
+      },
+      {
+        breakpoint: 1024,
+        settings: { slidesToShow: 3 },
+      },
+      {
+        breakpoint: 640,
+        settings: { slidesToShow: 2 },
+      },
+      {
+        breakpoint: 480,
+        settings: { slidesToShow: 1 },
+      },
+    ],
+  };
+
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primarymain via-indigo-600 to-violet-600">
+    <section className="relative overflow-hidden bg-black">
       {/* Cover Image */}
       {sale.imageUrl && (
         <div className="absolute inset-0">
@@ -22,17 +61,10 @@ export default function FlashSaleSectionClient({ sale, products }: FlashSaleSect
             src={sale.imageUrl}
             alt={sale.name}
             fill
-            className="object-cover"
             priority
+            className="w-full h-full object-cover opacity-30"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primarymain/90 via-primarymain/70 to-transparent" />
-        </div>
-      )}
-      {/* Decorative pattern */}
-      {!sale.imageUrl && (
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-72 h-72 bg-white rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
+          {/* <div className="absolute inset-0 bg-gradient-to-r from-primarymain/90 via-primarymain/70 to-transparent" /> */}
         </div>
       )}
 
@@ -40,111 +72,68 @@ export default function FlashSaleSectionClient({ sale, products }: FlashSaleSect
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 bg-white/15 backdrop-blur-sm rounded-xl border border-white/20">
-              <Zap className="h-6 w-6 text-white" fill="currentColor" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="inline-block px-2 py-0.5 bg-white/20 rounded text-[10px] font-bold text-white uppercase tracking-widest">
-                  Limited Time
-                </span>
-              </div>
               <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
                 {sale.name}
               </h2>
-            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Countdown */}
-            <div className="bg-white/15 backdrop-blur-sm rounded-xl px-4 py-2.5 border border-white/20">
-              <p className="text-[10px] font-bold text-white/70 uppercase tracking-wider mb-1">
-                Ends In
-              </p>
-              <CountdownTimer endsAt={sale.endsAt} />
-            </div>
-            {/* View All */}
-            <Link
-              href="/flash-sale"
-              className="group flex items-center gap-1.5 bg-white text-primarymain px-5 py-2.5 text-sm font-bold tracking-wide rounded-xl hover:bg-white/90 transition-all"
-            >
-              VIEW ALL
-              <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
+          <div className="bg-white rounded-xl px-6 py-4">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 text-center">
+              Ends In
+            </p>
+            <CountdownTimer endsAt={sale.endsAt} />
           </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-          {products.slice(0, 10).map((item) => {
-            const discountPercent = Math.round(
-              ((item.originalPrice - item.salePrice) / item.originalPrice) * 100
-            );
-            const stockRemaining = item.maxQuantity
-              ? item.maxQuantity - item.soldQuantity
-              : null;
-
-            return (
-              <Link
-                key={item.id}
-                href={`/products/${item.productSlug}`}
-                className="group relative bg-white rounded-xl overflow-hidden shadow-lg shadow-black/5 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
-              >
-                <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                  {item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.productName}
-                      fill
-                      className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-4xl font-bold text-gray-200">
-                      {item.productName.charAt(0)}
-                    </div>
-                  )}
-                  {/* Flash Sale badge - matching ProductCard style */}
-                  <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold tracking-wider px-2 py-1 z-10 flex items-center gap-1 shadow-md">
-                    <span>FLASH SALE</span>
-                    <span>{discountPercent}% OFF</span>
-                  </div>
-                  {/* Stock bar */}
-                  {stockRemaining !== null && stockRemaining <= 10 && (
-                    <div className="absolute bottom-2 left-2 right-2 z-10">
-                      <div className="bg-black/70 backdrop-blur-sm rounded-lg px-2.5 py-1.5">
-                        <div className="flex items-center justify-between text-[10px] text-white mb-1">
-                          <span>Stock left</span>
-                          <span className="font-bold">{stockRemaining}</span>
-                        </div>
-                        <div className="w-full bg-white/20 rounded-full h-1.5">
-                          <div
-                            className="bg-primarymain h-1.5 rounded-full transition-all"
-                            style={{
-                              width: `${Math.max(5, (stockRemaining / (item.maxQuantity || stockRemaining)) * 100)}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+        {/* Products */}
+        {showSlider ? (
+          <div className="relative">
+            <Slider {...settings} ref={sliderRef}>
+              {products.map((item) => (
+                <div key={item.id} className="px-2">
+                  <ProductCard activeFlashSaleProduct={item} />
                 </div>
+              ))}
+            </Slider>
 
-                <div className="p-3">
-                  <h3 className="font-medium text-sm leading-snug text-gray-900 line-clamp-2 group-hover:text-primarymain transition-colors mb-2">
-                    {item.productName}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-red-600">
-                      {formatPrice(item.salePrice)}
-                    </span>
-                    <span className="text-xs text-gray-400 line-through">
-                      {formatPrice(item.originalPrice)}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                sliderRef.current?.slickPrev();
+              }}
+              className="absolute left-0 top-[40%] z-10 -translate-y-1/2 -translate-x-3 bg-white border border-gray-200 p-2 transition-colors hover:border-gray-900 hover:bg-gray-50"
+            >
+              <ChevronLeft className="h-4 w-4 text-gray-900" />
+            </a>
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                sliderRef.current?.slickNext();
+              }}
+              className="absolute right-0 top-[40%] z-10 -translate-y-1/2 translate-x-3 bg-white border border-gray-200 p-2 transition-colors hover:border-gray-900 hover:bg-gray-50"
+            >
+              <ChevronRight className="h-4 w-4 text-gray-900" />
+            </a>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            {products.slice(0, 10).map((item) => (
+              <ProductCard key={item.id} activeFlashSaleProduct={item} />
+            ))}
+          </div>
+        )}
+
+        {/* View All Button */}
+        <div className="flex justify-center mt-8">
+          <a
+            href={`/flash-sale?sale=${sale.slug}`}
+            className="group flex items-center gap-2 bg-primarymain text-white px-8 py-3 text-sm font-bold tracking-wide rounded-xl hover:bg-primarymain/90 transition-all"
+          >
+            VIEW ALL
+            <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+          </a>
         </div>
       </div>
     </section>

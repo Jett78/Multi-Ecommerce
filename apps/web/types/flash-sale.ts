@@ -10,6 +10,7 @@ export interface FlashSale {
   createdAt: string;
   updatedAt: string;
   products?: FlashSaleProduct[];
+  productsCount?: number;
 }
 
 export interface FlashSaleProduct {

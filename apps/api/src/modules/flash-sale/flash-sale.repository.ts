@@ -117,7 +117,22 @@ export class FlashSaleRepository {
     const totalCount = Number(countResult.count);
 
     const sales = await this.db
-      .select()
+      .select({
+        id: schema.flashSales.id,
+        name: schema.flashSales.name,
+        slug: schema.flashSales.slug,
+        description: schema.flashSales.description,
+        startsAt: schema.flashSales.startsAt,
+        endsAt: schema.flashSales.endsAt,
+        isActive: schema.flashSales.isActive,
+        imageUrl: schema.flashSales.imageUrl,
+        createdAt: schema.flashSales.createdAt,
+        updatedAt: schema.flashSales.updatedAt,
+        productsCount: sql<number>`(
+          SELECT COUNT(*) FROM flash_sale_products fsp
+          WHERE fsp.flash_sale_id = ${schema.flashSales.id}
+        )`,
+      })
       .from(schema.flashSales)
       .where(whereClause)
       .orderBy(sql`${schema.flashSales.startsAt} desc`)

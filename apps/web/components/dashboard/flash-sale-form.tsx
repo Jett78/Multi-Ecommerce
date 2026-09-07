@@ -106,7 +106,7 @@ export default function FlashSaleForm({ flashSale }: { flashSale?: FlashSale }) 
     if (!variant) return;
 
     if (saleProducts.some((p) => p.variantId === variant.id)) {
-      showError("This product variant is already in the sale");
+      showError(`"${product.name}" is already in the sale`);
       return;
     }
 
@@ -121,8 +121,6 @@ export default function FlashSaleForm({ flashSale }: { flashSale?: FlashSale }) 
         maxQuantity: undefined,
       },
     ]);
-    setProductSearch("");
-    setSearchResults([]);
   };
 
   const removeProduct = (variantId: string) => {

@@ -7,18 +7,26 @@ export const metadata: Metadata = {
   description: "Don't miss out on our flash sale! Get amazing discounts on selected products for a limited time only.",
 };
 
-export default async function FlashSalePage() {
+export default async function FlashSalePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sale?: string }>;
+}) {
+  const { sale: saleSlug } = await searchParams;
+
   const [sales, products] = await Promise.all([
     getActiveFlashSales(),
     getActiveFlashSaleProducts(),
   ]);
 
-  const activeSale = sales[0] || null;
+  const activeSale = saleSlug
+    ? sales.find(s => s.slug === saleSlug) || sales[0] || null
+    : sales[0] || null;
 
   return (
     <FlashSalePageClient
       sale={activeSale}
-      products={products}
+      products={products.filter(p => p.flashSaleId === activeSale?.id)}
     />
   );
 }

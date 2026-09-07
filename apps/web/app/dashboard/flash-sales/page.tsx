@@ -81,7 +81,7 @@ export default function AdminFlashSalesPage() {
       label: "Products",
       render: (row) => (
         <span className="text-sm text-slate-600">
-          {row.products?.length || 0}
+          {row.productsCount ?? 0}
         </span>
       ),
     },

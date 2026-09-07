@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Zap, ArrowLeft, ChevronRight } from "lucide-react";
+import { Zap, ArrowLeft } from "lucide-react";
 import CountdownTimer from "@/components/countdown-timer";
-import { formatPrice } from "@/lib/utils";
 import type { FlashSale, ActiveFlashSaleProduct } from "@/types/flash-sale";
+import ProductCard from "@/components/product-card";
 
 interface FlashSalePageClientProps {
   sale: FlashSale | null;
@@ -38,12 +38,10 @@ export default function FlashSalePageClient({ sale, products }: FlashSalePageCli
         {/* Cover Image */}
         {sale.imageUrl && (
           <div className="absolute inset-0">
-            <Image
+            <img
               src={sale.imageUrl}
               alt={sale.name}
-              fill
-              className="object-cover"
-              priority
+              className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-primarymain/90 via-primarymain/70 to-transparent" />
           </div>
@@ -102,75 +100,12 @@ export default function FlashSalePageClient({ sale, products }: FlashSalePageCli
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-          {products.map((item) => {
-            const discountPercent = Math.round(
-              ((item.originalPrice - item.salePrice) / item.originalPrice) * 100
-            );
-            const stockRemaining = item.maxQuantity
-              ? item.maxQuantity - item.soldQuantity
-              : null;
-
-            return (
-              <Link
-                key={item.id}
-                href={`/products/${item.productSlug}`}
-                className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-primarymain hover:shadow-lg hover:shadow-primarymain/10 hover:-translate-y-0.5 transition-all duration-300"
-              >
-                <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                  {item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.productName}
-                      fill
-                      className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-4xl font-bold text-gray-200">
-                      {item.productName.charAt(0)}
-                    </div>
-                  )}
-                  {/* Flash Sale badge - matching ProductCard style */}
-                  <div className="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold tracking-wider px-2 py-1 z-10 flex items-center gap-1 shadow-md">
-                    <span>FLASH SALE</span>
-                    <span>{discountPercent}% OFF</span>
-                  </div>
-                  {/* Stock bar */}
-                  {stockRemaining !== null && stockRemaining <= 10 && (
-                    <div className="absolute bottom-2 left-2 right-2 z-10">
-                      <div className="bg-black/70 backdrop-blur-sm rounded-lg px-2.5 py-1.5">
-                        <div className="flex items-center justify-between text-[10px] text-white mb-1">
-                          <span>Stock left</span>
-                          <span className="font-bold">{stockRemaining}</span>
-                        </div>
-                        <div className="w-full bg-white/20 rounded-full h-1.5">
-                          <div
-                            className="bg-primarymain h-1.5 rounded-full transition-all"
-                            style={{
-                              width: `${Math.max(5, (stockRemaining / (item.maxQuantity || stockRemaining)) * 100)}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-3">
-                  <h3 className="font-medium text-sm leading-snug text-gray-900 line-clamp-2 group-hover:text-primarymain transition-colors mb-2">
-                    {item.productName}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-red-600">
-                      {formatPrice(item.salePrice)}
-                    </span>
-                    <span className="text-xs text-gray-400 line-through">
-                      {formatPrice(item.originalPrice)}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
+          {products.map((item) => (
+            <ProductCard
+              key={item.id}
+              activeFlashSaleProduct={item}
+            />
+          ))}
         </div>
       </div>
     </div>
