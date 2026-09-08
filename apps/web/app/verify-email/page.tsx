@@ -1,24 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, XCircle, Loader2, Mail, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export default function VerifyEmailPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const email = searchParams.get("email") || "";
-  const name = searchParams.get("name") || "";
-  
+
+  // Read directly from URL — bypasses useSearchParams() SSR/Suspense issues
+  const urlParams =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : null;
+  const email = urlParams?.get("email") || "";
+  const name = urlParams?.get("name") || "";
+  const redirect = urlParams?.get("redirect") || localStorage.getItem("auth_redirect") || "/";
+
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [countdown, setCountdown] = useState(60);
+  const otpSentRef = useRef(false);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -27,14 +34,21 @@ export default function VerifyEmailPage() {
     }
   }, [countdown]);
 
+  // Store redirect in localStorage so it survives page reloads
+  useEffect(() => {
+    if (redirect) {
+      localStorage.setItem("auth_redirect", redirect);
+    }
+  }, [redirect]);
+
   useEffect(() => {
     if (status === "success") {
       const timer = setTimeout(() => {
-        router.push("/login");
+        router.push(`/login?redirect=${encodeURIComponent(redirect)}&verified=true`);
       }, 2000);
       return () => clearTimeout(timer);
     }
-  }, [status, router]);
+  }, [status, router, redirect]);
 
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) return;
@@ -135,7 +149,8 @@ export default function VerifyEmailPage() {
 
   // Auto-send OTP when page loads (after handleResendOTP is defined)
   useEffect(() => {
-    if (email && name) {
+    if (email && name && !otpSentRef.current) {
+      otpSentRef.current = true;
       handleResendOTP();
     }
   }, [email, name]);
@@ -153,7 +168,7 @@ export default function VerifyEmailPage() {
           <p className="text-muted-foreground">
             Please register first to verify your email.
           </p>
-          <Link href="/register">
+          <Link href={`/register?redirect=${encodeURIComponent(redirect)}`}>
             <Button className="w-full">Go to Register</Button>
           </Link>
         </div>
@@ -255,7 +270,7 @@ export default function VerifyEmailPage() {
 
               <div className="text-center">
                 <Link
-                  href="/register"
+                  href={`/register?redirect=${encodeURIComponent(redirect)}`}
                   className="inline-flex items-center text-sm text-muted-foreground hover:text-primary"
                 >
                   <ArrowLeft className="mr-1 size-4" />

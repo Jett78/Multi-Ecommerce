@@ -38,9 +38,7 @@ export function AddressForm({
   const availableDistricts = selectedProvince?.districts || [];
   const availableLocalLevels = selectedProvince?.districts.find((d) => d.name === district)?.localLevels || [];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleSubmit = () => {
     if (!provinceId || !district || !municipality || !streetAddress) return;
     onSubmit({
       type,
@@ -58,7 +56,7 @@ export function AddressForm({
     "block w-full appearance-none rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 pr-10 text-sm text-gray-900 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="space-y-4">
       {/* Type selector */}
       <div className="grid grid-cols-3 gap-2">
         {TYPE_OPTIONS.map((opt) => (
@@ -169,7 +167,8 @@ export function AddressForm({
 
       <div className="flex items-center gap-3 pt-1">
         <button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={isSubmitting}
           className="flex-1 rounded-xl bg-primarymain px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-primarymain/90 disabled:opacity-50 active:scale-[0.98]"
         >
@@ -185,6 +184,6 @@ export function AddressForm({
           </button>
         )}
       </div>
-    </form>
+    </div>
   );
 }

@@ -47,7 +47,9 @@ export function LoginForm({
           if (!emailVerified) {
             await signOut();
             const savedRedirect = localStorage.getItem("auth_redirect") || "";
-            window.location.href = `/verify-email?email=${encodeURIComponent(email)}&name=${encodeURIComponent(data?.data?.name || "")}${savedRedirect ? `&redirect=${encodeURIComponent(savedRedirect)}` : ""}`;
+            const urlRedirect = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("redirect") || "" : "";
+            const redirect = savedRedirect || urlRedirect;
+            window.location.href = `/verify-email?email=${encodeURIComponent(email)}&name=${encodeURIComponent(data?.data?.name || "")}${redirect ? `&redirect=${encodeURIComponent(redirect)}` : ""}`;
             return;
           }
         } catch {

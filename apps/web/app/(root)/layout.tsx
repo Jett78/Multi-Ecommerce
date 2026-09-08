@@ -10,7 +10,7 @@ export default function RootLayout({
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 mt-16">{children}</main>
       <Footer />
       <WhatsAppFloat />
     </div>

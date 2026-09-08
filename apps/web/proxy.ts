@@ -62,23 +62,14 @@ export async function proxy(request: NextRequest) {
 
   const isAdminDashboard = pathname.startsWith("/dashboard");
   const isAdminLogin = pathname === "/admin";
-  const isUserProfile = pathname.startsWith("/profile/user");
-  const isUserLogin = pathname === "/login";
-  const isUserRegister = pathname === "/register";
 
   if (isAdminDashboard && !sessionToken) {
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 
-  if (isUserProfile && !sessionToken) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  if (sessionToken && (isAdminLogin || isUserLogin || isUserRegister)) {
+  if (sessionToken && isAdminLogin) {
     if (isAdmin) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
-    } else {
-      return NextResponse.redirect(new URL("/profile/user", request.url));
     }
   }
 

@@ -3,16 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/types/product";
+import type { ActiveFlashSaleProduct } from "@/types/flash-sale";
 import { formatPrice } from "@/lib/utils";
 import Rating from "@/components/rating";
 import WishlistButton from "@/components/wishlist/wishlist-button";
 
 interface ProductCardProps {
-  product: Product;
+  product?: Product;
   index?: number;
   flashSalePrice?: number;
   flashSaleOriginalPrice?: number;
   flashSaleName?: string;
+  activeFlashSaleProduct?: ActiveFlashSaleProduct;
 }
 
 function getCheapestVariant(product: Product) {
@@ -75,33 +77,47 @@ function getDiscountPercent(product: Product): number | null {
   return null;
 }
 
-export default function ProductCard({ product, index = 0, flashSalePrice, flashSaleOriginalPrice, flashSaleName }: ProductCardProps) {
-  const primaryImage =
-    product.images?.find((img) => img.isPrimary) || product.images?.[0];
-  const outOfStock = isOutOfStock(product);
-  const discountPercent = getDiscountPercent(product);
-  const compareAtPrice = getCompareAtPrice(product);
-  const hasFlashSale = flashSalePrice != null && flashSaleOriginalPrice != null && flashSalePrice < flashSaleOriginalPrice;
+export default function ProductCard({
+  product,
+  index = 0,
+  flashSalePrice,
+  flashSaleOriginalPrice,
+  flashSaleName,
+  activeFlashSaleProduct,
+}: ProductCardProps) {
+  const primaryImage = activeFlashSaleProduct?.imageUrl
+    ? { url: activeFlashSaleProduct.imageUrl, isPrimary: true }
+    : product?.images?.find((img) => img.isPrimary) || product?.images?.[0];
+  const outOfStock = product ? isOutOfStock(product) : false;
+  const discountPercent = product ? getDiscountPercent(product) : null;
+  const compareAtPrice = product ? getCompareAtPrice(product) : null;
+
+  const salePrice = activeFlashSaleProduct?.salePrice ?? flashSalePrice;
+  const originalPrice = activeFlashSaleProduct?.originalPrice ?? flashSaleOriginalPrice;
+  const hasFlashSale = salePrice != null && originalPrice != null && salePrice < originalPrice;
   const flashSaleDiscount = hasFlashSale
-    ? Math.round(((flashSaleOriginalPrice! - flashSalePrice!) / flashSaleOriginalPrice!) * 100)
+    ? Math.round(((originalPrice! - salePrice!) / originalPrice!) * 100)
     : null;
+
+  const displayName = activeFlashSaleProduct?.productName ?? product.name;
+  const displaySlug = activeFlashSaleProduct?.productSlug ?? product.slug;
 
   return (
     <Link
-      href={`/products/${product.slug}`}
+      href={`/products/${displaySlug}`}
       className="group relative"
     >
       <div className="relative aspect-square bg-gray-50 overflow-hidden border border-gray-200 group-hover:border-primarymain transition-colors duration-200">
-        {primaryImage ? (
+        {primaryImage?.url ? (
           <Image
             src={primaryImage.url}
-            alt={product.name}
+            alt={displayName}
             fill
             className="object-contain p-6 group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
           <div className="flex items-center justify-center h-full text-4xl font-bold text-gray-200">
-            {product.name.charAt(0)}
+            {displayName.charAt(0)}
           </div>
         )}
         {outOfStock && (
@@ -122,45 +138,30 @@ export default function ProductCard({ product, index = 0, flashSalePrice, flashS
             SAVE {discountPercent}%
           </div>
         )}
-        <div className="absolute top-2 right-2 z-10">
-          <WishlistButton product={product} size="sm" />
-        </div>
+        {product && (
+          <div className="absolute top-2 right-2 z-10">
+            <WishlistButton product={product} size="sm" />
+          </div>
+        )}
       </div>
 
-      <div className="mt-3 space-y-1.5">
+      <div className="bg-white px-3 py-3">
         <h3 className="font-medium text-[15px] leading-snug text-gray-900 line-clamp-2 group-hover:underline decoration-1 underline-offset-2">
-          {product.name}
+          {displayName}
         </h3>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {hasFlashSale ? (
-              <>
-                <p className="text-sm font-semibold text-red-600">{formatPrice(flashSalePrice!)}</p>
-                <p className="text-xs text-gray-400 line-through">{formatPrice(flashSaleOriginalPrice!)}</p>
-              </>
-            ) : (
-              <>
-                <p className="text-sm font-semibold text-gray-900">{getProductPrice(product)}</p>
-                {compareAtPrice && (
-                  <p className="text-xs text-gray-400 line-through">{compareAtPrice}</p>
-                )}
-              </>
-            )}
-          </div>
-          {product.category && (
-            <span className="text-[11px] text-gray-400 uppercase tracking-wide">
-              {product.category.name}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center justify-between">
-          {product.reviewCount > 0 && (
-            <Rating
-              rating={product.averageRating}
-              size="sm"
-              showValue
-              reviewCount={product.reviewCount}
-            />
+        <div className="flex items-center gap-2 mt-1">
+          {hasFlashSale ? (
+            <>
+              <p className="text-sm font-semibold text-red-600">{formatPrice(salePrice!)}</p>
+              <p className="text-xs text-gray-400 line-through">{formatPrice(originalPrice!)}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold text-gray-900">{product ? getProductPrice(product) : ""}</p>
+              {compareAtPrice && (
+                <p className="text-xs text-gray-400 line-through">{compareAtPrice}</p>
+              )}
+            </>
           )}
         </div>
       </div>
