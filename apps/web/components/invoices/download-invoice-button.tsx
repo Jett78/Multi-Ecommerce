@@ -59,42 +59,40 @@ export default function DownloadInvoiceButton({
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => handleOpen("invoice")}
-          disabled={loadingType !== null}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loadingType === "invoice" ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Preparing...
-            </>
-          ) : (
-            <>
-              <FileText className="h-4 w-4" />
-              View Invoice
-            </>
-          )}
-        </button>
-        <button
-          onClick={() => handleOpen("receipt")}
-          disabled={loadingType !== null}
-          className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition-colors hover:bg-emerald-50 hover:border-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loadingType === "receipt" ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Preparing...
-            </>
-          ) : (
-            <>
-              <Receipt className="h-4 w-4" />
-              View Receipt
-            </>
-          )}
-        </button>
-      </div>
+      <button
+        onClick={() => handleOpen("invoice")}
+        disabled={loadingType !== null}
+        className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loadingType ? (
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Preparing...
+          </>
+        ) : (
+          <>
+            <FileText className="h-3.5 w-3.5" />
+            View Invoice
+          </>
+        )}
+      </button>
+      <button
+        onClick={() => handleOpen("receipt")}
+        disabled={loadingType !== null}
+        className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600 transition-colors hover:border-gray-300 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loadingType ? (
+          <>
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Preparing...
+          </>
+        ) : (
+          <>
+            <Receipt className="h-3.5 w-3.5" />
+            View Receipt
+          </>
+        )}
+      </button>
 
       {activeDocument && (
         <PreviewModal

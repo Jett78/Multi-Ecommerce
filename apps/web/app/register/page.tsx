@@ -1,17 +1,19 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { RegisterForm } from "@/components/auth/register-form";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [redirect, setRedirect] = useState("/");
 
-  // Read directly from URL — bypasses useSearchParams() SSR/Suspense issues
-  const urlParams =
-    typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search)
-      : null;
-  const redirect = urlParams?.get("redirect") || localStorage.getItem("auth_redirect") || "/";
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromUrl = urlParams.get("redirect");
+    const fromStorage = localStorage.getItem("auth_redirect");
+    setRedirect(fromUrl || fromStorage || "/");
+  }, []);
 
   const handleSuccess = (email: string, name: string) => {
     localStorage.setItem("auth_redirect", redirect);

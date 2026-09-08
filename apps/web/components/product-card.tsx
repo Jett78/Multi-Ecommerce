@@ -85,12 +85,14 @@ export default function ProductCard({
   flashSaleName,
   activeFlashSaleProduct,
 }: ProductCardProps) {
+  if (!product) return null;
+
   const primaryImage = activeFlashSaleProduct?.imageUrl
     ? { url: activeFlashSaleProduct.imageUrl, isPrimary: true }
-    : product?.images?.find((img) => img.isPrimary) || product?.images?.[0];
-  const outOfStock = product ? isOutOfStock(product) : false;
-  const discountPercent = product ? getDiscountPercent(product) : null;
-  const compareAtPrice = product ? getCompareAtPrice(product) : null;
+    : product.images?.find((img) => img.isPrimary) || product.images?.[0];
+  const outOfStock = isOutOfStock(product);
+  const discountPercent = getDiscountPercent(product);
+  const compareAtPrice = getCompareAtPrice(product);
 
   const salePrice = activeFlashSaleProduct?.salePrice ?? flashSalePrice;
   const originalPrice = activeFlashSaleProduct?.originalPrice ?? flashSaleOriginalPrice;

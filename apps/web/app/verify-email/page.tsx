@@ -17,9 +17,10 @@ export default function VerifyEmailPage() {
       : null;
   const email = urlParams?.get("email") || "";
   const name = urlParams?.get("name") || "";
-  const redirect = urlParams?.get("redirect") || localStorage.getItem("auth_redirect") || "/";
+  const redirectFromUrl = urlParams?.get("redirect") || "/";
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [redirect, setRedirect] = useState(redirectFromUrl);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [isResending, setIsResending] = useState(false);
@@ -33,6 +34,12 @@ export default function VerifyEmailPage() {
       return () => clearTimeout(timer);
     }
   }, [countdown]);
+
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get("redirect");
+    const fromStorage = localStorage.getItem("auth_redirect");
+    setRedirect(fromUrl || fromStorage || "/");
+  }, []);
 
   // Store redirect in localStorage so it survives page reloads
   useEffect(() => {
