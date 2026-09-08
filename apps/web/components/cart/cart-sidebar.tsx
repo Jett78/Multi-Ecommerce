@@ -112,12 +112,6 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
   const selectAllVariants = useCartStore((s) => s.selectAllVariants);
   const deselectAllVariants = useCartStore((s) => s.deselectAllVariants);
 
-  React.useEffect(() => {
-    if (open && items.length > 0 && selectedVariantIds.length === 0) {
-      setSelectedVariantIds(items.map((i) => i.variantId));
-    }
-  }, [open]);
-
   const selectedItems = items.filter((i) => selectedVariantIds.includes(i.variantId));
   const total = selectedItems.reduce((sum, i) => sum + i.priceAtAdd * i.quantity, 0);
   const totalQty = selectedItems.reduce((sum, i) => sum + i.quantity, 0);

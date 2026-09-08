@@ -21,16 +21,20 @@ export const useCartStore = create<CartStore>()(
         set((state) => {
           const existing = state.items.find((i) => i.variantId === item.variantId);
           if (existing) {
+            const updatedItems = state.items.map((i) =>
+              i.variantId === item.variantId
+                ? { ...i, quantity: Math.min(i.quantity + quantity, item.stockQuantity) }
+                : i
+            );
             return {
-              items: state.items.map((i) =>
-                i.variantId === item.variantId
-                  ? { ...i, quantity: i.quantity + quantity }
-                  : i
-              ),
+              items: updatedItems,
+              selectedVariantIds: updatedItems.map((i) => i.variantId),
             };
           }
+          const updatedItems = [...state.items, { ...item, quantity: Math.min(quantity, item.stockQuantity) }];
           return {
-            items: [...state.items, { ...item, quantity }],
+            items: updatedItems,
+            selectedVariantIds: updatedItems.map((i) => i.variantId),
           };
         });
       },

@@ -153,7 +153,7 @@ export function SavedAddressSelector({ selectedId, onApply }: SavedAddressSelect
           <button
             type="button"
             onClick={openAdd}
-            className="flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-sm transition-all hover:border-primarymain hover:text-primarymain"
+            className="flex items-center gap-1.5 rounded-xl bg-primarymain px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-primarymain/90"
           >
             <Plus className="h-3.5 w-3.5" />
             Add New

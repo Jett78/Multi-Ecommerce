@@ -21,12 +21,16 @@ interface ProductInfoProps {
 export default function ProductInfo({ product, selectedVariant, onSelectVariant, flashSale }: ProductInfoProps) {
   const hasVariants = product.variants && product.variants.length > 0;
   const [quantity, setQuantity] = React.useState(1);
+  const cartItems = useCartStore((s) => s.items);
 
   const currentPrice = selectedVariant?.price ?? product.price ?? 0;
   const currentComparePrice = selectedVariant?.compareAtPrice ?? product.compareAtPrice;
   const currentStock = selectedVariant?.stockQuantity ?? product.stockQuantity ?? 0;
-  const isInStock = currentStock > 0;
   const currentVariantId = selectedVariant?.id || product.variants?.[0]?.id;
+  const alreadyInCart = cartItems.find((i) => i.variantId === currentVariantId)?.quantity ?? 0;
+  const remainingStock = Math.max(0, currentStock - alreadyInCart);
+  const isInStock = currentStock > 0;
+  const canAdd = isInStock && remainingStock > 0;
 
   const hasFlashSale = flashSale != null && flashSale.variantId === currentVariantId;
   const displayPrice = hasFlashSale ? flashSale.salePrice : currentPrice;
@@ -47,15 +51,19 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant,
       }, {} as Record<string, Set<string>>)
     : {};
 
+  React.useEffect(() => {
+    setQuantity((q) => Math.min(Math.max(1, q), remainingStock || 1));
+  }, [remainingStock]);
+
   const handleAddToCart = () => {
-    if (!isInStock) return;
+    if (!canAdd) return;
     if (!currentVariantId) {
       showError("This product is not available for purchase");
       return;
     }
 
     const primaryImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
-    const addQuantity = Math.min(quantity, currentStock);
+    const addQuantity = Math.min(quantity, remainingStock);
 
     useCartStore.getState().addItem({
       variantId: currentVariantId,
@@ -179,8 +187,10 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant,
             {selectedVariant && (
               <div className="flex items-center gap-2 text-sm pt-2">
                 <span className="font-semibold text-gray-500">Stock:</span>
-                <span className={`font-medium ${currentStock <= 5 ? "text-red-600" : "text-green-600"}`}>
-                  {currentStock} available
+                <span className={`font-medium ${remainingStock <= 5 ? "text-red-600" : "text-green-600"}`}>
+                  {alreadyInCart > 0
+                    ? `${remainingStock} available (${alreadyInCart} in cart)`
+                    : `${currentStock} available`}
                 </span>
               </div>
             )}
@@ -197,7 +207,9 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant,
                 <Check size={12} className="text-white" />
               </div>
               <span className="text-sm">
-                <span className="font-semibold">In stock</span> · {currentStock} available
+                <span className="font-semibold">In stock</span> · {alreadyInCart > 0
+                  ? `${remainingStock} available (${alreadyInCart} in cart)`
+                  : `${currentStock} available`}
               </span>
             </>
           ) : (
@@ -212,7 +224,7 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant,
       )}
 
       {/* Quantity Selector */}
-      {isInStock && (
+      {canAdd && (
         <div className="flex items-center gap-4">
           <span className="text-sm font-medium text-gray-500">Quantity</span>
           <div className="flex items-center border border-gray-300">
@@ -224,14 +236,17 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant,
             </button>
             <span className="w-10 text-center text-sm font-semibold">{quantity}</span>
             <button
-              onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
+              onClick={() => setQuantity(Math.min(remainingStock, quantity + 1))}
+              disabled={quantity >= remainingStock}
               className="px-3.5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
             >
               +
             </button>
           </div>
           <span className="text-xs text-gray-400">
-            {currentStock} available
+            {alreadyInCart > 0
+              ? `${remainingStock} available (${alreadyInCart} in cart)`
+              : `${currentStock} available`}
           </span>
         </div>
       )}
@@ -240,14 +255,14 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant,
       <div className="flex items-center gap-3">
         <button
           onClick={handleAddToCart}
-          disabled={!isInStock}
+          disabled={!canAdd}
           className={`flex-1 py-4 text-sm font-bold tracking-wide transition-all flex items-center justify-center gap-2 ${
-            isInStock
+            canAdd
               ? "bg-primarymain text-white hover:bg-primarymain/90"
               : "bg-gray-100 text-gray-400 cursor-not-allowed"
           }`}
         >
-          {isInStock ? (
+          {canAdd ? (
             <>
               <ShoppingBag size={16} />
               ADD TO CART

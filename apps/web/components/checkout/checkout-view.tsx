@@ -55,10 +55,7 @@ const paymentMethods = [
     label: "Khalti",
     desc: "Pay via Khalti digital wallet",
     icon: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="5" y="2" width="14" height="20" rx="3" />
-        <path d="M12 18h.01" />
-      </svg>
+      <img src="/icons/khalti.png" alt="Khalti" className="h-5 w-5 object-contain" />
     ),
   },
 ];
@@ -71,14 +68,18 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
     () => allItems.filter((i) => selectedVariantIds.includes(i.variantId)),
     [allItems, selectedVariantIds]
   );
-  const subtotal = useCartStore((s) => s.discountedTotal());
   const clearCart = useCartStore((s) => s.clearCart);
   const appliedCoupon = useCartStore((s) => s.appliedCoupon);
   const setCoupon = useCartStore((s) => s.setCoupon);
   const removeCoupon = useCartStore((s) => s.removeCoupon);
   const deliveryCharge = useCartStore((s) => s.deliveryCharge);
   const setDeliveryCharge = useCartStore((s) => s.setDeliveryCharge);
-  const totalWithDelivery = useCartStore((s) => s.totalWithDelivery());
+  const subtotal = React.useMemo(() => {
+    const raw = items.reduce((sum, i) => sum + i.priceAtAdd * i.quantity, 0);
+    const discount = appliedCoupon?.discountAmount || 0;
+    return Math.max(0, raw - discount);
+  }, [items, appliedCoupon]);
+  const totalWithDelivery = subtotal + deliveryCharge;
   const { rate: deliveryRate, isLoading: deliveryLoading, error: deliveryError, calculateCharge, reset: resetDelivery } = useDeliveryCharge();
 
   const { data: session } = useSession() as any;
@@ -565,7 +566,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                               {item.attributes.map((a) => a.attributeValue).join(", ")}
                             </p>
                           )}
-                          <p className="text-[11px] text-gray-300 mt-0.5">Qty: {item.quantity}</p>
+                          <p className="text-[11px] text-gray-300 mt-0.5">Qty: {item.quantity} × Rs. {item.priceAtAdd.toLocaleString()}</p>
                         </div>
                         <p className="text-sm font-semibold text-gray-900">
                           Rs. {(item.priceAtAdd * item.quantity).toLocaleString()}
