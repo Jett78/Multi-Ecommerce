@@ -215,6 +215,47 @@ export class KhaltiService {
           })
           .where(eq(schema.orders.id, order.id));
 
+        // Restore stock if payment was cancelled or expired
+        if (newOrderStatus === 'cancelled') {
+          this.logger.log(`Payment ${data.status} for order ${order.orderId}, restoring stock`);
+          const items = await this.db
+            .select()
+            .from(schema.orderItems)
+            .where(eq(schema.orderItems.orderId, order.id));
+
+          for (const item of items) {
+            if (!item.variantId) continue;
+
+            const [variant] = await this.db
+              .select()
+              .from(schema.productVariants)
+              .where(eq(schema.productVariants.id, item.variantId))
+              .limit(1);
+
+            if (variant) {
+              const quantityBefore = variant.stockQuantity;
+              const quantityAfter = quantityBefore + item.quantity;
+
+              await this.db
+                .update(schema.productVariants)
+                .set({ stockQuantity: quantityAfter, updatedAt: new Date() })
+                .where(eq(schema.productVariants.id, item.variantId));
+
+              await this.db
+                .insert(schema.inventoryTransactions)
+                .values({
+                  variantId: item.variantId,
+                  type: 'restock',
+                  quantity: item.quantity,
+                  quantityBefore,
+                  quantityAfter,
+                  reference: order.orderId,
+                  notes: `Order ${order.orderId} cancelled - payment ${data.status}`,
+                });
+            }
+          }
+        }
+
         this.logger.log(`Order ${order.orderId} updated to status: ${newOrderStatus}, payment: ${newPaymentStatus}`);
       }
 

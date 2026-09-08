@@ -59,6 +59,8 @@ export default function PaymentSuccessPage() {
               router.push("/profile/user/orders");
             }
           }, 2000);
+        } else if (data && (data.status === "User canceled" || data.status === "Expired")) {
+          router.push(`/payment/cancel?pidx=${encodeURIComponent(pidx)}`);
         } else {
           setStatus("failed");
         }

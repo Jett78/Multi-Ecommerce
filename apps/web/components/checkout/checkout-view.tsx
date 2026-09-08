@@ -233,6 +233,17 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
         .join(", ")
     : "";
 
+  const cancelOrder = async (orderId: string) => {
+    try {
+      await fetch(`${API_ROUTES.ORDERS}/${orderId}/cancel`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Failed to cancel order:", err);
+    }
+  };
+
   const placeOrder = async () => {
     const totalWeight = items.reduce((sum, item) => sum + item.quantity * 0.5, 0);
 
@@ -286,16 +297,14 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
               if (!paymentUrl) {
                 throw new Error("Khalti payment URL not received from server");
               }
-              showSuccess("Order placed successfully!");
+              showSuccess("Redirecting to Khalti payment...");
               clearCart();
               if (onClose) onClose();
               window.location.href = paymentUrl;
             } catch (err: any) {
               console.error("Khalti initiate failed:", err);
-              showError(err?.message || "Failed to initiate Khalti payment.");
-              clearCart();
-              if (onClose) onClose();
-              router.push(`/profile/user/orders/${order.id}`);
+              await cancelOrder(order.orderId);
+              showError(err?.message || "Failed to initiate Khalti payment. The order has been cancelled.");
             }
             return;
           }

@@ -225,4 +225,22 @@ export class OrderController {
       message: 'Order deleted successfully',
     };
   }
+
+  @Post(':orderId/cancel')
+  @AllowAnonymous()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Cancel an order and restore stock' })
+  async cancelOrder(
+    @Param('orderId') orderId: string,
+    @Session() session?: UserSession,
+  ) {
+    const userId = session?.user?.id;
+    const result = await this.orderService.cancelOrder(orderId, userId);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Order cancelled successfully',
+      data: result,
+    };
+  }
 }

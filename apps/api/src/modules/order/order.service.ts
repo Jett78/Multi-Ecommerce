@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger, Inject } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { eq } from 'drizzle-orm';
 import { OrderRepository } from './order.repository';
 import { VariantRepository } from '../product/variant.repository';
 import { DiscountRepository } from '../discount/discount.repository';
@@ -318,6 +319,53 @@ export class OrderService {
     }
 
     return this.orderRepository.deleteOrder(id);
+  }
+
+  async cancelOrder(orderId: string, userId?: string) {
+    const order = await this.orderRepository.findOrderByOrderId(orderId);
+    if (!order) {
+      throw new NotFoundException(`Order "${orderId}" not found`);
+    }
+
+    if (userId && order.userId && order.userId !== userId) {
+      throw new BadRequestException('You are not authorized to cancel this order');
+    }
+
+    if (order.status === 'cancelled') {
+      return order;
+    }
+
+    return await this.db.transaction(async (tx) => {
+      const trx = tx as unknown as NodePgDatabase<typeof schema>;
+
+      const items = await this.orderRepository.findOrderItems(order.id, trx);
+      for (const item of items) {
+        if (item.variantId) {
+          await this.variantRepository.adjustStock(
+            item.variantId,
+            item.quantity,
+            orderId,
+            `Order ${orderId} cancelled - stock restored`,
+            undefined,
+            trx,
+          );
+        }
+      }
+
+      const [updated] = await trx
+        .update(schema.orders)
+        .set({
+          status: 'cancelled',
+          paymentStatus: 'cancelled',
+          updatedAt: new Date(),
+        })
+        .where(eq(schema.orders.id, order.id))
+        .returning();
+
+      this.logger.log(`Order ${orderId} cancelled, stock restored for ${items.length} items`);
+
+      return updated;
+    });
   }
 
   async getOrderStats() {
