@@ -309,6 +309,13 @@ export class OrderService {
       throw new NotFoundException(`Order with id "${id}" not found`);
     }
 
+    const isGatewayManagedMethod = !!order.paymentMethod && order.paymentMethod !== 'cod';
+    if (isGatewayManagedMethod && ['completed', 'pending'].includes(paymentStatus)) {
+      throw new BadRequestException(
+        `Payment status for online payments is managed by the gateway. Only failed, expired, cancelled or refunded can be set manually for "${order.paymentMethod}".`,
+      );
+    }
+
     return this.orderRepository.updatePaymentStatus(id, paymentStatus, transactionId);
   }
 

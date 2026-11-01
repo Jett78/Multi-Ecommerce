@@ -369,6 +369,7 @@ export default async function OrderDetailPage({
               orderId={order.id}
               initialStatus={order.status}
               initialPaymentStatus={order.paymentStatus}
+              paymentMethod={order.paymentMethod}
               courierProvider={order.courierProvider}
               courierConsignmentId={order.courierConsignmentId}
               courierTrackingUrl={order.courierTrackingUrl}

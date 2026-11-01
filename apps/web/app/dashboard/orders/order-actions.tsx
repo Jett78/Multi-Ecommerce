@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   CircleAlert,
   Loader2,
+  Lock,
   RefreshCw,
   SlidersHorizontal,
   Truck,
@@ -21,9 +22,12 @@ import { cn } from "@/lib/utils";
 import {
   ORDER_STATUS_OPTIONS,
   PAYMENT_STATUS_OPTIONS,
+  paymentMethodLabel,
   type StatusOption,
 } from "./order-detail-ui";
-import type { OrderStatus, PaymentStatus } from "@/types/order";
+import type { OrderStatus, PaymentMethod, PaymentStatus } from "@/types/order";
+
+const GATEWAY_BLOCKED_TARGETS: string[] = ["completed", "pending"];
 
 function optionLabel(options: StatusOption[], value: string) {
   return options.find((o) => o.value === value)?.label ?? value;
@@ -40,6 +44,8 @@ function StatusControl({
   dirty,
   pending,
   disabled,
+  restrictBadge,
+  blockedReason,
   onChange,
   onSave,
 }: {
@@ -53,31 +59,54 @@ function StatusControl({
   dirty: boolean;
   pending: boolean;
   disabled: boolean;
+  restrictBadge?: string;
+  blockedReason?: string | null;
   onChange: (value: string) => void;
   onSave: () => void;
 }) {
+  const saveDisabled = disabled || pending || !dirty || !!blockedReason;
+  const canShowDirty = dirty && !blockedReason;
+
   return (
     <div
       className={cn(
         "rounded-xl border p-3.5 transition-colors",
-        dirty ? "border-amber-300 bg-amber-50/70" : "border-slate-200 bg-slate-50/60"
+        canShowDirty ? "border-amber-300 bg-amber-50/70" : "border-slate-200 bg-slate-50/60"
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <label
-          htmlFor={id}
-          className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500"
-        >
-          {label}
-        </label>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <label
+            htmlFor={id}
+            className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500"
+          >
+            {label}
+          </label>
+          {restrictBadge && (
+            <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-slate-200/80 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-slate-500">
+              <Lock className="size-2.5 shrink-0" />
+              <span className="truncate">{restrictBadge}</span>
+            </span>
+          )}
+        </span>
         <span
           className={cn(
-            "inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider",
-            dirty ? "text-amber-600" : "text-emerald-600"
+            "inline-flex shrink-0 items-center gap-1 text-[10px] font-black uppercase tracking-wider",
+            blockedReason
+              ? "text-slate-500"
+              : canShowDirty
+                ? "text-amber-600"
+                : "text-emerald-600"
           )}
         >
-          {dirty ? <CircleAlert className="size-3" /> : <BadgeCheck className="size-3" />}
-          {dirty ? "Unsaved" : "Up to date"}
+          {blockedReason ? (
+            <Lock className="size-3" />
+          ) : canShowDirty ? (
+            <CircleAlert className="size-3" />
+          ) : (
+            <BadgeCheck className="size-3" />
+          )}
+          {blockedReason ? "Gateway" : canShowDirty ? "Unsaved" : "Up to date"}
         </span>
       </div>
 
@@ -98,15 +127,21 @@ function StatusControl({
 
         <button
           type="button"
-          disabled={disabled || pending || !dirty}
+          disabled={saveDisabled}
           onClick={onSave}
           className={cn(
             "inline-flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-4 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primarymain/40",
-            dirty
+            canShowDirty
               ? "bg-primarymain text-white hover:bg-primarymain/90"
               : "cursor-not-allowed bg-slate-200 text-slate-400"
           )}
-          title={dirty ? `Save ${label.toLowerCase()}` : "No changes to save"}
+          title={
+            blockedReason
+              ? blockedReason
+              : dirty
+                ? `Save ${label.toLowerCase()}`
+                : "No changes to save"
+          }
         >
           {pending ? <Loader2 className="size-4 animate-spin" /> : "Update"}
         </button>
@@ -114,14 +149,23 @@ function StatusControl({
 
       <p
         className={cn(
-          "mt-2 flex items-center gap-1.5 text-[11px] font-bold",
-          dirty ? "text-amber-600" : "text-slate-400"
+          "mt-2 flex items-start gap-1.5 text-[11px] font-bold leading-relaxed",
+          blockedReason
+            ? "text-rose-500"
+            : canShowDirty
+              ? "text-amber-600"
+              : "text-slate-400"
         )}
       >
-        {dirty ? (
+        {blockedReason ? (
+          <>
+            <Lock className="mt-0.5 size-3 shrink-0" />
+            <span>{blockedReason}</span>
+          </>
+        ) : canShowDirty ? (
           <>
             {fromLabel}
-            <ArrowRight className="size-3" />
+            <ArrowRight className="mt-0.5 size-3 shrink-0" />
             <span className="font-black">{toLabel}</span>
           </>
         ) : (
@@ -136,6 +180,7 @@ interface OrderActionsProps {
   orderId: string;
   initialStatus: OrderStatus;
   initialPaymentStatus: PaymentStatus;
+  paymentMethod?: PaymentMethod | null;
   courierProvider?: string | null;
   courierConsignmentId?: string | null;
   courierTrackingUrl?: string | null;
@@ -146,6 +191,7 @@ export default function OrderActions({
   orderId,
   initialStatus,
   initialPaymentStatus,
+  paymentMethod,
   courierProvider,
   courierConsignmentId,
   courierTrackingUrl,
@@ -249,9 +295,20 @@ export default function OrderActions({
 
   const readOnly = !canUpdate;
 
+  const gatewayManaged = !!paymentMethod && paymentMethod !== "cod";
+  const paidVia = paymentMethodLabel(paymentMethod);
+  const paymentTargetBlocked =
+    gatewayManaged && GATEWAY_BLOCKED_TARGETS.includes(paymentStatus);
+  const paymentBlockedReason = paymentTargetBlocked
+    ? `Cannot set "${optionLabel(PAYMENT_STATUS_OPTIONS, paymentStatus)}" manually - ${paidVia} verifies this payment`
+    : null;
+  const paymentHint = gatewayManaged
+    ? `Auto-verified by ${paidVia} - failed, expired, cancelled or refunded can be set manually`
+    : "Pick a new status to update this order";
+
   const statusDirty = status !== initialStatus;
   const paymentDirty = paymentStatus !== initialPaymentStatus;
-  const anyDirty = statusDirty || paymentDirty;
+  const anyDirty = statusDirty || (paymentDirty && !paymentBlockedReason);
 
   const hasCourierInfo =
     !!courierProvider || !!courierConsignmentId || !!courierTrackingUrl;
@@ -393,7 +450,7 @@ export default function OrderActions({
           <StatusControl
             id="order-payment-status"
             label="Payment Status"
-            hint="Pick a new status to update this order"
+            hint={paymentHint}
             options={PAYMENT_STATUS_OPTIONS}
             value={paymentStatus}
             fromLabel={optionLabel(PAYMENT_STATUS_OPTIONS, initialPaymentStatus)}
@@ -401,6 +458,8 @@ export default function OrderActions({
             dirty={paymentDirty}
             pending={updatePaymentMutation.isPending}
             disabled={readOnly}
+            restrictBadge={gatewayManaged ? `Paid via ${paidVia}` : undefined}
+            blockedReason={paymentBlockedReason}
             onChange={(v) => setPaymentStatus(v as PaymentStatus)}
             onSave={() => updatePaymentMutation.mutate(paymentStatus)}
           />
