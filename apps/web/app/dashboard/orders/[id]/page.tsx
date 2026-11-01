@@ -140,7 +140,7 @@ export default async function OrderDetailPage({
       </header>
 
       {/* Key figures */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatTile
           dark
           icon={Banknote}
@@ -154,17 +154,6 @@ export default async function OrderDetailPage({
           value={paymentMethodLabel(order.paymentMethod)}
           valueClassName="text-lg"
           sub={<StatusBadge value={order.paymentStatus} options={PAYMENT_STATUS_OPTIONS} />}
-        />
-        <StatTile
-          icon={Package}
-          label="Delivery Charge"
-          value={order.deliveryCharge > 0 ? formatCurrency(order.deliveryCharge) : "Free"}
-          valueClassName={order.deliveryCharge > 0 ? "text-lg" : "text-lg text-emerald-600"}
-          sub={
-            order.discountAmount > 0
-              ? `${formatCurrency(order.discountAmount)} saved with coupon`
-              : "No discount applied"
-          }
         />
         <StatTile
           icon={CalendarDays}
