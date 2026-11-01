@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { usePathname } from "next/navigation";
 
 interface AuthModalContextType {
   loginOpen: boolean;
@@ -34,6 +35,12 @@ export function AuthModalProvider({ children }: { children: React.ReactNode }) {
     setLoginOpen(false);
     setRegisterOpen(false);
   }, []);
+
+  const pathname = usePathname();
+
+  React.useEffect(() => {
+    closeAll();
+  }, [pathname, closeAll]);
 
   return (
     <AuthModalContext.Provider
