@@ -21,7 +21,7 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
 
   const { create } = useCrud({
-    endpoint: `${API_ROUTES.AUTH}/reset-password`,
+    endpoint: `${API_ROUTES.AUTH_BETTER}/reset-password`,
     queryKey: "reset-password",
   });
 

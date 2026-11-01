@@ -2,6 +2,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export const API_ROUTES = {
   AUTH: `${API_BASE_URL}/auth`,
+  AUTH_BETTER: `${API_BASE_URL}/api/auth`,
   AUTH_PROFILE: `${API_BASE_URL}/auth/profile`,
   USER: `${API_BASE_URL}/auth/users`,
   BLOG: `${API_BASE_URL}/blogs`,

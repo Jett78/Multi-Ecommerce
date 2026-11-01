@@ -13,7 +13,7 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
 
   const { create } = useCrud({
-    endpoint: `${API_ROUTES.AUTH}/request-password-reset`,
+    endpoint: `${API_ROUTES.AUTH_BETTER}/request-password-reset`,
     queryKey: "forgot-password",
   });
 
