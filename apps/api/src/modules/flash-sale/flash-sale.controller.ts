@@ -97,6 +97,22 @@ export class FlashSaleController {
     };
   }
 
+  @Get(':id/debug')
+  @RequirePermissions('flash_sale.read')
+  @ApiOperation({ summary: 'Debug flash sale products (admin)' })
+  @ApiParam({ name: 'id', description: 'Flash Sale ID' })
+  async debugFlashSale(@Param('id', ParseUUIDPipe) id: string) {
+    const sale = await this.flashSaleService.findById(id);
+    const productCount = sale.products?.length || 0;
+    return {
+      success: true,
+      flashSaleId: id,
+      productsInMemory: productCount,
+      products: sale.products,
+      message: `Flash sale has ${productCount} products`,
+    };
+  }
+
   @Post()
   @RequirePermissions('flash_sale.create')
   @HttpCode(HttpStatus.CREATED)

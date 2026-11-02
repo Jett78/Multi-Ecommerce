@@ -129,9 +129,9 @@ export class FlashSaleRepository {
         createdAt: schema.flashSales.createdAt,
         updatedAt: schema.flashSales.updatedAt,
         productsCount: sql<number>`(
-          SELECT COUNT(*) FROM flash_sale_products fsp
+          SELECT COUNT(*)::INTEGER FROM flash_sale_products fsp
           WHERE fsp.flash_sale_id = ${schema.flashSales.id}
-        )`,
+        )::integer`,
       })
       .from(schema.flashSales)
       .where(whereClause)
@@ -237,6 +237,78 @@ export class FlashSaleRepository {
     return sale;
   }
 
+  async updateWithProducts(
+    id: string,
+    updateData: Partial<typeof schema.flashSales.$inferInsert>,
+    newProducts?: Array<{ variantId: string; salePrice: number; originalPrice: number; maxQuantity?: number }>,
+    existingProducts?: Array<{ id: string; variantId: string }>
+  ) {
+    return this.db.transaction(async (tx) => {
+      try {
+        console.log(`[Transaction Start] Updating flash sale ${id}`);
+        console.log(`[Transaction] Update data:`, updateData);
+
+        await tx
+          .update(schema.flashSales)
+          .set({ ...updateData, updatedAt: new Date() })
+          .where(eq(schema.flashSales.id, id));
+
+        console.log(`[Transaction] Flash sale metadata updated`);
+
+        if (newProducts !== undefined && existingProducts !== undefined) {
+          console.log(`[Transaction] Processing products - New: ${newProducts.length}, Existing: ${existingProducts.length}`);
+          console.log(`[Transaction] New products:`, JSON.stringify(newProducts, null, 2));
+          console.log(`[Transaction] Existing products:`, JSON.stringify(existingProducts.map(p => ({ id: p.id, variantId: p.variantId })), null, 2));
+
+          const existingVariantIds = new Set(existingProducts.map(p => p.variantId));
+          const newVariantIds = new Set(newProducts.map(p => p.variantId));
+
+          const toRemove = existingProducts.filter(p => !newVariantIds.has(p.variantId));
+          console.log(`[Transaction] Products to remove: ${toRemove.length}`);
+          
+          for (const product of toRemove) {
+            console.log(`[Transaction] Deleting product ${product.id} (variant: ${product.variantId})`);
+            await tx.delete(schema.flashSaleProducts)
+              .where(eq(schema.flashSaleProducts.id, product.id));
+          }
+
+          for (const product of newProducts) {
+            const existing = existingProducts.find(p => p.variantId === product.variantId);
+            if (existing) {
+              console.log(`[Transaction] Updating existing product ${existing.id} (variant: ${product.variantId})`);
+              await tx.update(schema.flashSaleProducts)
+                .set({
+                  salePrice: product.salePrice,
+                  originalPrice: product.originalPrice,
+                  maxQuantity: product.maxQuantity,
+                })
+                .where(eq(schema.flashSaleProducts.id, existing.id));
+            } else {
+              console.log(`[Transaction] Inserting new product (variant: ${product.variantId}, salePrice: ${product.salePrice})`);
+              const result = await tx.insert(schema.flashSaleProducts).values({
+                flashSaleId: id,
+                variantId: product.variantId,
+                salePrice: product.salePrice,
+                originalPrice: product.originalPrice,
+                maxQuantity: product.maxQuantity,
+              }).returning();
+              console.log(`[Transaction] Inserted product:`, result);
+            }
+          }
+
+          console.log(`[Transaction] Products processed successfully`);
+        } else {
+          console.log(`[Transaction] Skipping product update - newProducts: ${newProducts !== undefined}, existingProducts: ${existingProducts !== undefined}`);
+        }
+
+        console.log(`[Transaction Complete] Flash sale ${id} updated successfully`);
+      } catch (error) {
+        console.error(`[Transaction Error] Failed to update flash sale ${id}:`, error);
+        throw error;
+      }
+    });
+  }
+
   async delete(id: string) {
     const [sale] = await this.db
       .delete(schema.flashSales)
@@ -302,6 +374,18 @@ export class FlashSaleRepository {
       .update(schema.flashSaleProducts)
       .set({ soldQuantity: sql`${schema.flashSaleProducts.soldQuantity} + ${quantity}` })
       .where(eq(schema.flashSaleProducts.id, id));
+  }
+
+  async debugCheckProducts(flashSaleId: string) {
+    const products = await this.db
+      .select()
+      .from(schema.flashSaleProducts)
+      .where(eq(schema.flashSaleProducts.flashSaleId, flashSaleId));
+
+    console.log(`[DEBUG] Found ${products.length} products for flash sale ${flashSaleId}`);
+    console.log(`[DEBUG] Products:`, JSON.stringify(products, null, 2));
+
+    return products;
   }
 
   private buildImageUrl(key: string): string {

@@ -77,6 +77,10 @@ export class FlashSaleService {
       throw new NotFoundException(`Flash sale with id "${id}" not found`);
     }
 
+    this.logger.log(`[Service] Starting update for flash sale ${id}`);
+    this.logger.log(`[Service] DTO received:`, JSON.stringify(dto, null, 2));
+    this.logger.log(`[Service] Existing flash sale has ${existing.products?.length || 0} products`);
+
     const updateData: Record<string, any> = {};
     if (dto.name !== undefined) updateData.name = dto.name;
     if (dto.slug !== undefined) updateData.slug = dto.slug;
@@ -92,42 +96,43 @@ export class FlashSaleService {
       }
     }
 
-    await this.repository.update(id, updateData);
-
     if (dto.products !== undefined) {
-      const existingVariantIds = new Set(existing.products?.map(p => p.variantId) || []);
-      const newVariantIds = new Set(dto.products.map(p => p.variantId));
-
-      const toRemove = existing.products?.filter(p => !newVariantIds.has(p.variantId)) || [];
-      for (const product of toRemove) {
-        await this.repository.removeProduct(product.id);
+      this.logger.log(`[Service] Updating flash sale ${id} with ${dto.products.length} products`);
+      
+      if (dto.products.length === 0) {
+        this.logger.warn(`[Service] WARNING: Empty products array provided - all products will be removed`);
+      } else {
+        this.logger.log(`[Service] Products payload:`, JSON.stringify(dto.products, null, 2));
       }
-
+      
+      this.logger.log(`[Service] Existing products:`, JSON.stringify(existing.products?.map(p => ({ id: p.id, variantId: p.variantId })), null, 2));
+      
       for (const product of dto.products) {
         const existingProduct = existing.products?.find(p => p.variantId === product.variantId);
-        if (existingProduct) {
-          await this.repository.updateProduct(existingProduct.id, {
-            salePrice: product.salePrice,
-            originalPrice: product.originalPrice,
-            maxQuantity: product.maxQuantity,
-          });
-        } else {
+        if (!existingProduct) {
+          this.logger.log(`[Service] Checking if variant ${product.variantId} is in another active sale...`);
           const inActiveSale = await this.repository.checkVariantInActiveSale(product.variantId, id);
           if (inActiveSale) {
+            this.logger.error(`[Service] Variant ${product.variantId} is already in an active flash sale`);
             throw new ConflictException(`Variant "${product.variantId}" is already in an active flash sale`);
           }
-          await this.repository.addProduct({
-            flashSaleId: id,
-            variantId: product.variantId,
-            salePrice: product.salePrice,
-            originalPrice: product.originalPrice,
-            maxQuantity: product.maxQuantity,
-          });
+          this.logger.log(`[Service] Variant ${product.variantId} is available`);
         }
       }
+
+      this.logger.log(`[Service] All validations passed, calling repository.updateWithProducts...`);
+      await this.repository.updateWithProducts(id, updateData, dto.products, existing.products);
+      this.logger.log(`[Service] Flash sale ${id} updated successfully with products`);
+    } else {
+      this.logger.log(`[Service] No products in DTO, updating metadata only`);
+      await this.repository.update(id, updateData);
+      this.logger.log(`[Service] Flash sale ${id} metadata updated successfully`);
     }
 
-    return this.findById(id);
+    this.logger.log(`[Service] Fetching updated flash sale from database...`);
+    const updated = await this.findById(id);
+    this.logger.log(`[Service] Updated flash sale has ${updated.products?.length || 0} products`);
+    return updated;
   }
 
   async delete(id: string) {

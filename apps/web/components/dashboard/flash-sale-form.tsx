@@ -64,6 +64,7 @@ export default function FlashSaleForm({ flashSale }: { flashSale?: FlashSale }) 
   const [searchResults, setSearchResults] = React.useState<Product[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
   const [hasSearched, setHasSearched] = React.useState(false);
+  const [latestProducts, setLatestProducts] = React.useState<Product[]>([]);
   const debouncedSearch = useDebounce(productSearch, 300);
 
   const isPending = isEditing ? put.isPending : create.isPending;
@@ -100,6 +101,22 @@ export default function FlashSaleForm({ flashSale }: { flashSale?: FlashSale }) 
   React.useEffect(() => {
     handleSearchProducts(debouncedSearch);
   }, [debouncedSearch, handleSearchProducts]);
+
+  React.useEffect(() => {
+    const fetchLatestProducts = async () => {
+      try {
+        const response = await apiClient<any>(
+          `${API_ROUTES.PRODUCT}?take=10&skip=0`
+        );
+        console.log("Latest products response:", response);
+        setLatestProducts(response?.data || []);
+      } catch (err) {
+        console.error("Error fetching latest products:", err);
+        setLatestProducts([]);
+      }
+    };
+    fetchLatestProducts();
+  }, []);
 
   const addProduct = (product: Product) => {
     const variant = product.variants?.[0];
@@ -398,9 +415,47 @@ export default function FlashSaleForm({ flashSale }: { flashSale?: FlashSale }) 
                 </table>
               </div>
             ) : (
-              <div className="text-center py-8 text-slate-400 border border-dashed border-slate-200 rounded-lg">
-                <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No products added yet. Search above to add products.</p>
+              <div className="space-y-4">
+                <div className="text-center py-8 text-slate-400 border border-dashed border-slate-200 rounded-lg">
+                  <Zap className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No products added yet. Search above or select from latest products below.</p>
+                </div>
+                {latestProducts.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-3">Latest Products</h3>
+                    <div className="grid grid-cols-1 gap-2">
+                      {latestProducts.map((product) => {
+                        const productImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
+                        return (
+                          <button
+                            key={product.id}
+                            type="button"
+                            onClick={() => addProduct(product)}
+                            className="w-full flex items-center gap-3 px-3 py-2 text-left border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                          >
+                            <div className="w-10 h-10 bg-slate-100 rounded overflow-hidden flex-shrink-0">
+                              {productImage?.url ? (
+                                <img src={productImage.url} alt={product.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-lg font-bold text-slate-300">
+                                  {product.name.charAt(0)}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-900 truncate">{product.name}</p>
+                              <p className="text-xs text-slate-500">
+                                {product.variants?.[0]?.price ? formatPrice(product.variants[0].price) : "No price"}
+                                {product.variants?.[0]?.sku && ` · SKU: ${product.variants[0].sku}`}
+                              </p>
+                            </div>
+                            <Plus className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
