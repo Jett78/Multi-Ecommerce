@@ -315,3 +315,72 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+/* Print Styles for POS Receipt */
+@media print {
+  /* Hide everything except the receipt */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* Show only the receipt content */
+  #receipt,
+  #receipt * {
+    visibility: visible;
+  }
+  
+  /* Position receipt at top of page */
+  #receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
+  /* Hide all print dialog buttons and navigation */
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Remove page margins for better print layout */
+  @page {
+    margin: 0.5cm;
+  }
+  
+  /* Ensure proper print layout */
+  body {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Print Styles for POS Receipt */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  #receipt,
+  #receipt * {
+    visibility: visible;
+  }
+  
+  #receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  @page {
+    margin: 0.5cm;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+  }
+}
