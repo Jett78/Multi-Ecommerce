@@ -37,10 +37,15 @@ export class OrderRepository {
       district?: string;
       parcelWeightKg?: number;
       deliveryType?: string;
+      source?: string;
     },
     tx?: NodePgDatabase<typeof schema>,
   ) {
     const db = tx ?? this.db;
+    
+    const isPosOrder = data.source === 'pos';
+    const isPosPaymentMethod = ['cash', 'cod'].includes(data.paymentMethod || '');
+    
     const [order] = await db
       .insert(schema.orders)
       .values({
@@ -52,7 +57,8 @@ export class OrderRepository {
         taxAmount: data.taxAmount ?? 0,
         totalAmount: data.totalAmount,
         currency: data.currency ?? 'NPR',
-        status: (data.status as any) ?? 'pending',
+        status: (data.status as any) ?? (isPosOrder ? 'delivered' : 'pending'),
+        paymentStatus: (isPosOrder && isPosPaymentMethod) ? 'completed' : 'pending',
         paymentMethod: (data.paymentMethod as any) ?? null,
         customerName: data.customerName,
         customerEmail: data.customerEmail,
@@ -62,6 +68,7 @@ export class OrderRepository {
         landmark: data.landmark,
         notes: data.notes,
         metadata: data.metadata,
+        source: data.source ?? 'web',
         couponId: data.couponId ?? null,
         courierProvider: data.courierProvider ?? null,
         estimatedDeliveryDays: data.estimatedDeliveryDays ?? null,
@@ -288,6 +295,7 @@ export class OrderRepository {
     paymentMethod?: string;
     paymentStatus?: string;
     sort?: string;
+    source?: string;
   }) {
     const offset = (page - 1) * limit;
     const conditions: any[] = [];
@@ -300,6 +308,9 @@ export class OrderRepository {
     }
     if (filters?.paymentStatus) {
       conditions.push(eq(schema.orders.paymentStatus, filters.paymentStatus as any));
+    }
+    if (filters?.source) {
+      conditions.push(eq(schema.orders.source, filters.source));
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -426,12 +437,38 @@ export class OrderRepository {
       .from(schema.orders)
       .where(eq(schema.orders.status, 'shipped'));
 
+    const [webStats] = await this.db
+      .select({
+        count: count(),
+        revenue: sql<number>`coalesce(sum(${schema.orders.totalAmount}), 0)`,
+      })
+      .from(schema.orders)
+      .where(and(
+        eq(schema.orders.paymentStatus, 'completed'),
+        eq(schema.orders.source, 'web')
+      ));
+
+    const [posStats] = await this.db
+      .select({
+        count: count(),
+        revenue: sql<number>`coalesce(sum(${schema.orders.totalAmount}), 0)`,
+      })
+      .from(schema.orders)
+      .where(and(
+        eq(schema.orders.paymentStatus, 'completed'),
+        eq(schema.orders.source, 'pos')
+      ));
+
     return {
       totalOrders: stats.totalOrders,
       totalRevenue: stats.totalRevenue,
       pendingOrders: pendingCount.count,
       confirmedOrders: confirmedCount.count,
       shippedOrders: shippedCount.count,
+      webOrders: webStats.count,
+      webRevenue: webStats.revenue,
+      posOrders: posStats.count,
+      posRevenue: posStats.revenue,
     };
   }
 }

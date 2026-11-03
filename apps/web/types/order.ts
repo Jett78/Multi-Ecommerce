@@ -1,4 +1,4 @@
-export type PaymentMethod = 'khalti' | 'cod' | 'stripe';
+export type PaymentMethod = 'khalti' | 'cod' | 'stripe' | 'cash';
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded' | 'expired' | 'cancelled';
 
@@ -62,6 +62,7 @@ export interface Order {
   deliveryType: string | null;
   district: string | null;
   parcelWeightKg: number | null;
+  source?: string;
   createdAt: string;
   updatedAt: string;
   items?: OrderItem[];
@@ -126,4 +127,8 @@ export interface OrderStats {
   pendingOrders: number;
   confirmedOrders: number;
   shippedOrders: number;
+  webOrders?: number;
+  webRevenue?: number;
+  posOrders?: number;
+  posRevenue?: number;
 }

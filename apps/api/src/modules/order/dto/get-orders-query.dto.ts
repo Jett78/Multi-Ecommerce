@@ -28,4 +28,9 @@ export class GetOrdersQueryDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sort?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['web', 'pos'])
+  source?: string;
 }

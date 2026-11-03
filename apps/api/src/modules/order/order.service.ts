@@ -40,6 +40,7 @@ export class OrderService {
     district?: string;
     parcelWeightKg?: number;
     deliveryType?: string;
+    source?: string;
   }) {
     try {
       if (!dto.items || dto.items.length === 0) {
@@ -202,6 +203,7 @@ export class OrderService {
           district: dto.district,
           parcelWeightKg: dto.parcelWeightKg,
           deliveryType: dto.deliveryType,
+          source: dto.source,
         }, trx);
 
         // Record coupon usage if a coupon was applied
@@ -290,6 +292,7 @@ export class OrderService {
     paymentMethod?: string;
     paymentStatus?: string;
     sort?: string;
+    source?: string;
   }) {
     return this.orderRepository.findAllOrders(page, limit, filters);
   }

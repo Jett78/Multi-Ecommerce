@@ -226,7 +226,7 @@ export const paymentSettings = pgTable('payment_settings', {
 });
 
 export const paymentStatusEnum = pgEnum('payment_status', ['pending', 'completed', 'failed', 'refunded', 'expired', 'cancelled']);
-export const paymentMethodEnum = pgEnum('payment_method', ['khalti', 'cod', 'stripe']);
+export const paymentMethodEnum = pgEnum('payment_method', ['khalti', 'cod', 'stripe', 'cash']);
 export const orderStatusEnum = pgEnum('order_status', ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled']);
 export const productStatusEnum = pgEnum('product_status', ['draft', 'active', 'archived']);
 export const inventoryTransactionTypeEnum = pgEnum('inventory_transaction_type', ['purchase', 'sale', 'return', 'adjustment', 'damage', 'restock']);
@@ -255,6 +255,7 @@ export const orders = pgTable('orders', {
   landmark: text('landmark'),
   notes: text('notes'),
   metadata: text('metadata'),
+  source: varchar('source', { length: 50 }).default('web'),
   couponId: uuid('coupon_id').references(() => coupons.id, { onDelete: 'set null' }),
   courierProvider: varchar('courier_provider', { length: 50 }),
   courierConsignmentId: varchar('courier_consignment_id', { length: 255 }),

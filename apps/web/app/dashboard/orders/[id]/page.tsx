@@ -132,6 +132,14 @@ export default async function OrderDetailPage({
             <CreditCard className="size-3" />
             {paymentMethodLabel(order.paymentMethod)}
           </span>
+          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-wide ${
+            order.source === "pos" 
+              ? "border-purple-200 bg-purple-50 text-purple-700" 
+              : "border-blue-200 bg-blue-50 text-blue-700"
+          }`}>
+            <Package className="size-3" />
+            {order.source === "pos" ? "POS" : "WEB"}
+          </span>
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <DownloadInvoiceButton order={order} />

@@ -98,6 +98,7 @@ export class OrderController {
         paymentMethod: query.paymentMethod,
         paymentStatus: query.paymentStatus,
         sort: query.sort,
+        source: query.source,
       },
     );
     return {
@@ -106,9 +107,9 @@ export class OrderController {
       message: 'Orders fetched successfully',
       data: result.orders,
       total: result.totalCount,
-      skip: (page - 1) * limit,
-      take: limit,
-      hasMore: page < result.totalPages,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
     };
   }
 

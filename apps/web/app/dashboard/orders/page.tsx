@@ -49,6 +49,7 @@ export default function AdminOrdersPage() {
   const router = useRouter();
   const [page, setPage] = React.useState(1);
   const [statusFilter, setStatusFilter] = React.useState("");
+  const [sourceFilter, setSourceFilter] = React.useState("");
   const [sort, setSort] = React.useState<"asc" | "desc">("desc");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
@@ -58,6 +59,7 @@ export default function AdminOrdersPage() {
 
   const resetFilters = () => {
     setStatusFilter("");
+    setSourceFilter("");
     setSort("desc");
     setPage(1);
   };
@@ -77,6 +79,7 @@ export default function AdminOrdersPage() {
     limit: PAGE_SIZE,
   };
   if (statusFilter) params.status = statusFilter;
+  if (sourceFilter) params.source = sourceFilter;
   if (sort) params.sort = sort;
 
   const { data, isLoading, isError, error } = getAllPaginated(params);
@@ -237,6 +240,17 @@ export default function AdminOrdersPage() {
         </div>
       ),
     },
+    {
+      key: "source",
+      label: "Source",
+      render: (order) => (
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold ${
+          order.source === "pos" ? "bg-purple-100 text-purple-800" : "bg-blue-100 text-blue-800"
+        }`}>
+          {order.source === "pos" ? "POS" : "Web"}
+        </span>
+      ),
+    },
    
     {
       key: "discountAmount",
@@ -335,20 +349,34 @@ export default function AdminOrdersPage() {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-xl border border-gray-200 bg-white p-4">
             <p className="text-sm font-medium text-gray-500">Total Orders</p>
             <p className="mt-1 text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
+            {stats.webOrders !== undefined && stats.posOrders !== undefined && (
+              <p className="mt-1 text-xs text-gray-500">
+                Web: {stats.webOrders} · POS: {stats.posOrders}
+              </p>
+            )}
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4">
             <p className="text-sm font-medium text-gray-500">Total Revenue</p>
             <p className="mt-1 text-2xl font-bold text-green-600">
               Rs. {stats.totalRevenue.toLocaleString()}
             </p>
+            {stats.webRevenue !== undefined && stats.posRevenue !== undefined && (
+              <p className="mt-1 text-xs text-gray-500">
+                Web: Rs. {stats.webRevenue.toLocaleString()} · POS: Rs. {stats.posRevenue.toLocaleString()}
+              </p>
+            )}
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4">
             <p className="text-sm font-medium text-gray-500">Pending Orders</p>
             <p className="mt-1 text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <p className="text-sm font-medium text-gray-500">Confirmed Orders</p>
+            <p className="mt-1 text-2xl font-bold text-blue-600">{stats.confirmedOrders}</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4">
             <p className="text-sm font-medium text-gray-500">Shipped Orders</p>
@@ -437,6 +465,19 @@ export default function AdminOrdersPage() {
           </select>
 
           <select
+            value={sourceFilter}
+            onChange={(e) => {
+              setSourceFilter(e.target.value);
+              setPage(1);
+            }}
+            className={selectClass}
+          >
+            <option value="">All Sources</option>
+            <option value="web">Web</option>
+            <option value="pos">POS</option>
+          </select>
+
+          <select
             value={sort}
             onChange={(e) => {
               setSort(e.target.value as "asc" | "desc");
@@ -448,7 +489,7 @@ export default function AdminOrdersPage() {
             <option value="asc">Oldest first</option>
           </select>
 
-          {(statusFilter || sort !== "desc") && (
+          {(statusFilter || sourceFilter || sort !== "desc") && (
             <button
               onClick={resetFilters}
               className="text-xs text-primary hover:underline whitespace-nowrap"
