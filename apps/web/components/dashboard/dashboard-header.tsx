@@ -1,11 +1,13 @@
 "use client";
 
-import { Bell, Menu } from "lucide-react";
+import { Bell, Menu, Monitor } from "lucide-react";
 import Link from "next/link";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
 import { User } from "@/types/user";
 import Image from "next/image";
+import { usePOSModeStore } from "@/stores/pos-mode-store";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -22,6 +24,9 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
   const { data: profile } = getAll();
   const profileData = profile as User | undefined;
+
+  const isPOSMode = usePOSModeStore((s) => s.isPOSMode);
+  const togglePOSMode = usePOSModeStore((s) => s.togglePOSMode);
 
   const getInitials = (name?: string) => {
     if (!name) return "AU";
@@ -48,6 +53,23 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       </button>
 
       <div className="flex items-center gap-4">
+        <button
+          onClick={togglePOSMode}
+          className={cn(
+            "relative p-2 rounded-full transition-colors",
+            isPOSMode
+              ? "bg-green-100 text-green-700 hover:bg-green-200"
+              : "text-slate-500 hover:bg-slate-50"
+          )}
+          aria-label="Toggle POS Mode"
+          title={isPOSMode ? "Exit POS Mode" : "Enter POS Mode"}
+        >
+          <Monitor className="size-5" />
+          {isPOSMode && (
+            <span className="absolute -top-1 -right-1 size-3 bg-green-500 rounded-full border-2 border-white" />
+          )}
+        </button>
+
         <button
           className="relative p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors"
           aria-label="Notifications"
