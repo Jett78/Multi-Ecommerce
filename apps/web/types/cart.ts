@@ -7,6 +7,7 @@ export interface CartItem {
   productName: string;
   productSlug: string;
   variantSku: string | null;
+  variantName?: string | null;
   stockQuantity: number;
   allowBackorder: boolean;
   imageUrl?: string;

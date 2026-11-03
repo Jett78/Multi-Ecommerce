@@ -118,6 +118,83 @@ export class AuthController {
     };
   }
 
+  @Get('users/search')
+  @RequirePermissions('user.read')
+  @ApiOperation({
+    summary: 'Search user by phone number',
+    description: 'Find a user by phone number for POS lookup. Searches both user table and past orders. Requires user.read permission.',
+  })
+  @ApiQuery({ name: 'phone', required: true, type: String, description: 'Phone number to search', example: '+977-9841234567' })
+  @ApiResponse({ status: 200, description: 'User found' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async searchUserByPhone(
+    @Session() session: UserSession,
+    @Query('phone') phone?: string,
+  ) {
+    if (!session?.user) {
+      return {
+        success: false,
+        statusCode: 401,
+        message: 'Not authenticated',
+      };
+    }
+
+    if (!phone) {
+      throw new HttpException('Phone number is required', HttpStatus.BAD_REQUEST);
+    }
+
+    // First, search in the user table
+    const users = await this.db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.phone, phone))
+      .limit(1);
+
+    if (users.length > 0) {
+      return {
+        success: true,
+        statusCode: 200,
+        message: 'User found',
+        data: users[0],
+        source: 'user',
+      };
+    }
+
+    // If not found in users, search in orders table for most recent order with this phone
+    const orders = await this.db
+      .select({
+        customerName: sql<string>`${sql.raw('orders.customer_name')}`,
+        customerEmail: sql<string>`${sql.raw('orders.customer_email')}`,
+        phone: sql<string>`${sql.raw('orders.customer_phone')}`,
+        createdAt: sql<Date>`${sql.raw('orders.created_at')}`,
+      })
+      .from(sql.raw('orders'))
+      .where(sql`${sql.raw('orders.customer_phone')} = ${phone}`)
+      .orderBy(sql`${sql.raw('orders.created_at')} DESC`)
+      .limit(1);
+
+    if (orders.length > 0) {
+      return {
+        success: true,
+        statusCode: 200,
+        message: 'Customer found from previous orders',
+        data: {
+          name: orders[0].customerName,
+          email: orders[0].customerEmail,
+          phone: orders[0].phone,
+        },
+        source: 'order',
+      };
+    }
+
+    return {
+      success: false,
+      statusCode: 404,
+      message: 'User not found',
+      data: null,
+    };
+  }
+
   @Get('users')
   @RequirePermissions('user.read')
   @ApiOperation({

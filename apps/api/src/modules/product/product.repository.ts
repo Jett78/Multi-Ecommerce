@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DB_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
-import { eq, ilike, or, and, sql, desc, gte, lte, inArray, not } from 'drizzle-orm';
+import { eq, ilike, or, and, sql, desc, gte, lte, inArray, not, exists } from 'drizzle-orm';
 
 @Injectable()
 export class ProductRepository {
@@ -86,6 +86,28 @@ export class ProductRepository {
     return result || null;
   }
 
+  async findProductByBarcode(barcode: string) {
+    const [byProduct] = await this.db
+      .select({ id: schema.products.id })
+      .from(schema.products)
+      .where(eq(schema.products.barcode, barcode))
+      .limit(1);
+
+    if (byProduct) {
+      return this.findProductById(byProduct.id);
+    }
+
+    const [byVariant] = await this.db
+      .select({ productId: schema.productVariants.productId })
+      .from(schema.productVariants)
+      .where(eq(schema.productVariants.barcode, barcode))
+      .limit(1);
+
+    if (!byVariant) return null;
+
+    return this.findProductById(byVariant.productId);
+  }
+
   async findProductBySlug(slug: string) {
     const [result] = await this.db
       .select()
@@ -164,6 +186,21 @@ export class ProductRepository {
           ilike(schema.products.name, `%${params.search}%`),
           ilike(schema.products.description, `%${params.search}%`),
           ilike(schema.products.sku, `%${params.search}%`),
+          ilike(schema.products.barcode, `%${params.search}%`),
+          exists(
+            this.db
+              .select({ id: schema.productVariants.id })
+              .from(schema.productVariants)
+              .where(
+                and(
+                  eq(schema.productVariants.productId, schema.products.id),
+                  or(
+                    ilike(schema.productVariants.sku, `%${params.search}%`),
+                    ilike(schema.productVariants.barcode, `%${params.search}%`),
+                  ),
+                ),
+              ),
+          ),
         ),
       );
     }
@@ -313,6 +350,21 @@ export class ProductRepository {
           ilike(schema.products.name, `%${params.search}%`),
           ilike(schema.products.description, `%${params.search}%`),
           ilike(schema.products.sku, `%${params.search}%`),
+          ilike(schema.products.barcode, `%${params.search}%`),
+          exists(
+            this.db
+              .select({ id: schema.productVariants.id })
+              .from(schema.productVariants)
+              .where(
+                and(
+                  eq(schema.productVariants.productId, schema.products.id),
+                  or(
+                    ilike(schema.productVariants.sku, `%${params.search}%`),
+                    ilike(schema.productVariants.barcode, `%${params.search}%`),
+                  ),
+                ),
+              ),
+          ),
         ),
       );
     }

@@ -209,6 +209,19 @@ export class ProductService {
     }
   }
 
+  async findProductByBarcode(barcode: string) {
+    try {
+      const product = await this.productRepository.findProductByBarcode(barcode);
+      if (!product) {
+        throw new NotFoundException(`Product with barcode "${barcode}" not found`);
+      }
+      return this.cleanProduct(product);
+    } catch (error) {
+      this.logger.error(`Failed to fetch product by barcode: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
   async updateProduct(id: string, dto: UpdateProductDto) {
     try {
       const existing = await this.productRepository.findProductById(id);

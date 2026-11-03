@@ -6,6 +6,8 @@ import { Sidebar } from "@/components/dashboard/sidebar-navigation";
 import { Header } from "@/components/dashboard/dashboard-header";
 import { PermissionGuard } from "@/components/dashboard/permission-guard";
 import { cn } from "@/lib/utils";
+import { usePOSModeStore } from "@/stores/pos-mode-store";
+import { POSInterface } from "@/components/pos/pos-interface";
 
 export default function DashboardLayout({
   children,
@@ -15,6 +17,7 @@ export default function DashboardLayout({
   const [isOpen, setIsOpen] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
+  const isPOSMode = usePOSModeStore((s) => s.isPOSMode);
 
   const SIDEBAR_WIDTH = "275px";
 
@@ -46,9 +49,23 @@ export default function DashboardLayout({
 
   if (!isMounted) return null;
 
+  if (isPOSMode) {
+    return (
+      <div className="flex h-screen bg-slate-50 overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <Header onToggleSidebar={toggleSidebar} />
+          <main className="flex-1 overflow-hidden">
+            <PermissionGuard>
+              <POSInterface />
+            </PermissionGuard>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden relative">
-      {/* Mobile Sidebar Overlay */}
       {isOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-slate-900/60 z-40 backdrop-blur-sm animate-in fade-in duration-300"
@@ -56,7 +73,6 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 lg:relative lg:block shrink-0 h-full overflow-hidden transition-all duration-300 ease-in-out border-r border-slate-800 bg-slate-900 shadow-2xl lg:shadow-none",

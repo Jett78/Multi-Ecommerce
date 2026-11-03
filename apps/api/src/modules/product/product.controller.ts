@@ -237,6 +237,20 @@ export class ProductController {
     };
   }
 
+  @AllowAnonymous()
+  @Get('barcode/:code')
+  @ApiOperation({ summary: 'Get a product by barcode (exact match)' })
+  @ApiParam({ name: 'code', description: 'Product or variant barcode' })
+  async findByBarcode(@Param('code') code: string) {
+    const product = await this.productService.findProductByBarcode(code);
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'Product fetched successfully',
+      data: new ProductEntity(product),
+    };
+  }
+
   @Put(':id')
   @ApiCookieAuth()
   @RequirePermissions('product.edit')

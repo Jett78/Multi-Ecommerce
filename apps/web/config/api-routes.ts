@@ -26,6 +26,7 @@ export const API_ROUTES = {
   SUBCATEGORY: `${API_BASE_URL}/subcategories`,
   PRODUCT: `${API_BASE_URL}/products`,
   PRODUCT_VARIANT: `${API_BASE_URL}/products`,
+  PRODUCT_BARCODE: `${API_BASE_URL}/products/barcode`,
   CART: `${API_BASE_URL}/cart`,
   CART_COUNT: `${API_BASE_URL}/cart/count`,
   ORDERS: `${API_BASE_URL}/orders`,
