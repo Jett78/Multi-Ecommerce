@@ -2,6 +2,16 @@ import { IsOptional, IsNumber, IsString, IsBoolean, IsEnum, Min, Max } from 'cla
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 
+export enum ProductSortBy {
+  PRICE_ASC = 'price_asc',
+  PRICE_DESC = 'price_desc',
+  NEWEST = 'newest',
+  OLDEST = 'oldest',
+  NAME_ASC = 'name_asc',
+  NAME_DESC = 'name_desc',
+  POPULARITY = 'popularity',
+}
+
 export class GetProductsQueryDto {
   @ApiPropertyOptional({ default: 0, minimum: 0 })
   @IsOptional()
@@ -70,4 +80,9 @@ export class GetProductsQueryDto {
   @Min(1)
   @Max(5)
   minRating?: number;
+
+  @ApiPropertyOptional({ enum: ProductSortBy, default: ProductSortBy.NEWEST })
+  @IsOptional()
+  @IsEnum(ProductSortBy)
+  sortBy?: ProductSortBy = ProductSortBy.NEWEST;
 }

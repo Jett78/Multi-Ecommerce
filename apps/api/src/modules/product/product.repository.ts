@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DB_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
-import { eq, ilike, or, and, sql, desc, gte, lte, inArray, not, exists } from 'drizzle-orm';
+import { eq, ilike, or, and, sql, desc, asc, gte, lte, inArray, not, exists } from 'drizzle-orm';
 
 @Injectable()
 export class ProductRepository {
@@ -177,6 +177,7 @@ export class ProductRepository {
     minPrice?: number;
     maxPrice?: number;
     minRating?: number;
+    sortBy?: string;
   }) {
     const conditions = [];
 
@@ -239,14 +240,34 @@ export class ProductRepository {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const orderByClause = params?.search
+    const getSortOrder = () => {
+      switch (params?.sortBy) {
+        case 'price_asc':
+          return sql`(SELECT MIN(price) FROM product_variants WHERE product_variants.product_id = ${schema.products.id}) ASC`;
+        case 'price_desc':
+          return sql`(SELECT MIN(price) FROM product_variants WHERE product_variants.product_id = ${schema.products.id}) DESC`;
+        case 'name_asc':
+          return asc(schema.products.name);
+        case 'name_desc':
+          return desc(schema.products.name);
+        case 'oldest':
+          return asc(schema.products.createdAt);
+        case 'popularity':
+          return desc(schema.products.sortOrder);
+        case 'newest':
+        default:
+          return [desc(schema.products.sortOrder), desc(schema.products.createdAt)];
+      }
+    };
+
+    const orderByClause = params?.search && !params?.sortBy
       ? [
           sql`CASE WHEN ${schema.products.name} ILIKE ${params.search + '%'} THEN 0 ELSE 1 END`,
           sql`CASE WHEN ${schema.products.name} ILIKE ${'%' + params.search + '%'} THEN 0 ELSE 1 END`,
           desc(schema.products.sortOrder),
           desc(schema.products.createdAt),
         ]
-      : [desc(schema.products.sortOrder), desc(schema.products.createdAt)];
+      : getSortOrder();
 
     const products = await this.db
       .select()
@@ -255,7 +276,7 @@ export class ProductRepository {
       .leftJoin(schema.subcategories, eq(schema.products.subcategoryId, schema.subcategories.id))
       .leftJoin(schema.brands, eq(schema.products.brandId, schema.brands.id))
       .where(whereClause)
-      .orderBy(...orderByClause)
+      .orderBy(...(Array.isArray(orderByClause) ? orderByClause : [orderByClause]))
       .limit(params?.take || 10)
       .offset(params?.skip || 0);
 
@@ -349,6 +370,8 @@ export class ProductRepository {
     subcategoryId?: string;
     brandId?: string;
     isFeatured?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
     minRating?: number;
   }) {
     const conditions = [];
@@ -396,6 +419,14 @@ export class ProductRepository {
 
     if (params?.isFeatured !== undefined) {
       conditions.push(eq(schema.products.isFeatured, params.isFeatured));
+    }
+
+    if (params?.minPrice !== undefined) {
+      conditions.push(gte(sql`(SELECT MIN(price) FROM product_variants WHERE product_variants.product_id = ${schema.products.id})`, params.minPrice));
+    }
+
+    if (params?.maxPrice !== undefined) {
+      conditions.push(lte(sql`(SELECT MIN(price) FROM product_variants WHERE product_variants.product_id = ${schema.products.id})`, params.maxPrice));
     }
 
     if (params?.minRating !== undefined) {

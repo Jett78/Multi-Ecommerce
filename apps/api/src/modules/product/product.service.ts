@@ -161,11 +161,11 @@ export class ProductService {
 
   async findAllProducts(query: GetProductsQueryDto) {
     try {
-      const { skip = 0, take = 10, search, status, categoryId, subcategoryId, brandId, isFeatured, minPrice, maxPrice, minRating } = query;
+      const { skip = 0, take = 10, search, status, categoryId, subcategoryId, brandId, isFeatured, minPrice, maxPrice, minRating, sortBy } = query;
 
       const [products, total] = await Promise.all([
-        this.productRepository.findAllProducts({ skip, take, search, status, categoryId, subcategoryId, brandId, isFeatured, minPrice, maxPrice, minRating }),
-        this.productRepository.countProducts({ search, status, categoryId, subcategoryId, brandId, isFeatured, minRating }),
+        this.productRepository.findAllProducts({ skip, take, search, status, categoryId, subcategoryId, brandId, isFeatured, minPrice, maxPrice, minRating, sortBy }),
+        this.productRepository.countProducts({ search, status, categoryId, subcategoryId, brandId, isFeatured, minPrice, maxPrice, minRating }),
       ]);
 
       const hasMore = skip + take < total;

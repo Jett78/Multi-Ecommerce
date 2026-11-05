@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
 import type { Product } from "@/types/product";
@@ -11,12 +11,24 @@ import ProductFilter from "@/components/product-filter";
 import { getActiveFlashSaleProducts } from "@/actions/flash-sale-action";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+const SORT_OPTIONS = [
+  { value: "newest", label: "Newest" },
+  { value: "price_asc", label: "Price: Low to High" },
+  { value: "price_desc", label: "Price: High to Low" },
+  { value: "name_asc", label: "Name: A to Z" },
+  { value: "name_desc", label: "Name: Z to A" },
+  { value: "oldest", label: "Oldest" },
+  { value: "popularity", label: "Popularity" },
+];
+
 export default function ProductsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const searchQuery = searchParams.get("search") || "";
   const categoryId = searchParams.get("categoryId") || "";
   const subcategoryId = searchParams.get("subcategoryId") || "";
   const brandId = searchParams.get("brandId") || "";
+  const sortBy = searchParams.get("sortBy") || "newest";
   const [filters, setFilters] = useState({
     categoryId,
     subcategoryId,
@@ -28,6 +40,16 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [flashSaleProducts, setFlashSaleProducts] = useState<ActiveFlashSaleProduct[]>([]);
   const take = 20;
+
+  // Sync filters with URL params when they change
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      categoryId,
+      subcategoryId,
+      brandId,
+    }));
+  }, [categoryId, subcategoryId, brandId]);
 
   const { getAllPaginated } = useCrud<Product>({
     endpoint: API_ROUTES.PRODUCT,
@@ -44,7 +66,8 @@ export default function ProductsPage() {
     ...(filters.brandId && { brandId: filters.brandId }),
     ...(filters.minPrice && { minPrice: parseInt(filters.minPrice) }),
     ...(filters.maxPrice && { maxPrice: parseInt(filters.maxPrice) }),
-    ...(filters.minRating && { minRating: parseInt(filters.minRating) * 10 }),
+    ...(filters.minRating && { minRating: parseInt(filters.minRating) }),
+    ...(sortBy && { sortBy }),
   });
 
   const products = productsData?.items || [];
@@ -59,6 +82,17 @@ export default function ProductsPage() {
     setFilters(newFilters);
     setPage(1);
   }, []);
+
+  const handleSortChange = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "newest") {
+      params.delete("sortBy");
+    } else {
+      params.set("sortBy", value);
+    }
+    params.set("page", "1");
+    router.push(`/products?${params.toString()}`);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -79,12 +113,32 @@ export default function ProductsPage() {
           {/* Sticky Filter Sidebar */}
           <div className="hidden md:block w-64 flex-shrink-0">
             <div className="sticky top-24">
-              <ProductFilter onFilterChange={handleFilterChange} initialFilters={{ categoryId, subcategoryId, brandId }} />
+              <ProductFilter onFilterChange={handleFilterChange} initialFilters={filters} />
             </div>
           </div>
 
           {/* Products Grid */}
           <main className="flex-1 min-w-0">
+            {/* Sort Dropdown */}
+            <div className="mb-4 flex items-center justify-between sm:justify-end">
+              <div className="relative">
+                <label htmlFor="sort-select" className="sr-only">Sort by</label>
+                <select
+                  id="sort-select"
+                  value={sortBy}
+                  onChange={(e) => handleSortChange(e.target.value)}
+                  className="appearance-none w-full sm:w-48 px-3 py-2 pr-8 border border-gray-200 bg-white rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-primarymain/20 focus:border-primarymain cursor-pointer"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+            </div>
+
             {isLoading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {[...Array(8)].map((_, i) => (

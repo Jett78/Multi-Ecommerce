@@ -74,6 +74,19 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
   const hasActiveFilters =
     filters.categoryId || filters.subcategoryId || filters.brandId || filters.minPrice || filters.maxPrice || filters.minRating;
 
+  // Sync internal state with initialFilters prop changes
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      categoryId: initialFilters.categoryId || "",
+      subcategoryId: initialFilters.subcategoryId || "",
+      brandId: initialFilters.brandId || "",
+      minPrice: initialFilters.minPrice || "",
+      maxPrice: initialFilters.maxPrice || "",
+      minRating: initialFilters.minRating || "",
+    }));
+  }, [initialFilters]);
+
   useEffect(() => {
     onFilterChange(filters);
   }, [filters, onFilterChange]);
