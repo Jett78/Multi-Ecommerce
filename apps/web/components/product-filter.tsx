@@ -21,6 +21,7 @@ interface FilterState {
 
 interface ProductFilterProps {
   onFilterChange: (filters: FilterState) => void;
+  initialFilters?: Partial<FilterState>;
 }
 
 const initialFilters: FilterState = {
@@ -32,8 +33,15 @@ const initialFilters: FilterState = {
   minRating: "",
 };
 
-export default function ProductFilter({ onFilterChange }: ProductFilterProps) {
-  const [filters, setFilters] = useState<FilterState>(initialFilters);
+export default function ProductFilter({ onFilterChange, initialFilters = {} }: ProductFilterProps) {
+  const [filters, setFilters] = useState<FilterState>({
+    categoryId: initialFilters.categoryId || "",
+    subcategoryId: initialFilters.subcategoryId || "",
+    brandId: initialFilters.brandId || "",
+    minPrice: initialFilters.minPrice || "",
+    maxPrice: initialFilters.maxPrice || "",
+    minRating: initialFilters.minRating || "",
+  });
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   const { getAll: getCategories } = useCrud<FilterOption>({

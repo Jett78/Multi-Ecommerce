@@ -14,10 +14,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 export default function ProductsPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
+  const categoryId = searchParams.get("categoryId") || "";
+  const subcategoryId = searchParams.get("subcategoryId") || "";
+  const brandId = searchParams.get("brandId") || "";
   const [filters, setFilters] = useState({
-    categoryId: "",
-    subcategoryId: "",
-    brandId: "",
+    categoryId,
+    subcategoryId,
+    brandId,
     minPrice: "",
     maxPrice: "",
     minRating: "",
@@ -76,7 +79,7 @@ export default function ProductsPage() {
           {/* Sticky Filter Sidebar */}
           <div className="hidden md:block w-64 flex-shrink-0">
             <div className="sticky top-24">
-              <ProductFilter onFilterChange={handleFilterChange} />
+              <ProductFilter onFilterChange={handleFilterChange} initialFilters={{ categoryId, subcategoryId, brandId }} />
             </div>
           </div>
 
