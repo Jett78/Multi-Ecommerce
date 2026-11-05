@@ -6,6 +6,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { ThemeStyles } from "@/components/theme-styles";
 import { AuthModals } from "@/components/auth/auth-modals";
+import { PageTracker } from "@/components/page-tracker";
 import { getPublicSeoSettings } from "@/actions/seo-action";
 import { getCompanyProfile } from "@/actions/company-profile-action";
 import { Toaster } from "@/components/ui/toast";
@@ -71,7 +72,10 @@ export default async function RootLayout({
         <QueryProvider>
           <AuthModals>
             <ThemeStyles>
-              <ThemeProvider>{children}</ThemeProvider>
+              <ThemeProvider>
+                <PageTracker />
+                {children}
+              </ThemeProvider>
             </ThemeStyles>
           </AuthModals>
         </QueryProvider>

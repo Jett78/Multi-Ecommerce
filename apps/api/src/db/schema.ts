@@ -1013,3 +1013,29 @@ export const flashSaleProductsRelations = relations(flashSaleProducts, ({ one })
     references: [productVariants.id],
   }),
 }));
+
+// ============================================================
+// PAGE VIEWS TRACKING
+// ============================================================
+
+export const pageViews = pgTable('page_views', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  pagePath: varchar('page_path', { length: 500 }).notNull(),
+  pageTitle: varchar('page_title', { length: 500 }),
+  referrer: varchar('referrer', { length: 500 }),
+  userAgent: text('user_agent'),
+  ipAddress: varchar('ip_address', { length: 50 }),
+  userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+  sessionId: varchar('session_id', { length: 255 }),
+  deviceType: varchar('device_type', { length: 50 }),
+  browser: varchar('browser', { length: 100 }),
+  os: varchar('os', { length: 100 }),
+  country: varchar('country', { length: 100 }),
+  city: varchar('city', { length: 100 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => ({
+  pagePathIdx: index('page_views_page_path_idx').on(table.pagePath),
+  userIdIdx: index('page_views_user_id_idx').on(table.userId),
+  sessionIdIdx: index('page_views_session_id_idx').on(table.sessionId),
+  createdAtIdx: index('page_views_created_at_idx').on(table.createdAt),
+}));
