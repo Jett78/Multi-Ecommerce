@@ -239,6 +239,15 @@ export class ProductRepository {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
+    const orderByClause = params?.search
+      ? [
+          sql`CASE WHEN ${schema.products.name} ILIKE ${params.search + '%'} THEN 0 ELSE 1 END`,
+          sql`CASE WHEN ${schema.products.name} ILIKE ${'%' + params.search + '%'} THEN 0 ELSE 1 END`,
+          desc(schema.products.sortOrder),
+          desc(schema.products.createdAt),
+        ]
+      : [desc(schema.products.sortOrder), desc(schema.products.createdAt)];
+
     const products = await this.db
       .select()
       .from(schema.products)
@@ -246,7 +255,7 @@ export class ProductRepository {
       .leftJoin(schema.subcategories, eq(schema.products.subcategoryId, schema.subcategories.id))
       .leftJoin(schema.brands, eq(schema.products.brandId, schema.brands.id))
       .where(whereClause)
-      .orderBy(desc(schema.products.sortOrder), desc(schema.products.createdAt))
+      .orderBy(...orderByClause)
       .limit(params?.take || 10)
       .offset(params?.skip || 0);
 

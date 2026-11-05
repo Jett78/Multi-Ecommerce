@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
 import type { Product } from "@/types/product";
@@ -11,6 +12,8 @@ import { getActiveFlashSaleProducts } from "@/actions/flash-sale-action";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
   const [filters, setFilters] = useState({
     categoryId: "",
     subcategoryId: "",
@@ -32,6 +35,7 @@ export default function ProductsPage() {
     take,
     skip: (page - 1) * take,
     status: "active",
+    ...(searchQuery && { search: searchQuery }),
     ...(filters.categoryId && { categoryId: filters.categoryId }),
     ...(filters.subcategoryId && { subcategoryId: filters.subcategoryId }),
     ...(filters.brandId && { brandId: filters.brandId }),
