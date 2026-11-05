@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CheckCircle, XCircle, Loader2, Mail, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { API_ROUTES } from "@/config/api-routes";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -98,7 +99,7 @@ export default function VerifyEmailPage() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/verify-otp`,
+        `${API_ROUTES.AUTH}/verify-otp`,
         {
           method: "POST",
           headers: {
@@ -129,7 +130,7 @@ export default function VerifyEmailPage() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/resend-otp`,
+        `${API_ROUTES.AUTH}/resend-otp`,
         {
           method: "POST",
           headers: {

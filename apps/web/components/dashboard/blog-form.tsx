@@ -54,7 +54,9 @@ export function BlogForm({ blog }: BlogFormProps) {
     e.preventDefault();
 
     const slug = generateSlug(values.title);
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000");
 
     const payload = {
       title: values.title,

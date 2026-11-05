@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { API_ROUTES } from "@/config/api-routes";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -9,10 +10,7 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const fetchRoleAndRedirect = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/profile`,
-          { credentials: "include" }
-        );
+        const response = await fetch(API_ROUTES.AUTH_PROFILE, { credentials: "include" });
         const data = await response.json();
         const role = data?.data?.role || "user";
 

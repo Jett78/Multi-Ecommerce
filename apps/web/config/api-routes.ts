@@ -1,10 +1,17 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const isServer = typeof window === "undefined";
+
+const API_BASE_URL = isServer
+  ? process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+  : "/api";
+
+const authBase = isServer ? `${API_BASE_URL}/auth` : `${API_BASE_URL}/account`;
+const authBetterBase = isServer ? `${API_BASE_URL}/api/auth` : `${API_BASE_URL}/auth`;
 
 export const API_ROUTES = {
-  AUTH: `${API_BASE_URL}/auth`,
-  AUTH_BETTER: `${API_BASE_URL}/api/auth`,
-  AUTH_PROFILE: `${API_BASE_URL}/auth/profile`,
-  USER: `${API_BASE_URL}/auth/users`,
+  AUTH: authBase,
+  AUTH_BETTER: authBetterBase,
+  AUTH_PROFILE: `${authBase}/profile`,
+  USER: `${authBase}/users`,
   BLOG: `${API_BASE_URL}/blogs`,
   COMPANY_PROFILE: `${API_BASE_URL}/company-profile`,
   TESTIMONIAL: `${API_BASE_URL}/testimonials`,

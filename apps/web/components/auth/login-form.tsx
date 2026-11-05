@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { signIn, signOut } from "@/lib/auth-client";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { API_ROUTES } from "@/config/api-routes";
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -34,10 +35,7 @@ export function LoginForm({
         setError(error.message || "Login failed");
       } else {
         try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/profile`,
-            { credentials: "include" }
-          );
+          const response = await fetch(API_ROUTES.AUTH_PROFILE, { credentials: "include" });
           const data = await response.json();
           const role = data?.data?.role || "user";
           const emailVerified = data?.data?.emailVerified;

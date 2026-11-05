@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn, signOut } from "@/lib/auth-client";
 import { Shield, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import PrimaryButton from "@/components/ui/primary-button";
+import { API_ROUTES } from "@/config/api-routes";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -28,10 +29,7 @@ export default function AdminLoginPage() {
 
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/profile`,
-        { credentials: "include" }
-      );
+      const response = await fetch(API_ROUTES.AUTH_PROFILE, { credentials: "include" });
       const data = await response.json();
       const role = data?.data?.role || "user";
       const emailVerified = data?.data?.emailVerified;
