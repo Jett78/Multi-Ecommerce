@@ -2,18 +2,22 @@ import { ApiError } from "@/types/base-entity";
 
 interface RequestOptions extends RequestInit {
   isAuthenticated?: boolean;
+  timeout?: number;
 }
 
 export async function apiClient<T>(
   url: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { isAuthenticated, ...fetchOptions } = options;
+  const { isAuthenticated, timeout = 30000, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   let response: Response;
 
@@ -22,8 +26,19 @@ export async function apiClient<T>(
       ...fetchOptions,
       headers,
       credentials: "include",
+      signal: controller.signal,
     });
   } catch (networkError) {
+    clearTimeout(timeoutId);
+    if (networkError instanceof DOMException && networkError.name === "AbortError") {
+      const error: ApiError = {
+        success: false,
+        statusCode: 408,
+        message: "Request timeout. Please try again.",
+        errors: undefined,
+      };
+      throw error;
+    }
     const error: ApiError = {
       success: false,
       statusCode: 0,
@@ -32,6 +47,8 @@ export async function apiClient<T>(
       errors: undefined,
     };
     throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (!response.ok) {
@@ -45,5 +62,15 @@ export async function apiClient<T>(
     throw error;
   }
 
-  return response.json();
+  try {
+    return await response.json();
+  } catch (parseError) {
+    const error: ApiError = {
+      success: false,
+      statusCode: 500,
+      message: "Invalid response from server",
+      errors: undefined,
+    };
+    throw error;
+  }
 }

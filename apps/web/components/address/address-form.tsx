@@ -142,18 +142,23 @@ export function AddressForm({
           value={landmark}
           onChange={(e) => setLandmark(e.target.value)}
           placeholder="Landmark (optional)"
-          className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none"
+          className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-500 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none"
         />
       </div>
 
-      <textarea
-        value={streetAddress}
-        onChange={(e) => setStreetAddress(e.target.value)}
-        required
-        rows={2}
-        placeholder="Street address, ward, house number..."
-        className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-300 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none"
-      />
+      <div className="relative">
+          <label className="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">
+            Street Address <span className="text-red-400">*</span>
+          </label>
+          <textarea
+            value={streetAddress}
+            onChange={(e) => setStreetAddress(e.target.value)}
+            required
+            rows={2}
+            placeholder="Street address, ward, house number..."
+            className="block w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-gray-900 placeholder-gray-500 transition-all focus:border-primarymain focus:bg-white focus:ring-2 focus:ring-primarymain/10 focus:outline-none"
+          />
+        </div>
 
       <label className="flex items-center gap-2 text-sm text-gray-600">
         <input
