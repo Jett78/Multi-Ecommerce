@@ -10,8 +10,9 @@ import { API_ROUTES } from "@/config/api-routes";
 import { DataTableActions } from "@/components/dashboard/data-table-actions";
 import { revalidateRedirects } from "@/actions/revalidate-action";
 import type { Redirect } from "@/types/redirect";
+import { ErrorBoundary } from "@/components/error-boundary";
 
-export default function RedirectsPage() {
+function RedirectsContent() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -28,7 +29,7 @@ export default function RedirectsPage() {
     isAuthenticated: true,
   });
 
-  const { data, isLoading, isError, error } = getAll({ take: 50 });
+  const { data, isLoading, isError, error } = getAll({ take: 50 }, { timeout: 60000 });
 
   const redirects = (data as Redirect[]) || [];
 
@@ -143,5 +144,13 @@ export default function RedirectsPage() {
         className="shadow-2xl shadow-slate-200/40"
       />
     </div>
+  );
+}
+
+export default function RedirectsPage() {
+  return (
+    <ErrorBoundary>
+      <RedirectsContent />
+    </ErrorBoundary>
   );
 }

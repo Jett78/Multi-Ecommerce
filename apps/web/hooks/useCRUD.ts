@@ -4,6 +4,10 @@ import { apiClient } from "@/lib/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { CrudOptions } from "@/types/hooks";
 
+interface GetAllOptions {
+  timeout?: number;
+}
+
 export function useCrud<T>({
   endpoint,
   queryKey,
@@ -11,7 +15,7 @@ export function useCrud<T>({
 }: CrudOptions<T>) {
   const queryClient = useQueryClient();
 
-  const getAll = (params?: Record<string, string | number | boolean>) => {
+  const getAll = (params?: Record<string, string | number | boolean>, options?: GetAllOptions) => {
     const queryString = params
       ? "?" +
         Object.entries(params)
@@ -23,13 +27,21 @@ export function useCrud<T>({
     return useQuery({
       queryKey: [queryKey, params],
       queryFn: async () => {
-        const response = await apiClient<any>(`${endpoint}${queryString}`, { isAuthenticated });
-        return response?.data || [];
+        const response = await apiClient<any>(`${endpoint}${queryString}`, { isAuthenticated, timeout: options?.timeout });
+        // Handle paginated response format: { data: { data: [...], total, skip, take, hasMore } }
+        if (response?.data?.data && Array.isArray(response.data.data)) {
+          return response.data.data;
+        }
+        // Handle direct array response
+        if (Array.isArray(response?.data)) {
+          return response.data;
+        }
+        return [];
       },
     });
   };
 
-  const getAllPaginated = (params?: Record<string, string | number | boolean>) => {
+  const getAllPaginated = (params?: Record<string, string | number | boolean>, options?: GetAllOptions) => {
     const queryString = params
       ? "?" +
         Object.entries(params)
@@ -41,14 +53,25 @@ export function useCrud<T>({
     return useQuery({
       queryKey: [queryKey, "paginated", params],
       queryFn: async () => {
-        const response = await apiClient<any>(`${endpoint}${queryString}`, { isAuthenticated });
-        const items = response?.data || [];
+        const response = await apiClient<any>(`${endpoint}${queryString}`, { isAuthenticated, timeout: options?.timeout });
+        // Handle paginated response format
+        if (response?.data?.data && Array.isArray(response.data.data)) {
+          return {
+            items: response.data.data,
+            total: response.data.total ?? 0,
+            skip: response.data.skip ?? 0,
+            take: response.data.take ?? 10,
+            hasMore: response.data.hasMore ?? false,
+          };
+        }
+        // Fallback for direct array response
+        const items = Array.isArray(response?.data) ? response.data : [];
         return {
-          items: Array.isArray(items) ? items : [],
-          total: response?.total ?? 0,
-          skip: response?.skip ?? 0,
-          take: response?.take ?? 10,
-          hasMore: response?.hasMore ?? false,
+          items,
+          total: items.length,
+          skip: 0,
+          take: items.length,
+          hasMore: false,
         };
       },
     });
@@ -59,7 +82,11 @@ export function useCrud<T>({
       queryKey: [queryKey, id],
       queryFn: async () => {
         const response = await apiClient<any>(`${endpoint}/${id}`);
-        return response?.data || response;
+        // Handle response format: { data: {...} }
+        if (response?.data) {
+          return response.data;
+        }
+        return response;
       },
       enabled: !!id,
     });
