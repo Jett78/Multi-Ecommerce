@@ -679,6 +679,8 @@ export const orderItems = pgTable('order_items', {
   productName: varchar('product_name', { length: 500 }).notNull(),
   variantName: varchar('variant_name', { length: 500 }),
   sku: varchar('sku', { length: 100 }),
+  imageKey: varchar('image_key', { length: 500 }),
+  attributes: jsonb('attributes'),
   quantity: integer('quantity').notNull(),
   unitPrice: integer('unit_price').notNull(),
   subtotal: integer('subtotal').notNull(),

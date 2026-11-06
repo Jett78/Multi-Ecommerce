@@ -90,7 +90,9 @@ export class OrderRepository {
       quantity: number;
       unitPrice: number;
       totalAmount: number;
-      sku?: string;
+      sku?: string | null;
+      imageKey?: string | null;
+      attributes?: { attributeName: string; attributeValue: string }[] | null;
     },
     tx?: NodePgDatabase<typeof schema>,
   ) {
@@ -107,6 +109,8 @@ export class OrderRepository {
         subtotal: data.totalAmount,
         totalAmount: data.totalAmount,
         sku: data.sku,
+        imageKey: data.imageKey,
+        attributes: data.attributes,
       })
       .returning();
 
@@ -156,12 +160,12 @@ export class OrderRepository {
         },
       })
       .from(schema.orderItems)
-      .innerJoin(schema.productVariants, eq(schema.orderItems.variantId, schema.productVariants.id))
-      .innerJoin(schema.products, eq(schema.productVariants.productId, schema.products.id))
+      .leftJoin(schema.productVariants, eq(schema.orderItems.variantId, schema.productVariants.id))
+      .leftJoin(schema.products, eq(schema.productVariants.productId, schema.products.id))
       .where(eq(schema.orderItems.orderId, orderId));
 
-    const variantIds = rows.map((r) => r.variant.id);
-    const productIds = rows.map((r) => r.product.id);
+    const variantIds = rows.filter((r) => r.variant?.id).map((r) => r.variant!.id);
+    const productIds = rows.filter((r) => r.product?.id).map((r) => r.product!.id);
 
     const attributes = variantIds.length
       ? await db
@@ -207,15 +211,34 @@ export class OrderRepository {
     }
 
     return rows.map((row) => {
-      const variantImages = imagesByVariant.get(row.variant.id) || [];
-      let imageRow =
-        variantImages.find((i) => i.isPrimary) ||
-        variantImages[0] ||
-        (imagesByProduct.get(row.product.id) || []).find((i) => i.isPrimary) ||
-        (imagesByProduct.get(row.product.id) || [])[0] ||
-        null;
+      let imageKey: string | null = null;
+      let attributes: { attributeName: string; attributeValue: string }[] = [];
 
-      const imageKey = imageRow?.imageKey || null;
+      if (row.item.imageKey) {
+        imageKey = row.item.imageKey;
+      } else if (row.variant?.id) {
+        const variantImages = imagesByVariant.get(row.variant.id) || [];
+        const imageRow =
+          variantImages.find((i) => i.isPrimary) ||
+          variantImages[0] ||
+          (row.product?.id ? (imagesByProduct.get(row.product.id) || []).find((i) => i.isPrimary) : null) ||
+          (row.product?.id ? (imagesByProduct.get(row.product.id) || [])[0] : null) ||
+          null;
+        imageKey = imageRow?.imageKey || null;
+      } else if (row.product?.id) {
+        const productImages = imagesByProduct.get(row.product.id) || [];
+        const imageRow = productImages.find((i) => i.isPrimary) || productImages[0] || null;
+        imageKey = imageRow?.imageKey || null;
+      }
+
+      if (row.item.attributes && Array.isArray(row.item.attributes)) {
+        attributes = row.item.attributes;
+      } else if (row.variant?.id) {
+        attributes = (attributesByVariant.get(row.variant.id) || []).map((a) => ({
+          attributeName: a.attributeName,
+          attributeValue: a.attributeValue,
+        }));
+      }
 
       return {
         id: row.item.id,
@@ -228,19 +251,16 @@ export class OrderRepository {
         totalAmount: row.item.totalAmount,
         sku: row.item.sku,
         image: imageKey ? this.buildImageUrl(imageKey) : null,
-        attributes: (attributesByVariant.get(row.variant.id) || []).map((a) => ({
-          attributeName: a.attributeName,
-          attributeValue: a.attributeValue,
-        })),
-        product: {
+        attributes,
+        product: row.product ? {
           id: row.product.id,
           name: row.product.name,
           slug: row.product.slug,
-        },
-        variant: {
+        } : null,
+        variant: row.variant ? {
           id: row.variant.id,
           sku: row.variant.sku,
-        },
+        } : null,
       };
     });
   }
@@ -422,6 +442,10 @@ export class OrderRepository {
       .from(schema.orders)
       .where(eq(schema.orders.paymentStatus, 'completed'));
 
+    const [allOrdersCount] = await this.db
+      .select({ count: count() })
+      .from(schema.orders);
+
     const [pendingCount] = await this.db
       .select({ count: count() })
       .from(schema.orders)
@@ -462,6 +486,7 @@ export class OrderRepository {
     return {
       totalOrders: stats.totalOrders,
       totalRevenue: stats.totalRevenue,
+      allOrders: allOrdersCount.count,
       pendingOrders: pendingCount.count,
       confirmedOrders: confirmedCount.count,
       shippedOrders: shippedCount.count,

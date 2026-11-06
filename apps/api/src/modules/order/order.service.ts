@@ -55,7 +55,19 @@ export class OrderService {
         const trx = tx as unknown as NodePgDatabase<typeof schema>;
 
         // Validate stock for all items using variant repository
-        const orderItems: { variantId: string; productName: string; quantity: number; unitPrice: number; productId: string; categoryId: string | null; brandId: string | null }[] = [];
+        const orderItems: { 
+          variantId: string; 
+          productName: string; 
+          quantity: number; 
+          unitPrice: number; 
+          productId: string; 
+          categoryId: string | null; 
+          brandId: string | null;
+          sku: string | null;
+          imageKey: string | null;
+          variantName: string;
+          attributes: { attributeName: string; attributeValue: string }[];
+        }[] = [];
 
         for (const item of dto.items) {
           const variant = await this.variantRepository.findVariantById(item.variantId, trx);
@@ -70,6 +82,14 @@ export class OrderService {
           }
 
           const product = await this.variantRepository.findProductByVariantId(item.variantId, trx);
+          
+          const variantAttributes = variant.attributes || [];
+          const variantName = variantAttributes.length > 0
+            ? variantAttributes.map(a => `${a.attributeName}: ${a.attributeValue}`).join(', ')
+            : (variant.sku || `SKU-${item.variantId.slice(0, 8)}`);
+
+          const primaryImage = variant.images?.find(img => img.isPrimary) || variant.images?.[0];
+
           orderItems.push({
             variantId: item.variantId,
             productName: product?.name || 'Unknown Product',
@@ -78,6 +98,13 @@ export class OrderService {
             productId: product?.id || '',
             categoryId: product?.categoryId || null,
             brandId: product?.brandId || null,
+            sku: variant.sku || null,
+            imageKey: primaryImage?.imageKey || null,
+            variantName,
+            attributes: variantAttributes.map(a => ({
+              attributeName: a.attributeName,
+              attributeValue: a.attributeValue,
+            })),
           });
         }
 
@@ -223,7 +250,10 @@ export class OrderService {
             orderId: order.id,
             variantId: item.variantId,
             productName: item.productName,
-            variantName: `SKU-${item.variantId.slice(0, 8)}`,
+            variantName: item.variantName,
+            sku: item.sku,
+            imageKey: item.imageKey,
+            attributes: item.attributes,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             totalAmount: item.unitPrice * item.quantity,

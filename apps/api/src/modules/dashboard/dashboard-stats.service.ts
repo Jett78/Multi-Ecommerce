@@ -34,6 +34,7 @@ export class DashboardStatsService {
       this.db
         .select({ count: sql<number>`count(*)` })
         .from(schema.orders)
+        .where(eq(schema.orders.paymentStatus, 'completed'))
         .then((result) => Number(result[0].count)),
       
       this.db
@@ -68,7 +69,12 @@ export class DashboardStatsService {
       this.db
         .select({ count: sql<number>`count(*)` })
         .from(schema.orders)
-        .where(gte(schema.orders.createdAt, sql`NOW() - INTERVAL '7 days'`))
+        .where(
+          and(
+            eq(schema.orders.paymentStatus, 'completed'),
+            gte(schema.orders.createdAt, sql`NOW() - INTERVAL '7 days'`)
+          )
+        )
         .then((result) => Number(result[0].count)),
 
       this.db
@@ -76,6 +82,7 @@ export class DashboardStatsService {
         .from(schema.orders)
         .where(
           and(
+            eq(schema.orders.paymentStatus, 'completed'),
             gte(schema.orders.createdAt, sql`CURRENT_DATE`),
             lt(schema.orders.createdAt, sql`CURRENT_DATE + INTERVAL '1 day'`)
           )
@@ -163,7 +170,7 @@ export class DashboardStatsService {
       .select({
         date: sql<string>`DATE_TRUNC('${sql.raw(truncate)}', ${schema.orders.createdAt})`,
         revenue: sql<number>`coalesce(sum(CASE WHEN ${schema.orders.paymentStatus} = 'completed' THEN ${schema.orders.totalAmount} ELSE 0 END), 0)`,
-        orders: sql<number>`count(*)`,
+        orders: sql<number>`count(CASE WHEN ${schema.orders.paymentStatus} = 'completed' THEN 1 END)`,
         customers: sql<number>`count(DISTINCT ${schema.orders.userId})`,
       })
       .from(schema.orders)
@@ -306,6 +313,7 @@ export class DashboardStatsService {
         createdAt: schema.orders.createdAt,
       })
       .from(schema.orders)
+      .where(gte(schema.orders.createdAt, sql`NOW() - INTERVAL '7 days'`))
       .orderBy(sql`${schema.orders.createdAt} DESC`)
       .limit(limit);
 

@@ -124,6 +124,7 @@ export interface BulkSendToCourierResponse {
 export interface OrderStats {
   totalOrders: number;
   totalRevenue: number;
+  allOrders: number;
   pendingOrders: number;
   confirmedOrders: number;
   shippedOrders: number;
