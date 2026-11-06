@@ -352,7 +352,7 @@ export default function AdminOrdersPage() {
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-xl border border-gray-200 bg-white p-4">
             <p className="text-sm font-medium text-gray-500">Total Orders</p>
-            <p className="mt-1 text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
+            <p className="mt-1 text-2xl font-bold text-gray-900">{stats.totalOrders ?? 0}</p>
             {stats.webOrders !== undefined && stats.posOrders !== undefined && (
               <p className="mt-1 text-xs text-gray-500">
                 Web: {stats.webOrders} · POS: {stats.posOrders}
@@ -362,11 +362,11 @@ export default function AdminOrdersPage() {
           <div className="rounded-xl border border-gray-200 bg-white p-4">
             <p className="text-sm font-medium text-gray-500">Total Revenue</p>
             <p className="mt-1 text-2xl font-bold text-green-600">
-              Rs. {stats.totalRevenue.toLocaleString()}
+              Rs. {(stats.totalRevenue ?? 0).toLocaleString()}
             </p>
             {stats.webRevenue !== undefined && stats.posRevenue !== undefined && (
               <p className="mt-1 text-xs text-gray-500">
-                Web: Rs. {stats.webRevenue.toLocaleString()} · POS: Rs. {stats.posRevenue.toLocaleString()}
+                Web: Rs. {(stats.webRevenue ?? 0).toLocaleString()} · POS: Rs. {(stats.posRevenue ?? 0).toLocaleString()}
               </p>
             )}
           </div>

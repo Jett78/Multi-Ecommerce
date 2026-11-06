@@ -79,6 +79,7 @@ export function formatDate(date: string) {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Kathmandu",
   });
 }
 
@@ -87,6 +88,7 @@ export function formatShortDate(date: string) {
     month: "short",
     day: "numeric",
     year: "numeric",
+    timeZone: "Asia/Kathmandu",
   });
 }
 
@@ -94,6 +96,7 @@ export function formatTime(date: string) {
   return new Date(date).toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Asia/Kathmandu",
   });
 }
 
