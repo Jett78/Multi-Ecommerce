@@ -10,7 +10,7 @@ import { useCrud } from "@/hooks/useCRUD";
 import { useForm } from "@/hooks/useForm";
 import { useFormSubmit } from "@/hooks/useFormSubmit";
 import { API_ROUTES } from "@/config/api-routes";
-import { revalidateProducts } from "@/actions/revalidate-action";
+import { revalidateProduct, revalidateProducts } from "@/actions/revalidate-action";
 import SubmittingLoader from "@/components/dashboard/submitting-loader";
 import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import type { ProductFormProps } from "@/types/components";
@@ -142,8 +142,20 @@ export function ProductForm({ product }: ProductFormProps) {
     entityName: "Product",
     redirectPath: "/dashboard/products",
     entityId: product?.id,
-    revalidateAction: async () => {
-      await revalidateProducts();
+    revalidateAction: async (payload?: Record<string, any>) => {
+      if (isEditing && product?.slug) {
+        // If slug changed, revalidate both old and new slug
+        const newSlug = payload?.slug;
+        if (newSlug && newSlug !== product.slug) {
+          await revalidateProduct(product.slug);
+          await revalidateProduct(newSlug);
+        } else {
+          await revalidateProduct(product.slug);
+        }
+      } else {
+        // Product creation - revalidate products list
+        await revalidateProducts();
+      }
     },
   });
 

@@ -23,7 +23,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
     const response = await apiClient<{ data: Product }>(
       `${API_ROUTES.PRODUCT}/slug/${slug}`,
-      { next: { revalidate: 60 } }
+      { next: { tags: [`product-${slug}`] } }
     );
 
     if (!response || !response.data) return null;
@@ -54,7 +54,7 @@ export async function getRelatedProducts(
   try {
     const response = await apiClient<{ data: Product[] }>(
       `${API_ROUTES.PRODUCT}/${productId}/related?limit=${limit}`,
-      { next: { revalidate: 60 } }
+      { next: { tags: [`product-${productId}`] } }
     );
 
     if (!response || !response.data) return [];
