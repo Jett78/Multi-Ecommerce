@@ -88,6 +88,7 @@ export class UploadController {
   }
 
   @Post()
+  @Roles(['super_admin', 'admin', 'editor'])
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -144,6 +145,7 @@ export class UploadController {
   }
 
   @Post('from-url')
+  @Roles(['super_admin', 'admin', 'editor'])
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Upload image from external URL to S3' })
   @ApiBody({
@@ -169,6 +171,7 @@ export class UploadController {
   }
 
   @Post('multiple')
+  @Roles(['super_admin', 'admin', 'editor'])
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       limits: {

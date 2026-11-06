@@ -24,7 +24,7 @@ interface ProductFilterProps {
   initialFilters?: Partial<FilterState>;
 }
 
-const initialFilters: FilterState = {
+const DEFAULT_FILTERS: FilterState = {
   categoryId: "",
   subcategoryId: "",
   brandId: "",
@@ -102,7 +102,7 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
     []
   );
 
-  const clearFilters = () => setFilters(initialFilters);
+  const clearFilters = () => setFilters({ ...DEFAULT_FILTERS });
 
   const filterContent = (
     <div className="space-y-6">
