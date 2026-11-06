@@ -666,7 +666,7 @@ export function CheckoutView({ onClose }: { onClose?: () => void }) {
                         <span className="text-xs text-gray-500">{deliveryRate.estimatedDays} days</span>
                       </div>
                     )}
-                    {deliveryRate?.providerUsed === "default" && (
+                    {deliveryRate?.providerUsed === "default" && deliveryCharge > 0 && (
                       <p className="text-xs text-amber-600">Estimated delivery charge — finalized at shipping.</p>
                     )}
                     {deliveryError && (
