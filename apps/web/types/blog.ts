@@ -1,4 +1,4 @@
-import { BaseEntity, PaginatedResponse, CommonResponse } from "./base-entity";
+import { BaseEntity, CommonResponse } from "./base-entity";
 
 export interface SeoMeta {
   id: string;
@@ -23,5 +23,14 @@ export interface Blog extends BaseEntity {
   seoMeta?: SeoMeta;
 }
 
-export type BlogListResponse = CommonResponse<PaginatedResponse<Blog>>;
+export interface BlogListResponse {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: Blog[];
+  total: number;
+  skip: number;
+  take: number;
+  hasMore: boolean;
+}
 export type BlogResponse = CommonResponse<Blog>;

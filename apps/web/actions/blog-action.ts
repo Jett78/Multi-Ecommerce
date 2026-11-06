@@ -22,7 +22,7 @@ export async function getBlogs(params?: GetBlogsParams): Promise<Blog[]> {
     });
 
     if (!response || !response.success || !response.data) return [];
-    return response.data.data || [];
+    return response.data || [];
   } catch (error) {
     console.error("Error fetching blogs:", error);
     return [];
@@ -67,7 +67,7 @@ export async function getAllBlogSlugs(): Promise<string[]> {
     );
 
     if (!response || !response.success || !response.data) return [];
-    return response.data.data?.map((blog) => blog.slug) || [];
+    return response.data?.map((blog) => blog.slug) || [];
   } catch (error) {
     console.error("Error fetching blog slugs:", error);
     return [];
