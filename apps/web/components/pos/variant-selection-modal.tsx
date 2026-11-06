@@ -5,6 +5,7 @@ import { X, Plus, Minus, Package } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { Product, ProductVariant } from "@/types/product";
+import { normalizeAttributeName, getAttributeDisplayName } from "@/lib/utils";
 
 interface VariantSelectionModalProps {
   product: Product;
@@ -22,18 +23,19 @@ export function VariantSelectionModal({
   );
   const [quantity, setQuantity] = useState(1);
 
-  const attributeGroups: Record<string, Set<string>> = useMemo(() => {
+  const attributeGroups: Record<string, { displayName: string; values: Set<string> }> = useMemo(() => {
     if (!product.variants) return {};
     
     return product.variants.reduce((acc, variant) => {
       variant.attributes?.forEach((attr) => {
-        if (!acc[attr.attributeName]) {
-          acc[attr.attributeName] = new Set();
+        const normalizedName = normalizeAttributeName(attr.attributeName);
+        if (!acc[normalizedName]) {
+          acc[normalizedName] = { displayName: getAttributeDisplayName(attr.attributeName), values: new Set() };
         }
-        acc[attr.attributeName]?.add(attr.attributeValue);
+        acc[normalizedName]!.values.add(attr.attributeValue);
       });
       return acc;
-    }, {} as Record<string, Set<string>>);
+    }, {} as Record<string, { displayName: string; values: Set<string> }>);
   }, [product.variants]);
 
   const currentStock = selectedVariant?.stockQuantity || 0;
@@ -41,9 +43,10 @@ export function VariantSelectionModal({
   const maxQuantity = Math.min(currentStock, 99);
 
   const handleSelectVariant = (attributeName: string, attributeValue: string) => {
+    const normalizedName = normalizeAttributeName(attributeName);
     const variant = product.variants?.find((v) =>
       v.attributes?.some(
-        (a) => a.attributeName === attributeName && a.attributeValue === attributeValue
+        (a) => normalizeAttributeName(a.attributeName) === normalizedName && a.attributeValue === attributeValue
       )
     );
 
@@ -147,21 +150,21 @@ export function VariantSelectionModal({
 
           {Object.keys(attributeGroups).length > 0 && (
             <div className="space-y-4 pt-4 border-t border-slate-200">
-              {Object.entries(attributeGroups).map(([attrName, values]) => (
+              {Object.entries(attributeGroups).map(([attrName, group]) => (
                 <div key={attrName}>
                   <h3 className="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide">
-                    {attrName}
+                    {group.displayName}
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {Array.from(values).map((value) => {
+                    {Array.from(group.values).map((value) => {
                       const variant = product.variants?.find((v) =>
                         v.attributes?.some(
-                          (a) => a.attributeName === attrName && a.attributeValue === value
+                          (a) => normalizeAttributeName(a.attributeName) === attrName && a.attributeValue === value
                         )
                       );
                       const isSelected =
                         selectedVariant?.attributes?.some(
-                          (a) => a.attributeName === attrName && a.attributeValue === value
+                          (a) => normalizeAttributeName(a.attributeName) === attrName && a.attributeValue === value
                         ) || false;
                       const isAvailable = variant && variant.stockQuantity > 0;
 

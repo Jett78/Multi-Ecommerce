@@ -56,3 +56,13 @@ export function getImageUrl(imageKey: string | undefined | null): string {
   }
   return "";
 }
+
+export function normalizeAttributeName(name: string): string {
+  return name.toLowerCase().trim();
+}
+
+export function getAttributeDisplayName(name: string): string {
+  const normalized = normalizeAttributeName(name);
+  const words = normalized.split(/\s+/);
+  return words.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+}

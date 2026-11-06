@@ -10,6 +10,7 @@ import { useCartStore } from "@/stores/cart-store";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import WishlistButton from "@/components/wishlist/wishlist-button";
 import CountdownTimer from "@/components/countdown-timer";
+import { normalizeAttributeName, getAttributeDisplayName } from "@/lib/utils";
 
 interface ProductInfoProps {
   product: Product;
@@ -39,16 +40,17 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant,
     ? Math.round(((flashSale.originalPrice - flashSale.salePrice) / flashSale.originalPrice) * 100)
     : null;
 
-  const attributeGroups: Record<string, Set<string>> = hasVariants
+  const attributeGroups: Record<string, { displayName: string; values: Set<string> }> = hasVariants
     ? product.variants!.reduce((acc, variant) => {
         variant.attributes?.forEach((attr) => {
-          if (!acc[attr.attributeName]) {
-            acc[attr.attributeName] = new Set();
+          const normalizedName = normalizeAttributeName(attr.attributeName);
+          if (!acc[normalizedName]) {
+            acc[normalizedName] = { displayName: getAttributeDisplayName(attr.attributeName), values: new Set() };
           }
-          acc[attr.attributeName]?.add(attr.attributeValue);
+          acc[normalizedName]!.values.add(attr.attributeValue);
         });
         return acc;
-      }, {} as Record<string, Set<string>>)
+      }, {} as Record<string, { displayName: string; values: Set<string> }>)
     : {};
 
   React.useEffect(() => {
@@ -149,16 +151,16 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant,
 
         {hasVariants && Object.keys(attributeGroups).length > 0 && (
           <div className="space-y-4 pt-4 border-t border-gray-100">
-            {Object.entries(attributeGroups).map(([attrName, values]) => (
+            {Object.entries(attributeGroups).map(([attrName, group]) => (
               <div key={attrName}>
                 <h3 className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">
-                  {attrName}
+                  {group.displayName}
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {Array.from(values).map((value) => {
+                  {Array.from(group.values).map((value) => {
                     const variant = product.variants!.find((v) =>
                       v.attributes?.some(
-                        (a) => a.attributeName === attrName && a.attributeValue === value
+                        (a) => normalizeAttributeName(a.attributeName) === attrName && a.attributeValue === value
                       )
                     );
                     const isSelected = selectedVariant?.id === variant?.id;
