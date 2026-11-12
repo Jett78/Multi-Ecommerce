@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
-import { X, SlidersHorizontal } from "lucide-react";
+import { X, SlidersHorizontal, Check, Tag } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface FilterOption {
   id: string;
@@ -31,6 +32,15 @@ const DEFAULT_FILTERS: FilterState = {
   minPrice: "",
   maxPrice: "",
   minRating: "",
+};
+
+const FILTER_LABELS: Record<string, string> = {
+  categoryId: "Category",
+  subcategoryId: "Subcategory",
+  brandId: "Brand",
+  minPrice: "Min Price",
+  maxPrice: "Max Price",
+  minRating: "Rating",
 };
 
 export default function ProductFilter({ onFilterChange, initialFilters = {} }: ProductFilterProps) {
@@ -74,6 +84,33 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
   const hasActiveFilters =
     filters.categoryId || filters.subcategoryId || filters.brandId || filters.minPrice || filters.maxPrice || filters.minRating;
 
+  // Active filter chips for mobile display
+  const activeFilters = useMemo(() => {
+    const active: Array<{ key: string; label: string; value: string; onRemove: () => void }> = [];
+    if (filters.categoryId) {
+      const cat = categories.find((c: FilterOption) => c.id === filters.categoryId);
+      active.push({ key: "categoryId", label: "Category", value: cat?.name || filters.categoryId, onRemove: () => updateFilter("categoryId", "") });
+    }
+    if (filters.subcategoryId) {
+      const sub = allSubcategories.find((s: FilterOption & { categoryId: string }) => s.id === filters.subcategoryId);
+      active.push({ key: "subcategoryId", label: "Subcategory", value: sub?.name || filters.subcategoryId, onRemove: () => updateFilter("subcategoryId", "") });
+    }
+    if (filters.brandId) {
+      const brand = brands.find((b: FilterOption) => b.id === filters.brandId);
+      active.push({ key: "brandId", label: "Brand", value: brand?.name || filters.brandId, onRemove: () => updateFilter("brandId", "") });
+    }
+    if (filters.minPrice) {
+      active.push({ key: "minPrice", label: "Min Price", value: `Rs. ${filters.minPrice}`, onRemove: () => updateFilter("minPrice", "") });
+    }
+    if (filters.maxPrice) {
+      active.push({ key: "maxPrice", label: "Max Price", value: `Rs. ${filters.maxPrice}`, onRemove: () => updateFilter("maxPrice", "") });
+    }
+    if (filters.minRating) {
+      active.push({ key: "minRating", label: "Rating", value: `${filters.minRating}★ & up`, onRemove: () => updateFilter("minRating", "") });
+    }
+    return active;
+  }, [filters, categories, allSubcategories, brands]);
+
   // Sync internal state with initialFilters prop changes (bail out when unchanged to avoid render loops)
   useEffect(() => {
     setFilters((prev) => {
@@ -110,18 +147,12 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
 
   const clearFilters = () => setFilters({ ...DEFAULT_FILTERS });
 
+  const handleCloseMobile = () => setMobileFilterOpen(false);
+
   const filterContent = (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-gray-900">Filters</h2>
-        {hasActiveFilters && (
-          <button
-            onClick={clearFilters}
-            className="text-xs font-medium text-gray-400 hover:text-gray-900 transition-colors"
-          >
-            Clear all
-          </button>
-        )}
       </div>
 
       {/* Category Filter */}
@@ -260,11 +291,54 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
           )}
         </div>
       </div>
+
+      {/* Clear All Button at bottom */}
+      {hasActiveFilters && (
+        <div className="border-t border-gray-100 pt-5">
+          <button
+            onClick={clearFilters}
+            className="w-full px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+          >
+            Clear all filters
+          </button>
+        </div>
+      )}
     </div>
   );
 
   return (
     <>
+      {/* Mobile: Active filter chips (visible outside overlay) */}
+      {hasActiveFilters && (
+        <div className="md:hidden mb-4 flex flex-wrap gap-2">
+          {activeFilters.map((filter) => (
+            <button
+              key={filter.key}
+              onClick={filter.onRemove}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primarymain/10 text-primarymain text-sm rounded-full border border-primarymain/20 hover:bg-primarymain/20 transition-colors"
+            >
+              <Tag size={10} className="flex-shrink-0" />
+              <span className="font-medium">{filter.value}</span>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); filter.onRemove(); }}
+                className="ml-1 p-0.5 hover:bg-primarymain/30 rounded-full"
+                aria-label={`Remove ${filter.label} filter`}
+              >
+                <X size={10} />
+              </button>
+            </button>
+          ))}
+          <button
+            onClick={clearFilters}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-sm rounded-full border border-red-200 hover:bg-red-100 transition-colors"
+          >
+            <X size={10} className="flex-shrink-0" />
+            <span className="font-medium">Clear all</span>
+          </button>
+        </div>
+      )}
+
       {/* Mobile toggle button */}
       <button
         onClick={() => setMobileFilterOpen(true)}
@@ -272,6 +346,11 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
       >
         <SlidersHorizontal size={14} />
         Filters
+        {hasActiveFilters && (
+          <span className="flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-primarymain rounded-full">
+            {activeFilters.length}
+          </span>
+        )}
       </button>
 
       {/* Desktop filter (no wrapper, used in sticky container) */}
@@ -279,21 +358,44 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
         {filterContent}
       </div>
 
-      {/* Mobile filter overlay */}
-      {mobileFilterOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/20" onClick={() => setMobileFilterOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-80 max-w-full bg-white p-6 overflow-y-auto">
+      {/* Mobile filter overlay with slide animation */}
+      <div className={cn("fixed inset-0 z-50 md:hidden transition-opacity duration-300", mobileFilterOpen ? "opacity-100" : "pointer-events-none opacity-0")}>
+        <div
+          className="absolute inset-0 bg-black/30 transition-opacity duration-300"
+          onClick={handleCloseMobile}
+          style={{ opacity: mobileFilterOpen ? 1 : 0 }}
+        />
+        <div
+          className={cn(
+            "fixed inset-y-0 left-0 z-[70] w-80 max-w-full bg-white shadow-xl transition-transform duration-300 ease-out flex flex-col border-r border-gray-100",
+            mobileFilterOpen ? "translate-x-0" : "-translate-x-full"
+          )}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center gap-2.5">
+              <SlidersHorizontal className="h-4 w-4 text-gray-400" />
+              <span className="text-sm font-bold text-gray-900">Filters</span>
+              {hasActiveFilters && (
+                <span className="flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-primarymain rounded-full">
+                  {activeFilters.length}
+                </span>
+              )}
+            </div>
             <button
-              onClick={() => setMobileFilterOpen(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-gray-100"
+              onClick={handleCloseMobile}
+              className="p-1.5 text-gray-400 hover:text-gray-900 transition-colors"
             >
-              <X size={20} />
+              <X className="h-5 w-5" />
             </button>
+          </div>
+
+          {/* Filter Content */}
+          <div className="flex-1 overflow-y-auto p-5">
             {filterContent}
           </div>
         </div>
-      )}
+      </div>
     </>
   );
 }

@@ -110,7 +110,7 @@ export default function ProductsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex gap-8">
-          {/* Sticky Filter Sidebar */}
+          {/* Desktop: Sticky Filter Sidebar */}
           <div className="hidden md:block w-64 flex-shrink-0">
             <div className="sticky top-24">
               <ProductFilter onFilterChange={handleFilterChange} initialFilters={filters} />
@@ -119,6 +119,11 @@ export default function ProductsPage() {
 
           {/* Products Grid */}
           <main className="flex-1 min-w-0">
+            {/* Mobile: Filter toggle button (renders inline above sort dropdown) */}
+            <div className="md:hidden mb-4">
+              <ProductFilter onFilterChange={handleFilterChange} initialFilters={filters} />
+            </div>
+
             {/* Sort Dropdown */}
             <div className="mb-4 flex items-center justify-between sm:justify-end">
               <div className="relative">
