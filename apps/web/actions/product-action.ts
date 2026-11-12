@@ -37,7 +37,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 export async function getAllActiveProductSlugs(): Promise<string[]> {
   try {
     const response = await apiClient<{ data: { items: { slug: string }[] } }>(
-      `${API_ROUTES.PRODUCT}?take=100&status=active`
+      `${API_ROUTES.PRODUCT}?take=100&status=active`,
+      { next: { revalidate: 3600 } }
     );
 
     return response.data?.items?.map((p) => p.slug) ?? [];

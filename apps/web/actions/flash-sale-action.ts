@@ -7,7 +7,8 @@ import type { FlashSale, ActiveFlashSaleProduct } from "@/types/flash-sale";
 export async function getActiveFlashSales(): Promise<FlashSale[]> {
   try {
     const response = await apiClient<{ success: boolean; data: FlashSale[] }>(
-      API_ROUTES.FLASH_SALE_ACTIVE
+      API_ROUTES.FLASH_SALE_ACTIVE,
+      { next: { revalidate: 60 } }
     );
     return response.data || [];
   } catch (error) {
@@ -19,7 +20,8 @@ export async function getActiveFlashSales(): Promise<FlashSale[]> {
 export async function getActiveFlashSaleProducts(): Promise<ActiveFlashSaleProduct[]> {
   try {
     const response = await apiClient<{ success: boolean; data: ActiveFlashSaleProduct[] }>(
-      API_ROUTES.FLASH_SALE_ACTIVE_PRODUCTS
+      API_ROUTES.FLASH_SALE_ACTIVE_PRODUCTS,
+      { next: { revalidate: 60 } }
     );
     return response.data || [];
   } catch (error) {

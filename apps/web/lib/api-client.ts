@@ -22,13 +22,21 @@ export async function apiClient<T>(
   let response: Response;
 
   try {
-    response = await fetch(url, {
+    const fetchConfig: RequestInit = {
       ...fetchOptions,
       headers,
       credentials: "include",
-      cache: "no-store",
       signal: controller.signal,
-    });
+    };
+
+    // Only set cache: "no-store" if no Next.js-specific options are present
+    // (to avoid conflicts with next: { tags } or next: { revalidate })
+    const hasNextOptions = fetchOptions.next !== undefined;
+    if (!hasNextOptions) {
+      fetchConfig.cache = "no-store";
+    }
+
+    response = await fetch(url, fetchConfig);
   } catch (networkError) {
     clearTimeout(timeoutId);
     if (networkError instanceof DOMException && networkError.name === "AbortError") {
