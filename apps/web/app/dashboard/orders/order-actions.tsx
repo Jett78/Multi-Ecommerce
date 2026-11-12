@@ -219,9 +219,12 @@ export default function OrderActions({
         isAuthenticated: true,
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       showSuccess("Order status updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["admin-orders"],
+        refetchType: "all",
+      });
       router.refresh();
     },
     onError: (err: { message?: string }) => {
@@ -237,9 +240,12 @@ export default function OrderActions({
         isAuthenticated: true,
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       showSuccess("Payment status updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["admin-orders"],
+        refetchType: "all",
+      });
       router.refresh();
     },
     onError: (err: { message?: string }) => {
@@ -254,14 +260,17 @@ export default function OrderActions({
         isAuthenticated: true,
       });
     },
-    onSuccess: (res: any) => {
+    onSuccess: async (res: any) => {
       const consignmentId = res?.data?.consignmentId;
       showSuccess(
         res?.data?.alreadySent
           ? `Order already sent (Consignment: ${consignmentId})`
           : `Order sent to courier. Consignment: ${consignmentId}`,
       );
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["admin-orders"],
+        refetchType: "all",
+      });
       router.refresh();
     },
     onError: (err: { message?: string }) => {
@@ -276,9 +285,12 @@ export default function OrderActions({
         isAuthenticated: true,
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       showSuccess("Order status synced from courier");
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["admin-orders"],
+        refetchType: "all",
+      });
       router.refresh();
     },
     onError: (err: { message?: string }) => {

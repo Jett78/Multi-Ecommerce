@@ -166,7 +166,10 @@ export default function AdminOrdersPage() {
       }
     }
 
-    queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+    await queryClient.invalidateQueries({
+      queryKey: ["admin-orders"],
+      refetchType: "all",
+    });
     setSelectedIds(new Set());
   };
 
@@ -180,11 +183,14 @@ export default function AdminOrdersPage() {
         });
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       showSuccess(`Deleted ${selectedIds.size} order(s)`);
       setSelectedIds(new Set());
       setDeleteConfirmOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["admin-orders"],
+        refetchType: "all",
+      });
       router.refresh();
     },
     onError: () => {

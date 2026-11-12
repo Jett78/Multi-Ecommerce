@@ -98,9 +98,11 @@ export function useCrud<T>({
         body: JSON.stringify(data),
         isAuthenticated: isAuthenticated,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [queryKey],
+        refetchType: "all",
+      }),
   });
 
   const update = useMutation({
@@ -110,9 +112,11 @@ export function useCrud<T>({
         body: JSON.stringify(data),
         isAuthenticated: isAuthenticated,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [queryKey],
+        refetchType: "all",
+      }),
   });
 
   const put = useMutation({
@@ -122,9 +126,11 @@ export function useCrud<T>({
         body: JSON.stringify(data),
         isAuthenticated: isAuthenticated,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [queryKey],
+        refetchType: "all",
+      }),
   });
 
   const remove = useMutation({
@@ -133,9 +139,11 @@ export function useCrud<T>({
         method: "DELETE",
         isAuthenticated: isAuthenticated,
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKey] });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: [queryKey],
+        refetchType: "all",
+      }),
   });
 
   return {

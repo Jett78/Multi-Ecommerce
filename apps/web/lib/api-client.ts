@@ -26,6 +26,7 @@ export async function apiClient<T>(
       ...fetchOptions,
       headers,
       credentials: "include",
+      cache: "no-store",
       signal: controller.signal,
     });
   } catch (networkError) {
