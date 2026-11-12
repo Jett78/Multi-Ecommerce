@@ -36,6 +36,10 @@ export function useCrud<T>({
         if (Array.isArray(response?.data)) {
           return response.data;
         }
+        // Handle wrapped object responses, e.g. { data: { orders: [...] } }
+        if (response?.data && typeof response.data === "object") {
+          return response.data;
+        }
         return [];
       },
     });
