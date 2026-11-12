@@ -414,7 +414,6 @@ export class ProductController {
   // Reviews
   @Post(':id/reviews')
   @ApiCookieAuth()
-  @RequirePermissions('product.create')
   @ApiOperation({ summary: 'Submit a review for a product' })
   @ApiParam({ name: 'id', description: 'Product UUID' })
   async createReview(
