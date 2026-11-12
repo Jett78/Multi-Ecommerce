@@ -56,11 +56,17 @@ export function useCrud<T>({
 
     return useQuery({
       queryKey: [queryKey, "paginated", params],
-      queryFn: async () => {
+      queryFn: async (): Promise<{
+        items: T[];
+        total: number;
+        skip: number;
+        take: number;
+        hasMore: boolean;
+      }> => {
         const response = await apiClient<any>(`${endpoint}${queryString}`, { isAuthenticated, timeout: options?.timeout });
         // Nested paginated format: { data: { data: [...], total, skip, take, hasMore } }
         const nested = !!(response?.data?.data && Array.isArray(response.data.data));
-        const items = nested
+        const items: T[] = nested
           ? response.data.data
           : Array.isArray(response?.data)
             ? response.data
