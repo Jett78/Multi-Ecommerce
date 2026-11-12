@@ -74,17 +74,23 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
   const hasActiveFilters =
     filters.categoryId || filters.subcategoryId || filters.brandId || filters.minPrice || filters.maxPrice || filters.minRating;
 
-  // Sync internal state with initialFilters prop changes
+  // Sync internal state with initialFilters prop changes (bail out when unchanged to avoid render loops)
   useEffect(() => {
-    setFilters((prev) => ({
-      ...prev,
-      categoryId: initialFilters.categoryId || "",
-      subcategoryId: initialFilters.subcategoryId || "",
-      brandId: initialFilters.brandId || "",
-      minPrice: initialFilters.minPrice || "",
-      maxPrice: initialFilters.maxPrice || "",
-      minRating: initialFilters.minRating || "",
-    }));
+    setFilters((prev) => {
+      const next: FilterState = {
+        ...prev,
+        categoryId: initialFilters.categoryId || "",
+        subcategoryId: initialFilters.subcategoryId || "",
+        brandId: initialFilters.brandId || "",
+        minPrice: initialFilters.minPrice || "",
+        maxPrice: initialFilters.maxPrice || "",
+        minRating: initialFilters.minRating || "",
+      };
+      const unchanged = (Object.keys(next) as (keyof FilterState)[]).every(
+        (key) => prev[key] === next[key]
+      );
+      return unchanged ? prev : next;
+    });
   }, [initialFilters]);
 
   useEffect(() => {

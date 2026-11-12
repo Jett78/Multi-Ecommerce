@@ -54,24 +54,20 @@ export function useCrud<T>({
       queryKey: [queryKey, "paginated", params],
       queryFn: async () => {
         const response = await apiClient<any>(`${endpoint}${queryString}`, { isAuthenticated, timeout: options?.timeout });
-        // Handle paginated response format
-        if (response?.data?.data && Array.isArray(response.data.data)) {
-          return {
-            items: response.data.data,
-            total: response.data.total ?? 0,
-            skip: response.data.skip ?? 0,
-            take: response.data.take ?? 10,
-            hasMore: response.data.hasMore ?? false,
-          };
-        }
-        // Fallback for direct array response
-        const items = Array.isArray(response?.data) ? response.data : [];
+        // Nested paginated format: { data: { data: [...], total, skip, take, hasMore } }
+        const nested = !!(response?.data?.data && Array.isArray(response.data.data));
+        const items = nested
+          ? response.data.data
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
         return {
           items,
-          total: items.length,
-          skip: 0,
-          take: items.length,
-          hasMore: false,
+          // Flat format: { data: [...], total, skip, take, hasMore }
+          total: response?.total ?? (nested ? response.data.total : undefined) ?? items.length,
+          skip: response?.skip ?? (nested ? response.data.skip : undefined) ?? 0,
+          take: response?.take ?? (nested ? response.data.take : undefined) ?? items.length,
+          hasMore: response?.hasMore ?? (nested ? response.data.hasMore : undefined) ?? false,
         };
       },
     });
