@@ -17,6 +17,16 @@ import { productsToCsvRows, downloadCsv } from "@/lib/csv-helpers";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import { apiClient } from "@/lib/api-client";
 import CsvImportDialog from "@/components/dashboard/csv-import-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Product } from "@/types/product";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 
@@ -55,6 +65,7 @@ export default function ProductsPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const debouncedSearch = useDebounce(search);
   const queryClient = useQueryClient();
 
@@ -169,11 +180,13 @@ export default function ProductsPage() {
     onSuccess: () => {
       showSuccess(`Deleted ${selectedIds.size} product(s)`);
       setSelectedIds(new Set());
+      setBulkDeleteOpen(false);
       queryClient.invalidateQueries({ queryKey: ["products"] });
       revalidateProducts();
     },
     onError: () => {
       showError("Failed to delete some products");
+      setBulkDeleteOpen(false);
     },
   });
 
@@ -575,11 +588,7 @@ export default function ProductsPage() {
               Clear
             </button>
             <button
-              onClick={() => {
-                if (window.confirm(`Delete ${selectedIds.size} product(s)? This cannot be undone.`)) {
-                  bulkDeleteMutation.mutate();
-                }
-              }}
+              onClick={() => setBulkDeleteOpen(true)}
               disabled={bulkDeleteMutation.isPending}
               className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -615,6 +624,27 @@ export default function ProductsPage() {
           />
         )}
       </div>
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Products</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete {selectedIds.size} product(s)? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate()}
+              disabled={bulkDeleteMutation.isPending}
+              className="bg-red-500 text-white hover:bg-red-600"
+            >
+              {bulkDeleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <CsvImportDialog
         open={importDialogOpen}
