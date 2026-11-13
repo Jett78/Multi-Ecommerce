@@ -30,7 +30,7 @@ const HeroBannerSlider = ({ banners }: { banners: Banner[] }) => {
     <div className="relative w-full  mt-10">
       <Slider {...settings} ref={sliderRef}>
         {banners.map((banner) => (
-          <div key={banner.id} className="relative h-[250px] w-full sm:h-[350px] md:h-[450px]">
+          <div key={banner.id} className="relative h-[200px] w-full sm:h-[320px]  md:h-[380px] lg:h-[450px]">
             {banner.link ? (
               <Link href={banner.link} className="block h-full w-full">
                 <Image

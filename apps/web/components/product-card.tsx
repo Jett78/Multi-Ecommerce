@@ -154,12 +154,12 @@ export default function ProductCard({
         <div className="flex items-center gap-2 mt-1">
           {hasFlashSale ? (
             <>
-              <p className="text-sm font-semibold text-red-600">{formatPrice(salePrice!)}</p>
+              <p className="text-sm font-semibold text-primarymain">{formatPrice(salePrice!)}</p>
               <p className="text-xs text-gray-400 line-through">{formatPrice(originalPrice!)}</p>
             </>
           ) : (
             <>
-              <p className="text-sm font-semibold text-gray-900">{product ? getProductPrice(product) : ""}</p>
+              <p className="text-sm font-semibold text-primarymain">{product ? getProductPrice(product) : ""}</p>
               {compareAtPrice && (
                 <p className="text-xs text-gray-400 line-through">{compareAtPrice}</p>
               )}

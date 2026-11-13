@@ -292,9 +292,9 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
         </div>
       </div>
 
-      {/* Clear All Button at bottom */}
+      {/* Clear All Button at bottom (mobile overlay only; desktop uses Clear beside sort) */}
       {hasActiveFilters && (
-        <div className="border-t border-gray-100 pt-5">
+        <div className="md:hidden border-t border-gray-100 pt-5">
           <button
             onClick={clearFilters}
             className="w-full px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
@@ -308,9 +308,9 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
 
   return (
     <>
-      {/* Mobile: Active filter chips (visible outside overlay) */}
+      {/* Active filter chips */}
       {hasActiveFilters && (
-        <div className="md:hidden mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap gap-2">
           {activeFilters.map((filter) => (
             <button
               key={filter.key}
@@ -331,7 +331,7 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
           ))}
           <button
             onClick={clearFilters}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-sm rounded-full border border-red-200 hover:bg-red-100 transition-colors"
+            className="md:hidden flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-600 text-sm rounded-full border border-red-200 hover:bg-red-100 transition-colors"
           >
             <X size={10} className="flex-shrink-0" />
             <span className="font-medium">Clear all</span>

@@ -14,7 +14,7 @@ export async function Hero() {
   if (heroBanners.length === 1 && heroBanners[0]) {
     const banner = heroBanners[0];
     return (
-      <section className=" mt-10 relative h-[250px] w-full sm:h-[350px] md:h-[450px]">
+      <section className=" mt-10 relative h-[200px] w-full sm:h-[320px]  md:h-[380px] lg:h-[450px]">
         {banner.link ? (
           <Link href={banner.link} className="block h-full w-full">
             <Image

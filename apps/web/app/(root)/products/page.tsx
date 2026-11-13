@@ -8,8 +8,9 @@ import type { Product } from "@/types/product";
 import type { ActiveFlashSaleProduct } from "@/types/flash-sale";
 import ProductCard from "@/components/product-card";
 import ProductFilter from "@/components/product-filter";
+import NoData from "@/components/no-data";
 import { getActiveFlashSaleProducts } from "@/actions/flash-sale-action";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
@@ -94,21 +95,29 @@ export default function ProductsPage() {
     router.push(`/products?${params.toString()}`);
   };
 
+  const hasActiveFilters = !!(
+    filters.categoryId ||
+    filters.subcategoryId ||
+    filters.brandId ||
+    filters.minPrice ||
+    filters.maxPrice ||
+    filters.minRating
+  );
+
+  const clearFilters = () => {
+    handleFilterChange({
+      categoryId: "",
+      subcategoryId: "",
+      brandId: "",
+      minPrice: "",
+      maxPrice: "",
+      minRating: "",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Header */}
-      <div className="bg-primarymain text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 md:py-20">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-3">
-            Shop All
-          </h1>
-          <p className="text-sm md:text-base text-gray-400 max-w-md">
-            {total} products · Curated collections
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-20">
         <div className="flex gap-8">
           {/* Desktop: Sticky Filter Sidebar */}
           <div className="hidden md:block w-64 flex-shrink-0">
@@ -125,8 +134,19 @@ export default function ProductsPage() {
             </div>
 
             {/* Sort Dropdown */}
-            <div className="mb-4 flex items-center justify-between sm:justify-end">
-              <div className="relative">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="hidden md:block">
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 border border-red-200 bg-red-50 rounded-lg text-sm font-medium text-red-600 hover:bg-red-100 transition-colors"
+                  >
+                    <X size={14} />
+                    Clear filter
+                  </button>
+                )}
+              </div>
+              <div className="relative ml-auto">
                 <label htmlFor="sort-select" className="sr-only">Sort by</label>
                 <select
                   id="sort-select"
@@ -155,10 +175,7 @@ export default function ProductsPage() {
                 ))}
               </div>
             ) : products.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-xl font-bold text-gray-300 mb-1">No products found</p>
-                <p className="text-sm text-gray-400">Try adjusting your filters</p>
-              </div>
+              <NoData title="products" />
             ) : (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
