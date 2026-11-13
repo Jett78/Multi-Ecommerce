@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -8,6 +8,7 @@ import { useRef } from "react";
 import CountdownTimer from "@/components/countdown-timer";
 import type { FlashSale, ActiveFlashSaleProduct } from "@/types/flash-sale";
 import ProductCard from "@/components/product-card";
+import PrimaryButton from "@/components/ui/primary-button";
 import Image from "next/image";
 
 interface FlashSaleSectionClientProps {
@@ -127,13 +128,11 @@ export default function FlashSaleSectionClient({
 
         {/* View All Button */}
         <div className="flex justify-center mt-8">
-          <a
-            href={`/flash-sale?sale=${sale.slug}`}
-            className="group flex items-center gap-2 bg-primarymain text-white px-8 py-3 text-sm font-bold tracking-wide rounded-xl hover:bg-primarymain/90 transition-all"
-          >
-            VIEW ALL
-            <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-          </a>
+          <PrimaryButton
+            text="VIEW ALL"
+            path={`/flash-sale?sale=${sale.slug}`}
+            variant="primary"
+          />
         </div>
       </div>
     </section>

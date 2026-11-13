@@ -26,8 +26,8 @@ export default async function Home() {
       <BestSellers />
       <MidBanner />
       <FeaturedProducts />
-      <TrustFeatures />
       <BlogSection posts={posts} />
+      <TrustFeatures />
       <Testimonials />
       <FaqSection />
     </>

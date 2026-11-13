@@ -85,14 +85,14 @@ export default function ProductCard({
   flashSaleName,
   activeFlashSaleProduct,
 }: ProductCardProps) {
-  if (!product) return null;
+  if (!product && !activeFlashSaleProduct) return null;
 
   const primaryImage = activeFlashSaleProduct?.imageUrl
     ? { url: activeFlashSaleProduct.imageUrl, isPrimary: true }
-    : product.images?.find((img) => img.isPrimary) || product.images?.[0];
-  const outOfStock = isOutOfStock(product);
-  const discountPercent = getDiscountPercent(product);
-  const compareAtPrice = getCompareAtPrice(product);
+    : product?.images?.find((img) => img.isPrimary) || product?.images?.[0];
+  const outOfStock = product ? isOutOfStock(product) : false;
+  const discountPercent = product ? getDiscountPercent(product) : null;
+  const compareAtPrice = product ? getCompareAtPrice(product) : null;
 
   const salePrice = activeFlashSaleProduct?.salePrice ?? flashSalePrice;
   const originalPrice = activeFlashSaleProduct?.originalPrice ?? flashSaleOriginalPrice;
@@ -101,8 +101,8 @@ export default function ProductCard({
     ? Math.round(((originalPrice! - salePrice!) / originalPrice!) * 100)
     : null;
 
-  const displayName = activeFlashSaleProduct?.productName ?? product.name;
-  const displaySlug = activeFlashSaleProduct?.productSlug ?? product.slug;
+  const displayName = activeFlashSaleProduct?.productName ?? product?.name ?? "";
+  const displaySlug = activeFlashSaleProduct?.productSlug ?? product?.slug ?? "";
 
   return (
     <Link

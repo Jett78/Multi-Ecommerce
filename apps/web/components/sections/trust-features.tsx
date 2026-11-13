@@ -25,7 +25,7 @@ const features = [
 
 export default function TrustFeatures() {
   return (
-    <section className="py-14 sm:py-20 border-t border-gray-100">
+    <section className="py-10 sm:py-16 border-t border-gray-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {features.map((feature) => (

@@ -13,7 +13,7 @@ export async function Testimonials() {
   const showSlider = testimonials.length >= 3;
 
   return (
-    <section className="bg-gray-50 py-20 sm:py-28">
+    <section className="bg-gray-50 py-10 sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <PageHeader
           title="What our clients say"

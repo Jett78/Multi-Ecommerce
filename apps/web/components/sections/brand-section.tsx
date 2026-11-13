@@ -8,7 +8,7 @@ export default async function BrandSection() {
   if (brands.length === 0) return null;
 
   return (
-    <section className="py-12 sm:py-16 border-t border-gray-100">
+    <section className="py-10 sm:py-16 border-t border-gray-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 sm:mb-10">
           <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-1">

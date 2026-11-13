@@ -24,7 +24,10 @@ const PrimaryButton: React.FC<Props> = ({
   variant = "primary",
 }) => {
   const baseClasses = cn(
-    "relative text-sm font-bold tracking-wide bg-gray-900 px-6 py-3 text-white transition-colors hover:bg-gray-800",
+    "relative text-sm font-bold tracking-wide px-6 py-3 text-white transition-colors",
+    variant === "secondary"
+      ? "bg-secondarymain hover:bg-secondarymain/90"
+      : "bg-primarymain hover:bg-primarymain/90",
     disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "",
     className
   );

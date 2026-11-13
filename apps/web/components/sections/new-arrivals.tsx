@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { getNewArrivals } from "@/actions/homepage-actions";
 import { getActiveFlashSaleProducts } from "@/actions/flash-sale-action";
 import ProductCard from "@/components/product-card";
+import PrimaryButton from "@/components/ui/primary-button";
 
 export default async function NewArrivals() {
   const [products, flashSaleProducts] = await Promise.all([
@@ -47,12 +47,11 @@ export default async function NewArrivals() {
 
         {products.length >= 20 && (
           <div className="mt-8 text-center">
-            <Link
-              href="/products"
-              className="inline-block bg-primarymain text-white px-8 py-3 text-sm font-bold tracking-wide hover:bg-primarymain/90 transition-colors"
-            >
-              VIEW ALL PRODUCTS
-            </Link>
+            <PrimaryButton
+              text="VIEW ALL PRODUCTS"
+              path="/products"
+              variant="primary"
+            />
           </div>
         )}
       </div>
