@@ -4,7 +4,18 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, ShoppingCart, Heart, User, LogOut, Package, Settings, ChevronDown, Search } from "lucide-react";
+import {
+  Menu,
+  X,
+  ShoppingCart,
+  Heart,
+  User,
+  LogOut,
+  Package,
+  Settings,
+  ChevronDown,
+  Search,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CartIcon } from "@/components/cart/cart-icon";
 import { CartSidebar } from "@/components/cart/cart-sidebar";
@@ -67,7 +78,7 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
     setIsSearching(true);
     try {
       const response = await apiClient<{ data: Product[] }>(
-        `${API_ROUTES.PRODUCT}?take=10&skip=0&search=${encodeURIComponent(query)}`
+        `${API_ROUTES.PRODUCT}?take=10&skip=0&search=${encodeURIComponent(query)}`,
       );
       setSearchResults(response?.data || []);
     } catch {
@@ -83,7 +94,10 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
         setShowSuggestions(false);
       }
     };
@@ -130,7 +144,10 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
         setUserMenuOpen(false);
       }
     };
@@ -168,26 +185,67 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
         <div className="bg-primarymain text-white ">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="hidden md:flex h-10 items-center justify-between">
-              <div className="flex items-center gap-6">
-                <Link href="/" className="text-xs font-medium hover:opacity-80 transition-opacity">Home</Link>
-                <Link href="/about" className="text-xs font-medium hover:opacity-80 transition-opacity">About</Link>
-                <Link href="/products" className="text-xs font-medium hover:opacity-80 transition-opacity">Products</Link>
-                <Link href="/blog" className="text-xs font-medium hover:opacity-80 transition-opacity">Blog</Link>
-                <Link href="/contact" className="text-xs font-medium hover:opacity-80 transition-opacity">Contact</Link>
+              <div className="flex items-center gap-8">
+                <Link
+                  href="/"
+                  className="text-sm font-medium hover:opacity-80 transition-opacity"
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/about"
+                  className="text-sm font-medium hover:opacity-80 transition-opacity"
+                >
+                  About
+                </Link>
+                <Link
+                  href="/products"
+                  className="text-sm font-medium hover:opacity-80 transition-opacity"
+                >
+                  Shop
+                </Link>
+                <Link
+                  href="/blog"
+                  className="text-sm font-medium hover:opacity-80 transition-opacity"
+                >
+                  Blog
+                </Link>
+                <Link
+                  href="/contact"
+                  className="text-sm font-medium hover:opacity-80 transition-opacity"
+                >
+                  Contact
+                </Link>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-xs">📞 +977-01-4XXXXXX</span>
-                <span className="text-xs">✉️ info@example.com</span>
+              <div className="flex items-center gap-6">
+                {company?.phoneNumber && (
+                  <a
+                    href={`tel:${company.phoneNumber.replace(/[^\d+]/g, "")}`}
+                    className="text-sm hover:opacity-80 transition-opacity"
+                  >
+                    📞 {company.phoneNumber}
+                  </a>
+                )}
+                {company?.email && (
+                  <a
+                    href={`mailto:${company.email}`}
+                    className="text-sm hover:opacity-80 transition-opacity"
+                  >
+                    ✉️ {company.email}
+                  </a>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className={cn(
+      <div
+        className={cn(
           "fixed left-0 right-0 z-50 border-b border-gray-200 bg-white transition-[top] duration-300 ease-in-out top-0",
-          showNavbar ? "md:top-10" : "md:top-0"
-        )}>
+          showNavbar ? "md:top-10" : "md:top-0",
+        )}
+      >
         <header>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {/* Desktop layout */}
@@ -198,8 +256,8 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                   <Image
                     src={company.logoKey}
                     alt={company.companyName || "Logo"}
-                    width={100}
-                    height={72}
+                    width={50}
+                    height={60}
                     className="object-contain"
                   />
                 ) : (
@@ -210,7 +268,10 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
               </Link>
 
               {/* Search Bar */}
-              <div ref={searchRef} className="relative flex-1 max-w-2xl mx-auto">
+              <div
+                ref={searchRef}
+                className="relative flex-1 max-w-2xl mx-auto"
+              >
                 <form onSubmit={handleSearch}>
                   <div className="relative">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -222,17 +283,22 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                     <input
                       type="text"
                       value={searchQuery}
-                      onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setShowSuggestions(true);
+                      }}
                       onFocus={() => setShowSuggestions(true)}
                       placeholder="Search products..."
-                      className="w-full h-11 pl-11 pr-4 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primarymain/20 focus:border-primarymain transition-shadow"
+                      className="w-full h-11 pl-11 pr-4 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primarymain/20 focus:border-primarymain transition-shadow"
                     />
                   </div>
                 </form>
                 {showSuggestions && searchResults.length > 0 && (
                   <div className="absolute z-50 top-full mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-72 overflow-y-auto">
                     {searchResults.map((product) => {
-                      const productImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
+                      const productImage =
+                        product.images?.find((img) => img.isPrimary) ||
+                        product.images?.[0];
                       return (
                         <button
                           key={product.id}
@@ -242,7 +308,11 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                         >
                           <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                             {productImage?.url ? (
-                              <img src={productImage.url} alt={product.name} className="w-full h-full object-cover" />
+                              <img
+                                src={productImage.url}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-sm font-bold text-gray-400">
                                 {product.name.charAt(0)}
@@ -250,9 +320,13 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {product.name}
+                            </p>
                             <p className="text-xs text-gray-500 truncate">
-                              {product.variants?.[0]?.price ? `Rs. ${product.variants[0].price.toLocaleString()}` : "No price"}
+                              {product.variants?.[0]?.price
+                                ? `Rs. ${product.variants[0].price.toLocaleString()}`
+                                : "No price"}
                             </p>
                           </div>
                         </button>
@@ -263,7 +337,7 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
               </div>
 
               {/* Right section */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 {/* Wishlist Icon */}
                 <button
                   onClick={() => setWishlistOpen(true)}
@@ -291,8 +365,15 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-200">
                         <User className="h-4 w-4 text-gray-600" />
                       </div>
-                      <span className="max-w-[100px] truncate">{session.user.name}</span>
-                      <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", userMenuOpen && "rotate-180")} />
+                      <span className="max-w-[100px] truncate">
+                        {session.user.name}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "h-3.5 w-3.5 transition-transform",
+                          userMenuOpen && "rotate-180",
+                        )}
+                      />
                     </button>
 
                     {/* User Dropdown */}
@@ -409,7 +490,10 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                     <input
                       type="text"
                       value={searchQuery}
-                      onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setShowSuggestions(true);
+                      }}
                       onFocus={() => setShowSuggestions(true)}
                       placeholder="Search products..."
                       className="w-full h-10 pl-10 pr-10 bg-gray-50 border border-gray-200 rounded-full text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primarymain/20 focus:border-primarymain transition-shadow"
@@ -419,7 +503,9 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                 {showSuggestions && searchResults.length > 0 && (
                   <div className="absolute z-50 left-4 right-4 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-72 overflow-y-auto">
                     {searchResults.map((product) => {
-                      const productImage = product.images?.find((img) => img.isPrimary) || product.images?.[0];
+                      const productImage =
+                        product.images?.find((img) => img.isPrimary) ||
+                        product.images?.[0];
                       return (
                         <button
                           key={product.id}
@@ -429,7 +515,11 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                         >
                           <div className="w-10 h-10 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                             {productImage?.url ? (
-                              <img src={productImage.url} alt={product.name} className="w-full h-full object-cover" />
+                              <img
+                                src={productImage.url}
+                                alt={product.name}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-sm font-bold text-gray-400">
                                 {product.name.charAt(0)}
@@ -437,9 +527,13 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{product.name}</p>
+                            <p className="text-sm font-medium text-gray-900 truncate">
+                              {product.name}
+                            </p>
                             <p className="text-xs text-gray-500 truncate">
-                              {product.variants?.[0]?.price ? `Rs. ${product.variants[0].price.toLocaleString()}` : "No price"}
+                              {product.variants?.[0]?.price
+                                ? `Rs. ${product.variants[0].price.toLocaleString()}`
+                                : "No price"}
                             </p>
                           </div>
                         </button>
@@ -513,8 +607,12 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                     <User className="h-5 w-5 text-gray-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{session.user.name}</p>
-                    <p className="text-xs text-gray-400 truncate">{session.user.email}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {session.user.name}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">
+                      {session.user.email}
+                    </p>
                   </div>
                 </div>
                 <Link
@@ -534,7 +632,10 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
                   My Orders
                 </Link>
                 <button
-                  onClick={() => { setIsOpen(false); handleLogout(); }}
+                  onClick={() => {
+                    setIsOpen(false);
+                    handleLogout();
+                  }}
                   className="flex w-full items-center gap-3 px-0 py-3 text-[15px] font-medium text-red-600 transition-colors hover:text-red-700"
                 >
                   <LogOut className="h-5 w-5" />
@@ -543,7 +644,10 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
               </>
             ) : (
               <button
-                onClick={() => { setIsOpen(false); handleLoginClick(); }}
+                onClick={() => {
+                  setIsOpen(false);
+                  handleLoginClick();
+                }}
                 className="flex w-full items-center justify-center gap-2 bg-gray-900 py-3 text-sm font-bold text-white transition-colors hover:bg-gray-800"
               >
                 <User className="h-4 w-4" />
@@ -552,17 +656,25 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
             )}
 
             <button
-              onClick={() => { setIsOpen(false); setWishlistOpen(true); }}
+              onClick={() => {
+                setIsOpen(false);
+                setWishlistOpen(true);
+              }}
               className="flex w-full items-center gap-3 px-0 py-3 text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-900"
             >
               <Heart className="h-5 w-5" />
               Wishlist
               {wishlistItemCount > 0 && (
-                <span className="ml-auto text-[11px] text-gray-400">({wishlistItemCount})</span>
+                <span className="ml-auto text-[11px] text-gray-400">
+                  ({wishlistItemCount})
+                </span>
               )}
             </button>
             <button
-              onClick={() => { setIsOpen(false); setCartOpen(true); }}
+              onClick={() => {
+                setIsOpen(false);
+                setCartOpen(true);
+              }}
               className="flex w-full items-center gap-3 px-0 py-3 text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-900"
             >
               <ShoppingCart className="h-5 w-5" />
@@ -576,7 +688,10 @@ export function NavbarClient({ company, navItems }: NavbarClientProps) {
       <CartSidebar open={cartOpen} onClose={() => setCartOpen(false)} />
 
       {/* Wishlist Sidebar */}
-      <WishlistSidebar open={wishlistOpen} onClose={() => setWishlistOpen(false)} />
+      <WishlistSidebar
+        open={wishlistOpen}
+        onClose={() => setWishlistOpen(false)}
+      />
     </>
   );
 }
