@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DB_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
-import { eq, ilike, or, and, sql, desc, asc, gte, lte, inArray, not, exists } from 'drizzle-orm';
+import { eq, ilike, or, and, sql, desc, asc, gte, lte, gt, inArray, not, exists } from 'drizzle-orm';
 
 @Injectable()
 export class ProductRepository {
@@ -165,6 +165,32 @@ export class ProductRepository {
     };
   }
 
+  private buildStockCondition(stockStatus?: 'in_stock' | 'out_of_stock') {
+    if (!stockStatus) return undefined;
+
+    const hasVariants = exists(
+      this.db
+        .select({ id: schema.productVariants.id })
+        .from(schema.productVariants)
+        .where(eq(schema.productVariants.productId, schema.products.id)),
+    );
+
+    const variantStockSum = sql<number>`COALESCE((SELECT SUM(product_variants.stock_quantity) FROM product_variants WHERE product_variants.product_id = ${schema.products.id}), 0)`;
+    const productStock = sql<number>`COALESCE(${schema.products.stockQuantity}, 0)`;
+
+    if (stockStatus === 'out_of_stock') {
+      return or(
+        and(hasVariants, eq(variantStockSum, 0)),
+        and(not(hasVariants), eq(productStock, 0)),
+      );
+    }
+
+    return or(
+      and(hasVariants, gt(variantStockSum, 0)),
+      and(not(hasVariants), gt(productStock, 0)),
+    );
+  }
+
   async findAllProducts(params?: {
     skip?: number;
     take?: number;
@@ -178,6 +204,7 @@ export class ProductRepository {
     maxPrice?: number;
     minRating?: number;
     sortBy?: string;
+    stockStatus?: 'in_stock' | 'out_of_stock';
   }) {
     const conditions = [];
 
@@ -236,6 +263,11 @@ export class ProductRepository {
 
     if (params?.minRating !== undefined) {
       conditions.push(gte(schema.products.averageRating, params.minRating));
+    }
+
+    const stockCondition = this.buildStockCondition(params?.stockStatus);
+    if (stockCondition) {
+      conditions.push(stockCondition);
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -373,6 +405,7 @@ export class ProductRepository {
     minPrice?: number;
     maxPrice?: number;
     minRating?: number;
+    stockStatus?: 'in_stock' | 'out_of_stock';
   }) {
     const conditions = [];
 
@@ -431,6 +464,11 @@ export class ProductRepository {
 
     if (params?.minRating !== undefined) {
       conditions.push(gte(schema.products.averageRating, params.minRating));
+    }
+
+    const stockCondition = this.buildStockCondition(params?.stockStatus);
+    if (stockCondition) {
+      conditions.push(stockCondition);
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

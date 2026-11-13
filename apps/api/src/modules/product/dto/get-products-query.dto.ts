@@ -85,4 +85,9 @@ export class GetProductsQueryDto {
   @IsOptional()
   @IsEnum(ProductSortBy)
   sortBy?: ProductSortBy = ProductSortBy.NEWEST;
+
+  @ApiPropertyOptional({ enum: ['in_stock', 'out_of_stock'], description: 'Filter by stock availability' })
+  @IsOptional()
+  @IsEnum(['in_stock', 'out_of_stock'])
+  stockStatus?: 'in_stock' | 'out_of_stock';
 }

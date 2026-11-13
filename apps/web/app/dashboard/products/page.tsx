@@ -17,7 +17,7 @@ import { productsToCsvRows, downloadCsv } from "@/lib/csv-helpers";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import { apiClient } from "@/lib/api-client";
 import CsvImportDialog from "@/components/dashboard/csv-import-dialog";
-import type { Product, ProductVariant } from "@/types/product";
+import type { Product } from "@/types/product";
 import DashboardHeading from "@/components/dashboard/dashboard-heading";
 
 const PAGE_SIZE = 10;
@@ -108,6 +108,9 @@ export default function ProductsPage() {
 
   const { data: featuredData } = getAllPaginated({ take: 1, skip: 0, isFeatured: true });
   const featuredCount = featuredData?.total || 0;
+
+  const { data: outOfStockData } = getAllPaginated({ take: 1, skip: 0, stockStatus: "out_of_stock" });
+  const outOfStockCount = outOfStockData?.total || 0;
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -384,12 +387,7 @@ export default function ProductsPage() {
           iconBg="bg-amber-50"
           iconColor="text-amber-600"
           label="Out of Stock"
-          value={products.filter((p) => {
-            const stock = p.variants && p.variants.length > 0
-              ? p.variants.reduce((sum: number, v: ProductVariant) => sum + (v.stockQuantity ?? 0), 0)
-              : p.stockQuantity ?? 0;
-            return stock === 0;
-          }).length || "—"}
+          value={outOfStockCount || "—"}
         />
         <StatCard
           icon={Star}
