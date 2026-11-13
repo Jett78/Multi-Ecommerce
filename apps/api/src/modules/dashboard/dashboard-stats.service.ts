@@ -281,15 +281,17 @@ export class DashboardStatsService {
   async getTopProducts(limit: number = 5) {
     const results = await this.db
       .select({
-        productId: schema.orderItems.variantId,
-        productName: schema.orderItems.productName,
+        productId: schema.productVariants.productId,
+        productName: schema.products.name,
         totalQuantity: sql<number>`sum(${schema.orderItems.quantity})`,
         totalRevenue: sql<number>`sum(${schema.orderItems.totalAmount})`,
       })
       .from(schema.orderItems)
       .innerJoin(schema.orders, eq(schema.orderItems.orderId, schema.orders.id))
+      .innerJoin(schema.productVariants, eq(schema.orderItems.variantId, schema.productVariants.id))
+      .innerJoin(schema.products, eq(schema.productVariants.productId, schema.products.id))
       .where(eq(schema.orders.paymentStatus, 'completed'))
-      .groupBy(schema.orderItems.variantId, schema.orderItems.productName)
+      .groupBy(schema.productVariants.productId, schema.products.name)
       .orderBy(sql`sum(${schema.orderItems.totalAmount}) DESC`)
       .limit(limit);
 
