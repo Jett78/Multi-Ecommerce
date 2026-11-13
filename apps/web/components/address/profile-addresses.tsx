@@ -7,11 +7,22 @@ import { API_ROUTES } from "@/config/api-routes";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import { AddressCard } from "./address-card";
 import { AddressForm } from "./address-form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { ShippingAddress, AddressFormValues } from "@/types/address";
 
 export function ProfileAddresses() {
   const [showForm, setShowForm] = React.useState(false);
   const [editing, setEditing] = React.useState<ShippingAddress | null>(null);
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
   const { getAll, create, update, remove } = useCrud<AddressFormValues>({
     endpoint: API_ROUTES.SHIPPING_ADDRESS,
@@ -48,9 +59,16 @@ export function ProfileAddresses() {
   };
 
   const handleDelete = (id: string) => {
-    if (!confirm("Delete this address?")) return;
-    remove.mutate(id, {
-      onSuccess: () => showSuccess("Address deleted"),
+    setDeletingId(id);
+  };
+
+  const confirmDelete = () => {
+    if (!deletingId) return;
+    remove.mutate(deletingId, {
+      onSuccess: () => {
+        showSuccess("Address deleted");
+        setDeletingId(null);
+      },
       onError: () => showError("Failed to delete address"),
     });
   };
@@ -121,6 +139,32 @@ export function ProfileAddresses() {
           </div>
         )}
       </div>
+
+      <AlertDialog
+        open={!!deletingId}
+        onOpenChange={(open) => {
+          if (!open) setDeletingId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Address</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this address? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={remove.isPending}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {remove.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

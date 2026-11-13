@@ -218,7 +218,7 @@ export class ReviewRepository {
         AND ${schema.orderItems.variantId} IN (
           SELECT id FROM product_variants WHERE product_id = ${productId}
         )
-        AND ${schema.orders.status} = 'completed'`
+        AND ${schema.orders.status} = 'delivered'`
       );
 
     return Number(result[0]?.count) > 0;
