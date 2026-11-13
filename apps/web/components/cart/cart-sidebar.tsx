@@ -180,11 +180,18 @@ export function CartSidebar({ open, onClose }: CartSidebarProps) {
         )}
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto px-5">
+        <div className="flex flex-1 flex-col overflow-y-auto px-5">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex flex-1 flex-col items-center justify-center text-center">
               <p className="text-sm font-medium text-gray-900">Your cart is empty</p>
               <p className="mt-1 text-xs text-gray-400">Add items to get started</p>
+              <Link
+                href="/products"
+                onClick={onClose}
+                className="mt-6 inline-flex items-center justify-center bg-primarymain px-8 py-3 text-sm font-bold text-white transition-colors hover:bg-primarymain/90"
+              >
+                SHOP NOW
+              </Link>
             </div>
           ) : (
             <div className="divide-y divide-gray-50">
