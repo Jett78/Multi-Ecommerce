@@ -10,13 +10,13 @@ export async function uploadSingleImage(
 ): Promise<UploadResult> {
   try {
     const cookieStore = await cookies();
-    const sessionToken =
-      cookieStore.get("better-auth.session_token")?.value ||
-      cookieStore.get("__Secure-better-auth.session_token")?.value;
-
     const headers: Record<string, string> = {};
-    if (sessionToken) {
-      headers["Cookie"] = `better-auth.session_token=${sessionToken}`;
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+    if (cookieHeader) {
+      headers["Cookie"] = cookieHeader;
     }
 
     const response = await fetch(`${API_BASE_URL}/upload`, {
@@ -49,13 +49,13 @@ export async function uploadMultipleImages(
 ): Promise<{ success: boolean; data?: Array<{ url: string; key: string }>; error?: string }> {
   try {
     const cookieStore = await cookies();
-    const sessionToken =
-      cookieStore.get("better-auth.session_token")?.value ||
-      cookieStore.get("__Secure-better-auth.session_token")?.value;
-
     const headers: Record<string, string> = {};
-    if (sessionToken) {
-      headers["Cookie"] = `better-auth.session_token=${sessionToken}`;
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+    if (cookieHeader) {
+      headers["Cookie"] = cookieHeader;
     }
 
     const response = await fetch(`${API_BASE_URL}/upload/multiple`, {
@@ -90,15 +90,15 @@ export async function uploadFromUrl(
 ): Promise<UploadResult> {
   try {
     const cookieStore = await cookies();
-    const sessionToken =
-      cookieStore.get("better-auth.session_token")?.value ||
-      cookieStore.get("__Secure-better-auth.session_token")?.value;
-
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
-    if (sessionToken) {
-      headers["Cookie"] = `better-auth.session_token=${sessionToken}`;
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+    if (cookieHeader) {
+      headers["Cookie"] = cookieHeader;
     }
 
     const response = await fetch(`${API_BASE_URL}/upload/from-url`, {

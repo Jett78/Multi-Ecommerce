@@ -8,15 +8,15 @@ import type { PageSeo, PageSeoResponse, PageSeoListResponse } from "@/types/page
 export async function getPageSeoList(): Promise<PageSeo[]> {
   try {
     const cookieStore = await cookies();
-    const sessionToken =
-      cookieStore.get("better-auth.session_token")?.value ||
-      cookieStore.get("__Secure-better-auth.session_token")?.value;
-
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
-    if (sessionToken) {
-      headers["Cookie"] = `better-auth.session_token=${sessionToken}`;
+    const cookieHeader = cookieStore
+      .getAll()
+      .map((c) => `${c.name}=${c.value}`)
+      .join("; ");
+    if (cookieHeader) {
+      headers["Cookie"] = cookieHeader;
     }
 
     const response = await fetch(API_ROUTES.PAGE_SEO, { headers });
