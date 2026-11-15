@@ -75,39 +75,32 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const imageUrl = blog.imageKey || blog.seoMeta?.ogImageKey;
 
   return (
-    <article className="min-h-screen bg-background">
-      {/* Hero */}
-      <div className="relative bg-gray-950 pt-32 pb-16 sm:pt-40 sm:pb-20">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(120,119,198,0.12),transparent)]" />
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 relative">
-          <BackButton />
+    <article className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mt-20  mb-6">
+        <BackButton />
 
-          <div className="mt-8 flex items-center gap-3 text-sm text-slate-400">
-            <span className="inline-flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5" />
-              {formatDate(blog.createdAt)}
-            </span>
-            <span className="h-1 w-1 rounded-full bg-slate-600" />
-            <span className="inline-flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5" />
-              {readTime(blog.description || "")}
-            </span>
-          </div>
-
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            {blog.title}
-          </h1>
-
-          <div className="mt-6">
-            <SocialShare slug={blog.slug} title={blog.title} />
-          </div>
+        <div className="mt-6 flex items-center gap-3 text-[11px] font-medium text-gray-400">
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5" />
+            {formatDate(blog.createdAt)}
+          </span>
+          <span className="h-0.5 w-0.5 rounded-full bg-gray-300" />
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" />
+            {readTime(blog.description || "")}
+          </span>
         </div>
+
+        <h1 className="mt-4 text-xl font-bold  text-gray-900 sm:text-2xl lg:text-3xl">
+          {blog.title}
+        </h1>
       </div>
 
       {/* Image */}
       {imageUrl && (
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
-          <figure className="overflow-hidden rounded-2xl shadow-2xl ring-1 ring-gray-900/5">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <figure className="overflow-hidden border border-gray-200">
             <Image
               src={imageUrl}
               alt={blog.title}
@@ -121,9 +114,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       )}
 
       {/* Content */}
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div
-          className="prose prose-lg prose-gray prose-headings:font-bold prose-headings:tracking-tight prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline prose-img:rounded-xl"
+          className="prose prose-lg prose-gray prose-headings:font-bold prose-headings:tracking-tight prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:underline"
           dangerouslySetInnerHTML={{
             __html: blog.description || "<p>No content available.</p>",
           }}
@@ -131,11 +124,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       </div>
 
       {/* Footer */}
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
-        <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-8 py-6 ring-1 ring-gray-900/5">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pb-16 sm:pb-24">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 pt-6">
           <div>
-            <p className="text-sm text-gray-400">Written by</p>
-            <p className="mt-0.5 text-sm font-semibold text-gray-900">Admin</p>
+            <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
+              Written by
+            </p>
+            <p className="mt-1 text-sm font-bold text-gray-900">Admin</p>
           </div>
           <SocialShare slug={blog.slug} title={blog.title} />
         </div>
