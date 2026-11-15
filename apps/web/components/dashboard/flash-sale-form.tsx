@@ -108,7 +108,7 @@ export default function FlashSaleForm({ flashSale }: { flashSale?: FlashSale }) 
         const response = await apiClient<any>(
           `${API_ROUTES.PRODUCT}?take=10&skip=0`
         );
-        console.log("Latest products response:", response);
+      
         setLatestProducts(response?.data || []);
       } catch (err) {
         console.error("Error fetching latest products:", err);

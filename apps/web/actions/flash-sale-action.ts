@@ -8,7 +8,7 @@ export async function getActiveFlashSales(): Promise<FlashSale[]> {
   try {
     const response = await apiClient<{ success: boolean; data: FlashSale[] }>(
       API_ROUTES.FLASH_SALE_ACTIVE,
-      { next: { revalidate: 60 } }
+      { next: { revalidate: 60, tags: ["flash-sales"] } }
     );
     return response.data || [];
   } catch (error) {
@@ -21,7 +21,7 @@ export async function getActiveFlashSaleProducts(): Promise<ActiveFlashSaleProdu
   try {
     const response = await apiClient<{ success: boolean; data: ActiveFlashSaleProduct[] }>(
       API_ROUTES.FLASH_SALE_ACTIVE_PRODUCTS,
-      { next: { revalidate: 60 } }
+      { next: { revalidate: 60, tags: ["flash-sales"] } }
     );
     return response.data || [];
   } catch (error) {

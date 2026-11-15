@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
 import { DataTableActions } from "@/components/dashboard/data-table-actions";
+import { revalidateFlashSales } from "@/actions/revalidate-action";
 import { useDebounce } from "@/hooks/useDebounce";
 import type { FlashSale } from "@/types/flash-sale";
 
@@ -108,6 +109,7 @@ export default function AdminFlashSalesPage() {
           deleteEndpoint={API_ROUTES.FLASH_SALE}
           deleteQueryKey="flash-sales"
           deleteEntityName="flash sale"
+          onDeleteSuccess={revalidateFlashSales}
         />
       ),
     },

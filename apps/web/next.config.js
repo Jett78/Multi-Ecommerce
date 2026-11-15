@@ -1,10 +1,17 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverActions: {
-    bodySizeLimit: '2mb',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
   turbopack: {
-    root: '../..',
+    root: path.resolve(__dirname, '../..'),
   },
   async rewrites() {
     const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
