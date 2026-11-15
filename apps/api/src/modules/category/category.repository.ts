@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { DB_CONNECTION } from '../../db/db.module';
 import * as schema from '../../db/schema';
-import { eq, ilike, or, and, sql, desc } from 'drizzle-orm';
+import { eq, ilike, or, and, sql, asc } from 'drizzle-orm';
 
 @Injectable()
 export class CategoryRepository {
@@ -112,7 +112,7 @@ export class CategoryRepository {
       .select()
       .from(schema.categories)
       .where(whereClause)
-      .orderBy(desc(schema.categories.sortOrder), desc(schema.categories.createdAt))
+      .orderBy(asc(schema.categories.sortOrder), asc(schema.categories.createdAt))
       .limit(params?.take || 10)
       .offset(params?.skip || 0);
 
@@ -178,7 +178,7 @@ export class CategoryRepository {
       .from(schema.subcategories)
       .leftJoin(schema.categories, eq(schema.subcategories.categoryId, schema.categories.id))
       .where(whereClause)
-      .orderBy(desc(schema.subcategories.sortOrder), desc(schema.subcategories.createdAt))
+      .orderBy(asc(schema.subcategories.sortOrder), asc(schema.subcategories.createdAt))
       .limit(params?.take || 10)
       .offset(params?.skip || 0);
 
