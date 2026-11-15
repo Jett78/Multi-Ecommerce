@@ -242,15 +242,6 @@ export class CategoryRepository {
     return subcategory;
   }
 
-  async deleteCategory(id: string) {
-    const [category] = await this.db
-      .delete(schema.categories)
-      .where(eq(schema.categories.id, id))
-      .returning();
-
-    return category;
-  }
-
   async deleteSubcategory(id: string) {
     const [subcategory] = await this.db
       .delete(schema.subcategories)
@@ -258,6 +249,13 @@ export class CategoryRepository {
       .returning();
 
     return subcategory;
+  }
+
+  async deactivateSubcategoriesByCategoryId(categoryId: string) {
+    await this.db
+      .update(schema.subcategories)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(schema.subcategories.categoryId, categoryId));
   }
 
   async countSubcategoriesByCategoryId(categoryId: string) {

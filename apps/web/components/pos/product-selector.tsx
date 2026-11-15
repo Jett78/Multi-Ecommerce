@@ -47,7 +47,7 @@ export function ProductSelector() {
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(selectedCategory ? { categoryId: selectedCategory } : {}),
   });
-  const { data: categoriesData } = getCategories({ take: 100, skip: 0 });
+  const { data: categoriesData } = getCategories({ take: 100, skip: 0, isActive: true });
 
   const products = (productsData?.items || []) as Product[];
   const total = productsData?.total || 0;

@@ -122,8 +122,9 @@ export class CategoryService {
         throw new NotFoundException(`Category with id "${id}" not found`);
       }
 
-      await this.repository.deleteCategory(id);
-      return { message: 'Category deleted successfully' };
+      await this.repository.updateCategory(id, { isActive: false });
+      await this.repository.deactivateSubcategoriesByCategoryId(id);
+      return { message: 'Category deactivated successfully' };
     } catch (error) {
       this.logger.error(`Failed to delete category: ${error.message}`, error.stack);
       throw error;

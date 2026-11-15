@@ -69,8 +69,8 @@ export default function ProductFilter({ onFilterChange, initialFilters = {} }: P
     queryKey: "public-brands",
   });
 
-  const { data: categoriesData } = getCategories({ take: 100, skip: 0 });
-  const { data: subcategoriesData } = getSubcategories({ take: 100, skip: 0 });
+  const { data: categoriesData } = getCategories({ take: 100, skip: 0, isActive: true });
+  const { data: subcategoriesData } = getSubcategories({ take: 100, skip: 0, isActive: true });
   const { data: brandsData } = getBrands({ take: 100, skip: 0 });
 
   const categories = categoriesData || [];
