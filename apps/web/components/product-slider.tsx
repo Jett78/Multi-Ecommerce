@@ -53,7 +53,7 @@ const ProductSlider = ({ products, title, subtitle }: ProductSliderProps) => {
       },
       {
         breakpoint: 480,
-        settings: { slidesToShow: 1 },
+        settings: { slidesToShow: 2 },
       },
     ],
   };

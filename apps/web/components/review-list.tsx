@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
 import type { Review, ReviewReply } from "@/types/review";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/lib/api-client";
+import { useQueryClient } from "@tanstack/react-query";
 import { showSuccess, showError } from "@/lib/toast-helper";
+import { getImageUrl } from "@/lib/utils";
 import Rating from "@/components/rating";
 import {
   ThumbsUp,
@@ -20,6 +20,8 @@ import {
 
 interface ReviewListProps {
   productId: string;
+  ratingFilter?: number | null;
+  onRatingFilter?: (rating: number | null) => void;
 }
 
 interface TreeNode {
@@ -59,6 +61,59 @@ function buildReplyTree(replies: ReviewReply[]): TreeNode[] {
   return roots;
 }
 
+function timeAgo(dateInput: string | Date): string {
+  const date = new Date(dateInput);
+  const diffMs = Date.now() - date.getTime();
+  if (Number.isNaN(diffMs)) return "";
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "Just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 30) return `${diffDays}d ago`;
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function UserAvatar({
+  name,
+  image,
+  size = "md",
+}: {
+  name?: string;
+  image?: string;
+  size?: "sm" | "md";
+}) {
+  const dimensions = size === "sm" ? "w-6 h-6 text-[10px]" : "w-10 h-10 text-sm";
+  const resolvedImage = image ? getImageUrl(image) : "";
+
+  if (resolvedImage) {
+    return (
+      <div
+        className={`${dimensions} rounded-full overflow-hidden bg-gray-100 flex-shrink-0`}
+      >
+        <img
+          src={resolvedImage}
+          alt={name || "User"}
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`${dimensions} rounded-full bg-gray-900 text-white flex items-center justify-center font-bold flex-shrink-0`}
+    >
+      {(name || "U").charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
 function ReplyItem({
   reply,
   reviewId,
@@ -79,12 +134,14 @@ function ReplyItem({
   onSubmitReply: (reviewId: string, parentId?: string) => void;
 }) {
   return (
-    <div className={`${depth > 0 ? "ml-6" : ""}`}>
+    <div className={depth > 0 ? "ml-6 pl-4 border-l border-gray-200" : ""}>
       <div className="bg-gray-50 border border-gray-100 p-3">
         <div className="flex items-center gap-2 mb-1.5">
-          <div className="w-6 h-6 bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600">
-            {(reply as any)?.userName?.[0] || "U"}
-          </div>
+          <UserAvatar
+            name={(reply as any)?.userName}
+            image={(reply as any)?.userImage}
+            size="sm"
+          />
           <span className="text-xs font-bold text-gray-900">
             {(reply as any)?.userName || "User"}
           </span>
@@ -148,7 +205,7 @@ function ReplyItem({
             }
           }}
           placeholder="Write a reply..."
-          className="flex-1 px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-primarymain transition-colors"
+          className="flex-1 px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-primarymain transition-colors bg-white"
           disabled={isSubmitting}
         />
         <button
@@ -163,14 +220,25 @@ function ReplyItem({
   );
 }
 
-export default function ReviewList({ productId }: ReviewListProps) {
+export default function ReviewList({
+  productId,
+  ratingFilter,
+  onRatingFilter,
+}: ReviewListProps) {
   const [page, setPage] = useState(1);
-  const [ratingFilter, setRatingFilter] = useState<number | null>(null);
-  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+  const [internalFilter, setInternalFilter] = useState<number | null>(null);
+  const [expandedReviewId, setExpandedReviewId] = useState<string | null>(null);
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({});
-  const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
   const take = 10;
   const queryClient = useQueryClient();
+
+  const activeFilter = ratingFilter !== undefined ? ratingFilter : internalFilter;
+
+  // Reset pagination whenever the filter changes — including changes
+  // driven externally by the rating breakdown bars.
+  useEffect(() => {
+    setPage(1);
+  }, [activeFilter]);
 
   const endpoint = `${API_ROUTES.PRODUCT}/${productId}/reviews`;
   const { getAllPaginated } = useCrud<Review>({
@@ -178,8 +246,8 @@ export default function ReviewList({ productId }: ReviewListProps) {
     queryKey: "reviews",
   });
 
-  const repliesEndpoint = activeReviewId
-    ? `${API_ROUTES.PRODUCT}/reviews/${activeReviewId}/replies`
+  const repliesEndpoint = expandedReviewId
+    ? `${API_ROUTES.PRODUCT}/reviews/${expandedReviewId}/replies`
     : "";
 
   const { getAll: getAllReplies, create: createReply, remove: removeReply } = useCrud<ReviewReply>({
@@ -192,29 +260,25 @@ export default function ReviewList({ productId }: ReviewListProps) {
     skip: (page - 1) * take,
     take,
     isApproved: true,
-    ...(ratingFilter !== null ? { rating: ratingFilter } : {}),
+    ...(activeFilter !== null ? { rating: activeFilter } : {}),
   };
 
   const { data, isLoading } = getAllPaginated(reviewParams);
 
   const handleRatingFilter = (rating: number | null) => {
-    setRatingFilter(rating);
+    if (onRatingFilter) {
+      onRatingFilter(rating);
+    } else {
+      setInternalFilter(rating);
+    }
     setPage(1);
   };
 
-  const repliesQuery = activeReviewId ? getAllReplies() : null;
+  const repliesQuery = getAllReplies(undefined, { enabled: !!expandedReviewId });
   const flatReplies = (repliesQuery?.data as ReviewReply[] | undefined) || [];
 
   const toggleReplies = (reviewId: string) => {
-    const newExpanded = new Set(expandedReplies);
-    if (newExpanded.has(reviewId)) {
-      newExpanded.delete(reviewId);
-      setActiveReviewId(null);
-    } else {
-      newExpanded.add(reviewId);
-      setActiveReviewId(reviewId);
-    }
-    setExpandedReplies(newExpanded);
+    setExpandedReviewId((prev) => (prev === reviewId ? null : reviewId));
   };
 
   const handleReplySubmit = (reviewId: string, parentId?: string) => {
@@ -249,15 +313,17 @@ export default function ReviewList({ productId }: ReviewListProps) {
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="animate-pulse border border-gray-200 p-4">
-            <div className="flex gap-1 mb-2">
-              {[...Array(5)].map((_, j) => (
-                <div key={j} className="w-4 h-4 bg-gray-200" />
-              ))}
+          <div key={i} className="animate-pulse border border-gray-200 p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-gray-100" />
+              <div className="space-y-1.5">
+                <div className="h-3 w-28 bg-gray-100" />
+                <div className="h-3 w-20 bg-gray-100" />
+              </div>
             </div>
-            <div className="h-3 bg-gray-200 w-1/3 mb-2" />
-            <div className="h-3 bg-gray-200 w-full mb-1" />
-            <div className="h-3 bg-gray-200 w-2/3" />
+            <div className="h-3 bg-gray-100 w-1/3 mb-2" />
+            <div className="h-3 bg-gray-100 w-full mb-1" />
+            <div className="h-3 bg-gray-100 w-2/3" />
           </div>
         ))}
       </div>
@@ -271,163 +337,211 @@ export default function ReviewList({ productId }: ReviewListProps) {
 
   return (
     <div className="space-y-6">
-      {/* Rating Filter */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => handleRatingFilter(null)}
-          className={`px-4 py-2 text-xs font-bold tracking-wide transition-colors ${
-            ratingFilter === null
-              ? "bg-primarymain text-white"
-              : "border border-gray-200 text-gray-600 hover:border-primarymain"
-          }`}
-        >
-          ALL
-        </button>
-        {[5, 4, 3, 2, 1].map((rating) => (
+      {/* Filter Bar */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase">
+          {total} {total === 1 ? "review" : "reviews"}
+          {activeFilter !== null ? ` · ${activeFilter}★` : ""}
+        </p>
+        <div className="flex flex-wrap gap-2">
           <button
-            key={rating}
-            onClick={() => handleRatingFilter(rating)}
-            className={`px-4 py-2 text-xs font-bold tracking-wide transition-colors ${
-              ratingFilter === rating
+            onClick={() => handleRatingFilter(null)}
+            className={`px-3.5 py-1.5 text-[11px] font-bold tracking-widest uppercase transition-colors ${
+              activeFilter === null
                 ? "bg-primarymain text-white"
-                : "border border-gray-200 text-gray-600 hover:border-primarymain"
+                : "border border-gray-200 text-gray-500 hover:border-gray-900 hover:text-gray-900"
             }`}
           >
-            {rating} ★
+            All
           </button>
-        ))}
+          {[5, 4, 3, 2, 1].map((rating) => (
+            <button
+              key={rating}
+              onClick={() => handleRatingFilter(rating)}
+              className={`px-3.5 py-1.5 text-[11px] font-bold tracking-widest transition-colors ${
+                activeFilter === rating
+                  ? "bg-primarymain text-white"
+                  : "border border-gray-200 text-gray-500 hover:border-gray-900 hover:text-gray-900"
+              }`}
+            >
+              {rating} ★
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Reviews List */}
       {reviews.length === 0 ? (
-        <div className="text-center py-16 border border-gray-200">
-          <p className="text-sm text-gray-400">No reviews yet</p>
-          <p className="text-xs text-gray-300 mt-1">Be the first to share your experience</p>
+        <div className="border border-gray-200 py-16 px-6 text-center">
+          <div className="w-12 h-12 mx-auto border border-gray-200 flex items-center justify-center mb-4">
+            <MessageSquare size={20} className="text-gray-300" />
+          </div>
+          <p className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+            {activeFilter !== null
+              ? `No ${activeFilter}★ reviews yet`
+              : "No reviews yet"}
+          </p>
+          <p className="text-xs text-gray-400 mt-1.5">
+            {activeFilter !== null
+              ? "Try another rating filter"
+              : "Be the first to share your experience"}
+          </p>
+          {activeFilter !== null && (
+            <button
+              onClick={() => handleRatingFilter(null)}
+              className="mt-4 text-[11px] font-bold tracking-widest uppercase text-primarymain hover:text-primarymain/80 transition-colors"
+            >
+              Show all reviews
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
-          {reviews.map((review: Review) => (
-            <div
-              key={review.id}
-              className="border border-gray-200 hover:border-gray-300 transition-colors"
-            >
-              <div className="p-5">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <Rating rating={review.rating} size="sm" />
-                    {review.title && (
-                      <h4 className="font-bold text-gray-900 mt-2">{review.title}</h4>
-                    )}
+          {reviews.map((review: Review) => {
+            const isExpanded = expandedReviewId === review.id;
+            const replyCount = isExpanded
+              ? flatReplies.length
+              : (review.replyCount ?? 0);
+
+            return (
+              <article
+                key={review.id}
+                className="border border-gray-200 hover:border-gray-300 transition-colors"
+              >
+                <div className="p-5">
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <UserAvatar name={review.userName} image={review.userImage} />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold text-gray-900">
+                            {review.userName || "Anonymous"}
+                          </span>
+                          {review.isVerifiedPurchase && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-50 px-1.5 py-0.5 uppercase tracking-wide">
+                              <Check size={10} />
+                              Verified
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Rating rating={review.rating} size="sm" />
+                          <span className="text-[11px] text-gray-400">
+                            · {timeAgo(review.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  {review.isVerifiedPurchase && (
-                    <span className="flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 px-2 py-1">
-                      <Check size={12} />
-                      Verified Purchase
-                    </span>
+
+                  {/* Title */}
+                  {review.title && (
+                    <h4 className="font-bold text-gray-900 mt-4">{review.title}</h4>
                   )}
-                </div>
 
-                {/* Comment */}
-                {review.comment && (
-                  <p className="text-sm text-gray-600 leading-relaxed">{review.comment}</p>
-                )}
-
-                {/* Images */}
-                {review.images && review.images.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {review.images.map((imageKey, index) => (
-                      <img
-                        key={index}
-                        src={imageKey}
-                        alt={`Review image ${index + 1}`}
-                        className="w-20 h-20 object-cover border border-gray-200 hover:border-gray-900 transition-colors cursor-pointer"
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* Footer */}
-                <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-100">
-                  <span className="text-xs text-gray-400">
-                    {new Date(review.createdAt).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                  {review.helpfulCount > 0 && (
-                    <span className="flex items-center gap-1 text-xs text-gray-400">
-                      <ThumbsUp size={12} />
-                      {review.helpfulCount} helpful
-                    </span>
+                  {/* Comment */}
+                  {review.comment && (
+                    <p className="text-sm text-gray-600 leading-relaxed mt-2">
+                      {review.comment}
+                    </p>
                   )}
-                  <button
-                    onClick={() => toggleReplies(review.id)}
-                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-900 transition-colors"
-                  >
-                    <MessageSquare size={12} />
-                    {flatReplies.length || 0} Replies
-                  </button>
-                </div>
-              </div>
 
-              {/* Replies Section */}
-              {expandedReplies.has(review.id) && (
-                <div className="border-t border-gray-100 p-5 bg-gray-50">
-                  {replyTree.length > 0 && (
-                    <div className="space-y-3 mb-4">
-                      {replyTree.map((reply) => (
-                        <ReplyItem
-                          key={reply.id}
-                          reply={reply}
-                          reviewId={review.id}
-                          depth={0}
-                          onDelete={handleDeleteReply}
-                          replyTexts={replyTexts}
-                          setReplyTexts={setReplyTexts}
-                          isSubmitting={createReply.isPending}
-                          onSubmitReply={handleReplySubmit}
+                  {/* Images */}
+                  {review.images && review.images.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {review.images.map((imageKey, index) => (
+                        <img
+                          key={index}
+                          src={getImageUrl(imageKey)}
+                          alt={`Review image ${index + 1}`}
+                          className="w-20 h-20 object-cover border border-gray-200 hover:border-gray-900 transition-colors cursor-pointer"
                         />
                       ))}
                     </div>
                   )}
 
-                  {/* Reply Input */}
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={replyTexts[review.id] || ""}
-                      onChange={(e) =>
-                        setReplyTexts((prev) => ({
-                          ...prev,
-                          [review.id]: e.target.value,
-                        }))
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleReplySubmit(review.id);
-                        }
-                      }}
-                      placeholder="Write a reply..."
-                      className="flex-1 px-4 py-2.5 border border-gray-200 text-sm focus:outline-none focus:border-primarymain transition-colors bg-white"
-                      disabled={createReply.isPending}
-                    />
+                  {/* Footer */}
+                  <div className="flex items-center gap-4 mt-4 pt-3 border-t border-gray-100">
+                    {review.helpfulCount > 0 && (
+                      <span className="flex items-center gap-1 text-xs text-gray-400">
+                        <ThumbsUp size={12} />
+                        {review.helpfulCount} helpful
+                      </span>
+                    )}
                     <button
-                      onClick={() => handleReplySubmit(review.id)}
-                      disabled={
-                        createReply.isPending || !replyTexts[review.id]?.trim()
-                      }
-                      className="px-4 py-2.5 bg-primarymain text-white hover:bg-primarymain/90 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
+                      onClick={() => toggleReplies(review.id)}
+                      className={`flex items-center gap-1 text-xs transition-colors ${
+                        isExpanded
+                          ? "text-primarymain font-medium"
+                          : "text-gray-400 hover:text-gray-900"
+                      }`}
                     >
-                      <Send size={14} />
+                      <MessageSquare size={12} />
+                      {replyCount > 0
+                        ? `${replyCount} ${replyCount === 1 ? "Reply" : "Replies"}`
+                        : "Reply"}
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
-          ))}
+
+                {/* Replies Section */}
+                {isExpanded && (
+                  <div className="border-t border-gray-100 p-5 bg-gray-50">
+                    {replyTree.length > 0 && (
+                      <div className="space-y-3 mb-4">
+                        {replyTree.map((reply) => (
+                          <ReplyItem
+                            key={reply.id}
+                            reply={reply}
+                            reviewId={review.id}
+                            depth={0}
+                            onDelete={handleDeleteReply}
+                            replyTexts={replyTexts}
+                            setReplyTexts={setReplyTexts}
+                            isSubmitting={createReply.isPending}
+                            onSubmitReply={handleReplySubmit}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Reply Input */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={replyTexts[review.id] || ""}
+                        onChange={(e) =>
+                          setReplyTexts((prev) => ({
+                            ...prev,
+                            [review.id]: e.target.value,
+                          }))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleReplySubmit(review.id);
+                          }
+                        }}
+                        placeholder="Write a reply..."
+                        className="flex-1 px-4 py-2.5 border border-gray-200 text-sm focus:outline-none focus:border-primarymain transition-colors bg-white"
+                        disabled={createReply.isPending}
+                      />
+                      <button
+                        onClick={() => handleReplySubmit(review.id)}
+                        disabled={
+                          createReply.isPending || !replyTexts[review.id]?.trim()
+                        }
+                        className="px-4 py-2.5 bg-primarymain text-white hover:bg-primarymain/90 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
+                      >
+                        <Send size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </article>
+            );
+          })}
         </div>
       )}
 

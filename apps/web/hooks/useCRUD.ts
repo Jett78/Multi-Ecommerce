@@ -6,6 +6,7 @@ import type { CrudOptions } from "@/types/hooks";
 
 interface GetAllOptions {
   timeout?: number;
+  enabled?: boolean;
 }
 
 export function useCrud<T>({
@@ -42,6 +43,7 @@ export function useCrud<T>({
         }
         return [];
       },
+      enabled: options?.enabled ?? true,
     });
   };
 

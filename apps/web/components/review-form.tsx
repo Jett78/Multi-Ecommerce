@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Star, X, ImageIcon, Camera } from "lucide-react";
+import { Star, X, Camera } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import { uploadMultipleImages } from "@/actions/upload-action";
+import { getImageUrl } from "@/lib/utils";
 import SubmittingLoader from "@/components/dashboard/submitting-loader";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
@@ -98,13 +99,19 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
   };
 
   const ratingLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+  const activeLabel = ratingLabels[hoverRating || rating];
 
   return (
     <>
       {create.isPending && <SubmittingLoader status="Submitting review" />}
       <div className="border border-gray-200">
         <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Write a Review</h3>
+          <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-1">
+            Your Experience
+          </p>
+          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
+            Write a Review
+          </h3>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-5">
@@ -113,7 +120,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
             <label className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3 block">
               Your Rating *
             </label>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-h-[40px]">
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -122,6 +129,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
                     onClick={() => setRating(star)}
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
+                    aria-label={`${star} star${star > 1 ? "s" : ""}`}
                     className="p-0.5 transition-transform hover:scale-110"
                   >
                     <Star
@@ -134,11 +142,13 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
                   </button>
                 ))}
               </div>
-              {(hoverRating || rating) > 0 && (
-                <span className="text-sm font-medium text-gray-600">
-                  {ratingLabels[hoverRating || rating]}
-                </span>
-              )}
+              <span
+                className={`text-sm font-medium transition-opacity ${
+                  activeLabel ? "text-gray-900 opacity-100" : "opacity-0"
+                }`}
+              >
+                {activeLabel || " "}
+              </span>
             </div>
           </div>
 
@@ -180,7 +190,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
               {images.map((imageKey, index) => (
                 <div key={index} className="relative w-20 h-20 border border-gray-200 group">
                   <img
-                    src={imageKey}
+                    src={getImageUrl(imageKey)}
                     alt={`Review image ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
@@ -212,15 +222,15 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="flex items-center justify-between pt-2">
+          {/* Submit */}
+          <div className="pt-1 space-y-3">
             <p className="text-[11px] text-gray-400">
               Your review will appear after moderation
             </p>
             <button
               type="submit"
               disabled={create.isPending || rating === 0 || uploading}
-              className="px-6 py-3 bg-primarymain text-white text-sm font-bold tracking-wide hover:bg-primarymain/90 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-3.5 bg-primarymain text-white text-sm font-bold tracking-wide hover:bg-primarymain/90 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
             >
               {create.isPending ? "SUBMITTING..." : "SUBMIT REVIEW"}
             </button>

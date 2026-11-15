@@ -17,6 +17,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useCrud } from "@/hooks/useCRUD";
+import { apiClient } from "@/lib/api-client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Review, ReviewReply } from "@/types/review";
 import {
   Check,
@@ -185,11 +187,32 @@ export default function ReviewsPage() {
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({});
   const [activeReviewId, setActiveReviewId] = useState<string | null>(null);
   const take = 20;
+  const queryClient = useQueryClient();
 
-  const { getAllPaginated, put, remove } = useCrud<Review>({
+  const { getAllPaginated } = useCrud<Review>({
     endpoint: `${API_ROUTES.PRODUCT}/reviews/all`,
     queryKey: "admin-reviews",
     isAuthenticated: true,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (reviewId: string) =>
+      apiClient(`${API_ROUTES.PRODUCT}/reviews/${reviewId}/approve`, {
+        method: "PUT",
+        isAuthenticated: true,
+      }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["admin-reviews"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (reviewId: string) =>
+      apiClient(`${API_ROUTES.PRODUCT}/reviews/${reviewId}`, {
+        method: "DELETE",
+        isAuthenticated: true,
+      }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["admin-reviews"] }),
   });
 
   const repliesEndpoint = activeReviewId
@@ -213,30 +236,27 @@ export default function ReviewsPage() {
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / take);
 
-  const repliesQuery = activeReviewId ? getAllReplies() : null;
+  const repliesQuery = getAllReplies(undefined, { enabled: !!activeReviewId });
   const flatReplies = (repliesQuery?.data as ReviewReply[] | undefined) || [];
   const replyTree = buildReplyTree(flatReplies);
 
   const handleApprove = () => {
     if (!selectedReviewId) return;
-    put.mutate(
-      { id: selectedReviewId, data: {} as Review },
-      {
-        onSuccess: () => {
-          showSuccess("Review approved");
-          setApproveDialogOpen(false);
-          setSelectedReviewId(null);
-        },
-        onError: (error: any) => {
-          showError(error.message || "Failed to approve review");
-        },
-      }
-    );
+    approveMutation.mutate(selectedReviewId, {
+      onSuccess: () => {
+        showSuccess("Review approved");
+        setApproveDialogOpen(false);
+        setSelectedReviewId(null);
+      },
+      onError: (error: any) => {
+        showError(error.message || "Failed to approve review");
+      },
+    });
   };
 
   const handleDelete = () => {
     if (!selectedReviewId) return;
-    remove.mutate(selectedReviewId, {
+    deleteMutation.mutate(selectedReviewId, {
       onSuccess: () => {
         showSuccess("Review deleted");
         setDeleteDialogOpen(false);
@@ -492,7 +512,7 @@ export default function ReviewsPage() {
                           setSelectedReviewId(review.id);
                           setApproveDialogOpen(true);
                         }}
-                        disabled={put.isPending}
+                        disabled={approveMutation.isPending}
                         className="flex items-center gap-1.5 px-4 py-2 bg-green-500 text-white font-space text-xs font-bold rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
                       >
                         <Check size={14} />
@@ -504,7 +524,7 @@ export default function ReviewsPage() {
                         setSelectedReviewId(review.id);
                         setDeleteDialogOpen(true);
                       }}
-                      disabled={remove.isPending}
+                      disabled={deleteMutation.isPending}
                       className="flex items-center gap-1.5 px-4 py-2 bg-white text-red-500 border-2 border-red-200 font-space text-xs font-bold rounded-lg hover:bg-red-50 disabled:opacity-50 transition-colors"
                     >
                       <Trash2 size={14} />
@@ -587,10 +607,10 @@ export default function ReviewsPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleApprove}
-              disabled={put.isPending}
+              disabled={approveMutation.isPending}
               className="bg-green-500 hover:bg-green-600"
             >
-              {put.isPending ? "Approving..." : "Approve"}
+              {approveMutation.isPending ? "Approving..." : "Approve"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -608,10 +628,10 @@ export default function ReviewsPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              disabled={remove.isPending}
+              disabled={deleteMutation.isPending}
               className="bg-red-500 hover:bg-red-600"
             >
-              {remove.isPending ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

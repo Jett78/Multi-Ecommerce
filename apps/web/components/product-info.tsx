@@ -95,7 +95,7 @@ export default function ProductInfo({ product, selectedVariant, onSelectVariant,
             {product.category.name}
           </span>
         )}
-        <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-gray-900 leading-tight mb-3">
+        <h1 className="text-2xl md:text-4xl lg:text-[2.2rem] font-bold tracking-tight text-gray-900 leading-tight mb-3">
           {product.name}
         </h1>
         {product.brand && (

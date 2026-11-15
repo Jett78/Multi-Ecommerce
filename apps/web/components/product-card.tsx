@@ -5,7 +5,6 @@ import Link from "next/link";
 import type { Product } from "@/types/product";
 import type { ActiveFlashSaleProduct } from "@/types/flash-sale";
 import { formatPrice } from "@/lib/utils";
-import Rating from "@/components/rating";
 import WishlistButton from "@/components/wishlist/wishlist-button";
 
 interface ProductCardProps {
@@ -79,10 +78,8 @@ function getDiscountPercent(product: Product): number | null {
 
 export default function ProductCard({
   product,
-  index = 0,
   flashSalePrice,
   flashSaleOriginalPrice,
-  flashSaleName,
   activeFlashSaleProduct,
 }: ProductCardProps) {
   if (!product && !activeFlashSaleProduct) return null;
@@ -148,18 +145,18 @@ export default function ProductCard({
       </div>
 
       <div className="bg-white px-3 py-3">
-        <h3 className="font-medium text-[15px] leading-snug text-gray-900 line-clamp-2 group-hover:underline decoration-1 underline-offset-2">
+        <h3 className="font-medium sm:text-[15px] text-xs leading-snug text-gray-900 line-clamp-2 group-hover:underline decoration-1 underline-offset-2">
           {displayName}
         </h3>
         <div className="flex items-center gap-2 mt-1">
           {hasFlashSale ? (
             <>
-              <p className="text-sm font-semibold text-primarymain">{formatPrice(salePrice!)}</p>
+              <p className="sm:text-sm text-xs font-semibold text-primarymain">{formatPrice(salePrice!)}</p>
               <p className="text-xs text-gray-400 line-through">{formatPrice(originalPrice!)}</p>
             </>
           ) : (
             <>
-              <p className="text-sm font-semibold text-primarymain">{product ? getProductPrice(product) : ""}</p>
+              <p className="sm:text-sm text-xs font-semibold text-primarymain">{product ? getProductPrice(product) : ""}</p>
               {compareAtPrice && (
                 <p className="text-xs text-gray-400 line-through">{compareAtPrice}</p>
               )}

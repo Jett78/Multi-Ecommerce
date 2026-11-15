@@ -22,6 +22,7 @@ export default function ProductDetailClient({ product, relatedProducts = [], fla
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
     product.variants?.[0] ?? null
   );
+  const [ratingFilter, setRatingFilter] = useState<number | null>(null);
 
   const displayImages = product.images || [];
   const currentStock = selectedVariant?.stockQuantity ?? product.stockQuantity ?? 0;
@@ -33,7 +34,7 @@ export default function ProductDetailClient({ product, relatedProducts = [], fla
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-16 ">
         <Link
           href="/products"
           className="inline-flex items-center gap-1.5 mb-8 text-[13px] font-medium text-gray-500 hover:text-gray-900 transition-colors"
@@ -61,19 +62,39 @@ export default function ProductDetailClient({ product, relatedProducts = [], fla
 
         {/* Reviews Section */}
         <div className="mt-16 pt-12 border-t border-gray-200">
+          {/* Section Header */}
+          <div className="mb-10">
+            <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mb-2">
+              Reviews
+            </p>
+            <div className="flex items-end justify-between gap-6 flex-wrap">
+              <h2 className="text-xl md:text-3xl font-bold tracking-tight text-gray-900 uppercase">
+                Customer Reviews
+              </h2>
+              <p className="text-sm text-gray-500 max-w-md">
+                Honest feedback from customers who bought and used this product.
+              </p>
+            </div>
+          </div>
+
           <div className="grid lg:grid-cols-3 gap-10">
-            {/* Rating Summary - Left Side */}
-            <div className="lg:col-span-1">
-              <h2 className="text-lg font-bold text-gray-900 mb-5">Customer Reviews</h2>
-              <RatingSummary productId={product.id} />
-              <div className="mt-6">
-                <ReviewForm productId={product.id} />
-              </div>
+            {/* Rating Summary + Form - Left Side */}
+            <div className="lg:col-span-1 space-y-6">
+              <RatingSummary
+                productId={product.id}
+                selectedRating={ratingFilter}
+                onSelectRating={setRatingFilter}
+              />
+              <ReviewForm productId={product.id} />
             </div>
 
             {/* Reviews List - Right Side */}
             <div className="lg:col-span-2">
-              <ReviewList productId={product.id} />
+              <ReviewList
+                productId={product.id}
+                ratingFilter={ratingFilter}
+                onRatingFilter={setRatingFilter}
+              />
             </div>
           </div>
         </div>

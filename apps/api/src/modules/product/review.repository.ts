@@ -55,8 +55,24 @@ export class ReviewRepository {
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const reviews = await this.db
-      .select()
+      .select({
+        id: schema.productReviews.id,
+        productId: schema.productReviews.productId,
+        userId: schema.productReviews.userId,
+        rating: schema.productReviews.rating,
+        title: schema.productReviews.title,
+        comment: schema.productReviews.comment,
+        images: schema.productReviews.images,
+        isVerifiedPurchase: schema.productReviews.isVerifiedPurchase,
+        isApproved: schema.productReviews.isApproved,
+        helpfulCount: schema.productReviews.helpfulCount,
+        createdAt: schema.productReviews.createdAt,
+        updatedAt: schema.productReviews.updatedAt,
+        userName: schema.user.name,
+        userImage: schema.user.image,
+      })
       .from(schema.productReviews)
+      .leftJoin(schema.user, eq(schema.productReviews.userId, schema.user.id))
       .where(whereClause)
       .orderBy(desc(schema.productReviews.createdAt))
       .limit(params?.take || 10)
