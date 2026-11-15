@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Star, X, Camera } from "lucide-react";
 import { showSuccess, showError } from "@/lib/toast-helper";
 import { uploadMultipleImages } from "@/actions/upload-action";
-import { getImageUrl } from "@/lib/utils";
 import SubmittingLoader from "@/components/dashboard/submitting-loader";
 import { useCrud } from "@/hooks/useCRUD";
 import { API_ROUTES } from "@/config/api-routes";
@@ -20,7 +19,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
   const [hoverRating, setHoverRating] = useState(0);
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<{ key: string; url: string }[]>([]);
   const [uploading, setUploading] = useState(false);
 
   const endpoint = `${API_ROUTES.PRODUCT}/${productId}/reviews`;
@@ -52,7 +51,10 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
 
       const result = await uploadMultipleImages(formData);
       if (result.success && result.data) {
-        setImages([...images, ...result.data.map((img) => img.key)]);
+        setImages([
+          ...images,
+          ...result.data.map((img) => ({ key: img.key, url: img.url })),
+        ]);
         showSuccess(`${result.data.length} image(s) uploaded`);
       } else {
         showError(result.error || "Failed to upload images");
@@ -80,7 +82,7 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
         rating,
         title: title || undefined,
         comment: comment || undefined,
-        images: images.length > 0 ? images : undefined,
+        images: images.length > 0 ? images.map((img) => img.key) : undefined,
       } as any,
       {
         onSuccess: () => {
@@ -187,10 +189,10 @@ export default function ReviewForm({ productId, onSuccess }: ReviewFormProps) {
               Photos (optional, max 5)
             </label>
             <div className="flex flex-wrap gap-2">
-              {images.map((imageKey, index) => (
+              {images.map((image, index) => (
                 <div key={index} className="relative w-20 h-20 border border-gray-200 group">
                   <img
-                    src={getImageUrl(imageKey)}
+                    src={image.url}
                     alt={`Review image ${index + 1}`}
                     className="w-full h-full object-cover"
                   />

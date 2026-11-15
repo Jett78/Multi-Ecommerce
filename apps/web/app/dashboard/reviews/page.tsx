@@ -465,7 +465,7 @@ export default function ReviewsPage() {
                           {review.productName}
                         </span>
                       )}
-                      <Rating rating={review.rating} size="sm" />
+                      <Rating rating={review.rating * 10} size="sm" />
                     </div>
 
                     <div className="bg-zinc-50 rounded-lg p-3 border border-zinc-100">

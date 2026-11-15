@@ -16,6 +16,7 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Reply,
 } from "lucide-react";
 
 interface ReviewListProps {
@@ -123,6 +124,8 @@ function ReplyItem({
   setReplyTexts,
   isSubmitting,
   onSubmitReply,
+  replyingToId,
+  onToggleReply,
 }: {
   reply: TreeNode;
   reviewId: string;
@@ -132,6 +135,8 @@ function ReplyItem({
   setReplyTexts: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   isSubmitting: boolean;
   onSubmitReply: (reviewId: string, parentId?: string) => void;
+  replyingToId: string | null;
+  onToggleReply: (replyId: string) => void;
 }) {
   return (
     <div className={depth > 0 ? "ml-6 pl-4 border-l border-gray-200" : ""}>
@@ -161,6 +166,17 @@ function ReplyItem({
         <p className="text-sm text-gray-700">{reply.comment}</p>
         <div className="flex items-center gap-3 mt-2">
           <button
+            onClick={() => onToggleReply(reply.id)}
+            className={`text-[11px] transition-colors flex items-center gap-1 ${
+              replyingToId === reply.id
+                ? "text-primarymain font-medium"
+                : "text-gray-400 hover:text-gray-900"
+            }`}
+          >
+            <Reply size={10} />
+            Reply
+          </button>
+          <button
             onClick={() => onDelete(reviewId, reply.id)}
             className="text-[11px] text-gray-400 hover:text-red-500 transition-colors flex items-center gap-1"
           >
@@ -183,39 +199,44 @@ function ReplyItem({
               setReplyTexts={setReplyTexts}
               isSubmitting={isSubmitting}
               onSubmitReply={onSubmitReply}
+              replyingToId={replyingToId}
+              onToggleReply={onToggleReply}
             />
           ))}
         </div>
       )}
 
-      <div className="flex gap-2 mt-2">
-        <input
-          type="text"
-          value={replyTexts[`${reviewId}-${reply.id}`] || ""}
-          onChange={(e) =>
-            setReplyTexts((prev) => ({
-              ...prev,
-              [`${reviewId}-${reply.id}`]: e.target.value,
-            }))
-          }
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              onSubmitReply(reviewId, reply.id);
+      {replyingToId === reply.id && (
+        <div className="flex gap-2 mt-2">
+          <input
+            type="text"
+            value={replyTexts[`${reviewId}-${reply.id}`] || ""}
+            onChange={(e) =>
+              setReplyTexts((prev) => ({
+                ...prev,
+                [`${reviewId}-${reply.id}`]: e.target.value,
+              }))
             }
-          }}
-          placeholder="Write a reply..."
-          className="flex-1 px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-primarymain transition-colors bg-white"
-          disabled={isSubmitting}
-        />
-        <button
-          onClick={() => onSubmitReply(reviewId, reply.id)}
-          disabled={isSubmitting || !replyTexts[`${reviewId}-${reply.id}`]?.trim()}
-          className="px-3 py-2 bg-primarymain text-white hover:bg-primarymain/90 disabled:bg-gray-100 disabled:text-gray-400 transition-colors"
-        >
-          <Send size={14} />
-        </button>
-      </div>
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                onSubmitReply(reviewId, reply.id);
+              }
+            }}
+            placeholder="Write a reply..."
+            className="flex-1 px-3 py-2 border border-gray-200 text-sm focus:outline-none focus:border-primarymain transition-colors bg-white"
+            disabled={isSubmitting}
+            autoFocus
+          />
+          <button
+            onClick={() => onSubmitReply(reviewId, reply.id)}
+            disabled={isSubmitting || !replyTexts[`${reviewId}-${reply.id}`]?.trim()}
+            className="px-3 py-2 bg-primarymain text-white hover:bg-primarymain/90 disabled:bg-gray-100 disabled:text-gray-400 transition-colors"
+          >
+            <Send size={14} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -228,6 +249,7 @@ export default function ReviewList({
   const [page, setPage] = useState(1);
   const [internalFilter, setInternalFilter] = useState<number | null>(null);
   const [expandedReviewId, setExpandedReviewId] = useState<string | null>(null);
+  const [replyingToId, setReplyingToId] = useState<string | null>(null);
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({});
   const take = 10;
   const queryClient = useQueryClient();
@@ -279,6 +301,7 @@ export default function ReviewList({
 
   const toggleReplies = (reviewId: string) => {
     setExpandedReviewId((prev) => (prev === reviewId ? null : reviewId));
+    setReplyingToId(null);
   };
 
   const handleReplySubmit = (reviewId: string, parentId?: string) => {
@@ -292,6 +315,7 @@ export default function ReviewList({
         onSuccess: () => {
           showSuccess("Reply posted!");
           setReplyTexts((prev) => ({ ...prev, [textKey]: "" }));
+          if (parentId) setReplyingToId(null);
           queryClient.invalidateQueries({ queryKey: ["review-replies"] });
         },
         onError: () => showError("Failed to post reply"),
@@ -426,7 +450,7 @@ export default function ReviewList({
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
-                          <Rating rating={review.rating} size="sm" />
+                          <Rating rating={review.rating * 10} size="sm" />
                           <span className="text-[11px] text-gray-400">
                             · {timeAgo(review.createdAt)}
                           </span>
@@ -501,6 +525,12 @@ export default function ReviewList({
                             setReplyTexts={setReplyTexts}
                             isSubmitting={createReply.isPending}
                             onSubmitReply={handleReplySubmit}
+                            replyingToId={replyingToId}
+                            onToggleReply={(replyId) =>
+                              setReplyingToId((prev) =>
+                                prev === replyId ? null : replyId
+                              )
+                            }
                           />
                         ))}
                       </div>

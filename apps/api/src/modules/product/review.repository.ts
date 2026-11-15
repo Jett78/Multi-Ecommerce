@@ -12,6 +12,9 @@ export class ReviewRepository {
   ) {}
 
   private buildImageUrl(key: string): string {
+    if (key.startsWith('http://') || key.startsWith('https://')) {
+      return key;
+    }
     const cloudfrontUrl = process.env.AWS_CLOUDFRONT_URL || '';
     const bucketName = process.env.S3_BUCKET_NAME || '';
     const region = process.env.AWS_REGION || 'ap-south-1';
@@ -78,7 +81,10 @@ export class ReviewRepository {
       .limit(params?.take || 10)
       .offset(params?.skip || 0);
 
-    return reviews;
+    return reviews.map((review) => ({
+      ...review,
+      images: (review.images || []).map((image) => this.buildImageUrl(image)),
+    }));
   }
 
   async countReviewsByProductId(productId: string, params?: { rating?: number; isApproved?: boolean }) {
@@ -162,6 +168,7 @@ export class ReviewRepository {
     return reviews.map((review) => ({
       ...review,
       productImage: review.productImage ? this.buildImageUrl(review.productImage) : null,
+      images: (review.images || []).map((image) => this.buildImageUrl(image)),
     }));
   }
 

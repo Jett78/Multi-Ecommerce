@@ -61,7 +61,7 @@ export default function RatingSummary({
   if (!data) return null;
 
   const { averageRating, totalReviews, breakdown } = data;
-  const displayAverage = (averageRating / 10).toFixed(1);
+  const displayAverage = averageRating.toFixed(1);
   const isFiltered = selectedRating !== null;
 
   return (
@@ -72,7 +72,7 @@ export default function RatingSummary({
           {displayAverage}
         </span>
         <div>
-          <Rating rating={averageRating} size="lg" />
+          <Rating rating={averageRating * 10} size="lg" />
           <p className="text-[11px] font-bold tracking-widest text-gray-400 uppercase mt-2">
             Based on {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
           </p>
