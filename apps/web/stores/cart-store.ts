@@ -60,7 +60,14 @@ export const useCartStore = create<CartStore>()(
       },
 
       clearCart: () => {
-        set({ items: [], appliedCoupon: null, deliveryCharge: 0, deliveryProvider: null, estimatedDeliveryDays: null });
+        set({
+          items: [],
+          appliedCoupon: null,
+          deliveryCharge: 0,
+          deliveryProvider: null,
+          estimatedDeliveryDays: null,
+          selectedVariantIds: [],
+        });
       },
 
       setSelectedVariantIds: (ids) => set({ selectedVariantIds: ids }),
@@ -119,7 +126,11 @@ export const useCartStore = create<CartStore>()(
       },
     }),
     {
-      name: "cart-store",
+      name: "pos.cart.v2",
     }
   )
 );
+
+if (typeof window !== "undefined") {
+  window.localStorage.removeItem("cart-store");
+}

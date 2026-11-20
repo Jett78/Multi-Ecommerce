@@ -15,6 +15,11 @@ import { VariantSelectionModal } from "./variant-selection-modal";
 
 const PAGE_SIZE = 20;
 
+type ProductsListResponse = {
+  data?: Product[] | { data?: Product[]; total?: number };
+  total?: number;
+};
+
 export function ProductSelector() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -89,46 +94,122 @@ export function ProductSelector() {
     showSuccess(`${product.name} added to cart`);
   };
 
-  const handleAddVariantToCart = (variant: ProductVariant, quantity: number) => {
-    if (!selectedProductForVariants) return;
-
-    const firstImage = variant.images?.[0] || selectedProductForVariants.images?.[0];
+  const addVariantToCart = (product: Product, variant: ProductVariant, quantity: number) => {
+    const firstImage = variant.images?.[0] || product.images?.[0];
 
     addItem({
       variantId: variant.id,
-      productId: selectedProductForVariants.id,
-      productName: selectedProductForVariants.name,
-      productSlug: selectedProductForVariants.slug,
+      productId: product.id,
+      productName: product.name,
+      productSlug: product.slug,
       variantName: variant.attributes?.map(a => a.attributeValue).join(" / ") || null,
       priceAtAdd: variant.price,
       imageUrl: firstImage?.url,
       stockQuantity: variant.stockQuantity,
       variantSku: variant.sku,
       allowBackorder: variant.allowBackorder,
-      categoryId: selectedProductForVariants.categoryId,
-      brandId: selectedProductForVariants.brandId,
+      categoryId: product.categoryId,
+      brandId: product.brandId,
       attributes: variant.attributes || [],
     }, quantity);
 
-    showSuccess(`${selectedProductForVariants.name} added to cart`);
+    showSuccess(`${product.name} added to cart`);
+  };
+
+  const handleAddVariantToCart = (variant: ProductVariant, quantity: number) => {
+    if (!selectedProductForVariants) return;
+
+    addVariantToCart(selectedProductForVariants, variant, quantity);
     setShowVariantModal(false);
     setSelectedProductForVariants(null);
   };
 
-  const handleBarcodeLookup = async (code: string) => {
+  const parseProductResults = (
+    response: ProductsListResponse | undefined
+  ): { items: Product[]; total: number } => {
+    const data = response?.data;
+    if (data && !Array.isArray(data) && Array.isArray(data.data)) {
+      return {
+        items: data.data,
+        total: response?.total ?? data.total ?? data.data.length,
+      };
+    }
+    const items = Array.isArray(data) ? data : [];
+    return { items, total: response?.total ?? items.length };
+  };
+
+  const findExactSkuMatch = (
+    items: Product[],
+    code: string
+  ): { product: Product; variant?: ProductVariant } | null => {
+    const needle = code.toLowerCase();
+    for (const product of items) {
+      if (product.sku?.toLowerCase() === needle) return { product };
+      const variant = product.variants?.find((v) => v.sku?.toLowerCase() === needle);
+      if (variant) return { product, variant };
+    }
+    return null;
+  };
+
+  const handleExactLookup = async (code: string) => {
     if (!code || isScanningRef.current) return;
     isScanningRef.current = true;
     try {
-      const res = await apiClient<{ success: boolean; data?: Product }>(
-        `${API_ROUTES.PRODUCT_BARCODE}/${encodeURIComponent(code)}`
-      );
-      if (res?.data) {
-        handleAddToCart(res.data);
-        setSearch("");
-      } else {
-        showError(`No product found for "${code}"`);
+      let matched: Product | null = null;
+      try {
+        const res = await apiClient<{ success: boolean; data?: Product }>(
+          `${API_ROUTES.PRODUCT_BARCODE}/${encodeURIComponent(code)}`
+        );
+        matched = res?.data ?? null;
+      } catch {
+        // No exact barcode match — fall through to SKU / live-results handling
       }
-    } catch {
+
+      if (matched) {
+        handleAddToCart(matched);
+        setSearch("");
+        return;
+      }
+
+      let liveItems: Product[] = [];
+      let liveTotal = 0;
+
+      if (debouncedSearch === code) {
+        liveItems = products;
+        liveTotal = total;
+      } else {
+        try {
+          const params = new URLSearchParams({
+            take: String(PAGE_SIZE),
+            skip: "0",
+            status: "active",
+            search: code,
+          });
+          if (selectedCategory) params.set("categoryId", selectedCategory);
+          const res = await apiClient<ProductsListResponse>(
+            `${API_ROUTES.PRODUCT}?${params.toString()}`
+          );
+          const parsed = parseProductResults(res);
+          liveItems = parsed.items;
+          liveTotal = parsed.total;
+        } catch {
+          // Search request failed — treat as no live results
+        }
+      }
+
+      const exactSku = findExactSkuMatch(liveItems, code);
+      if (exactSku) {
+        if (exactSku.variant) {
+          addVariantToCart(exactSku.product, exactSku.variant, 1);
+        } else {
+          handleAddToCart(exactSku.product);
+        }
+        setSearch("");
+        return;
+      }
+
+      if (liveTotal > 0) return;
+
       showError(`No product found for "${code}"`);
     } finally {
       isScanningRef.current = false;
@@ -139,7 +220,7 @@ export function ProductSelector() {
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
     e.preventDefault();
-    handleBarcodeLookup(search.trim());
+    handleExactLookup(search.trim());
   };
 
   return (

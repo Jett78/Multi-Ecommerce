@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, User, Mail, Phone, Loader2, Banknote, Wallet, CreditCard, Tag, X, Search } from "lucide-react";
 import { useCartStore } from "@/stores/cart-store";
 import { usePOSModeStore } from "@/stores/pos-mode-store";
@@ -50,6 +51,7 @@ export function POSCheckout({ onBack }: POSCheckoutProps) {
     endpoint: API_ROUTES.ORDERS + "/checkout",
     queryKey: "orders",
   });
+  const queryClient = useQueryClient();
 
   const { values: form, setField, handleChange } = useForm({
     customerName: customerInfo.customerName,
@@ -167,8 +169,10 @@ export function POSCheckout({ onBack }: POSCheckoutProps) {
       };
 
       const response: any = await create.mutateAsync(payload);
-      
+
       if (response?.data) {
+        await queryClient.invalidateQueries({ queryKey: ["products-pos"], refetchType: "all" });
+        clearCart();
         setCompletedOrder(response.data);
         setShowReceipt(true);
         showSuccess("Order completed successfully!");
@@ -180,7 +184,7 @@ export function POSCheckout({ onBack }: POSCheckoutProps) {
     }
   };
 
-  const handleNewSale = () => {
+  const handleFinishSale = () => {
     clearCart();
     setCompletedOrder(null);
     setShowReceipt(false);
@@ -203,8 +207,8 @@ export function POSCheckout({ onBack }: POSCheckoutProps) {
     return (
       <POSReceipt
         order={completedOrder}
-        onNewSale={handleNewSale}
-        onClose={() => setShowReceipt(false)}
+        onNewSale={handleFinishSale}
+        onClose={handleFinishSale}
       />
     );
   }
