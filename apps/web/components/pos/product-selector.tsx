@@ -49,6 +49,7 @@ export function ProductSelector() {
     take: PAGE_SIZE,
     skip: (page - 1) * PAGE_SIZE,
     status: "active",
+    sortBy: "stable",
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
     ...(selectedCategory ? { categoryId: selectedCategory } : {}),
   });
@@ -174,21 +175,22 @@ export function ProductSelector() {
       let liveItems: Product[] = [];
       let liveTotal = 0;
 
-      if (debouncedSearch === code) {
-        liveItems = products;
-        liveTotal = total;
-      } else {
-        try {
-          const params = new URLSearchParams({
-            take: String(PAGE_SIZE),
-            skip: "0",
-            status: "active",
-            search: code,
-          });
-          if (selectedCategory) params.set("categoryId", selectedCategory);
-          const res = await apiClient<ProductsListResponse>(
-            `${API_ROUTES.PRODUCT}?${params.toString()}`
-          );
+if (debouncedSearch === code) {
+          liveItems = products;
+          liveTotal = total;
+        } else {
+          try {
+            const params = new URLSearchParams({
+              take: String(PAGE_SIZE),
+              skip: "0",
+              status: "active",
+              search: code,
+              sortBy: "stable",
+            });
+            if (selectedCategory) params.set("categoryId", selectedCategory);
+            const res = await apiClient<ProductsListResponse>(
+              `${API_ROUTES.PRODUCT}?${params.toString()}`
+            );
           const parsed = parseProductResults(res);
           liveItems = parsed.items;
           liveTotal = parsed.total;

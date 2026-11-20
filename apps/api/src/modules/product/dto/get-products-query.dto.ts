@@ -10,6 +10,7 @@ export enum ProductSortBy {
   NAME_ASC = 'name_asc',
   NAME_DESC = 'name_desc',
   POPULARITY = 'popularity',
+  STABLE = 'stable',
 }
 
 export class GetProductsQueryDto {

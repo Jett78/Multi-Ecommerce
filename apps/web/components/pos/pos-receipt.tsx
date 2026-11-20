@@ -105,6 +105,7 @@ export function POSReceipt({ order, onNewSale, onClose }: POSReceiptProps) {
                     <td className="text-right font-medium">
                       Rs. {item.totalAmount.toLocaleString()}
                     </td>
+                    <td className="text-right text-xs text-slate-500">{item.sku || "—"}</td>
                   </tr>
                 ))}
               </tbody>

@@ -286,6 +286,21 @@ export class ProductRepository {
           return asc(schema.products.createdAt);
         case 'popularity':
           return desc(schema.products.sortOrder);
+        case 'stable':
+          return [
+            asc(schema.categories.name),
+            asc(schema.products.name),
+            sql`(SELECT string_agg(va.attribute_value, ' / ' ORDER BY va.sort_order)
+                FROM product_variants pv
+                INNER JOIN variant_attributes va ON va.variant_id = pv.id
+                WHERE pv.id = (
+                  SELECT pv2.id FROM product_variants pv2
+                  WHERE pv2.product_id = ${schema.products.id}
+                  ORDER BY pv2.sort_order, pv2.created_at, pv2.id
+                  LIMIT 1
+                ))`,
+            asc(schema.products.id),
+          ];
         case 'newest':
         default:
           return [desc(schema.products.sortOrder), desc(schema.products.createdAt)];

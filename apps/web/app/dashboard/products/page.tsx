@@ -282,7 +282,9 @@ export default function ProductsPage() {
           })()}
           <div>
             <span className="font-semibold text-slate-900 text-sm">{row.name}</span>
-            <p className="text-xs text-slate-400">SKU: {row.sku || "—"}</p>
+            <p className="text-xs text-slate-400">
+              SKU:{row.variants?.[0]?.sku ? ` ${row.variants[0].sku}` : ` ${row.sku || "—"}`}
+            </p>
           </div>
         </div>
       ),
